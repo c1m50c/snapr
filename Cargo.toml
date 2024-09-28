@@ -1,0 +1,9 @@
+[workspace]
+members = ["snapper"]
+resolver = "2"
+
+# Shared Package Configuration
+package.authors = [
+    "c1m50c <58411864+c1m50c@users.noreply.github.com>"
+]
+package.license = "MIT"
