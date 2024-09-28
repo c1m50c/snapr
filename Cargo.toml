@@ -1,9 +1,18 @@
 [workspace]
-members = ["snapper"]
+members = [
+    "examples/open-street-maps",
+    "snapper"
+]
 resolver = "2"
 
-# Shared Package Configuration
-package.authors = [
+[workspace.package]
+authors = [
     "c1m50c <58411864+c1m50c@users.noreply.github.com>"
 ]
-package.license = "MIT"
+license = "MIT"
+
+[workspace.dependencies]
+anyhow = "1.0.89"
+geo = "0.28.0"
+image = { version = "0.25.2", default-features = false, features = ["jpeg", "png"] }
+thiserror = "1.0.64"

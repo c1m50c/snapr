@@ -1,0 +1,14 @@
+[package]
+name = "open-street-maps"
+edition = "2021"
+publish = false
+
+# Shared Package Configuration
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+geo = { workspace = true }
+image = { workspace = true }
+reqwest = { version = "0.12.7", features = ["blocking"] }
+snapper = { path = "../../snapper" }
