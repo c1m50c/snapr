@@ -17,16 +17,11 @@ pub enum Error {
     /// Returned by [`SnapperBuilder`] when attempting to call [`build`](`SnapperBuilder::build()`) on an incomplete builder.
     /// Contains an inner [`reason`](Error::Builder::reason) explaining the specifics of the error.
     #[error("failed to build structure")]
-    Builder {
-        reason: String,
-    },
+    Builder { reason: String },
 
     /// Returned by [`Snapper`] when a fetched tile does not match the expected [`tile_size`](Snapper::tile_size).
     #[error("incorrect tile size")]
-    IncorrectTileSize {
-        expected: u32,
-        received: u32,
-    },
+    IncorrectTileSize { expected: u32, received: u32 },
 
     #[error("failed to convert between primitive numbers")]
     PrimitiveNumberConversion,
@@ -40,12 +35,12 @@ pub enum Error {
 }
 
 /// Function that takes coordinates and a zoom level as arguments and returns an [`Image`](image::DynamicImage) of the map tile at the given position.
-/// 
+///
 /// ## Example
-/// 
+///
 /// ```rust
 /// use image::DynamicImage;
-/// 
+///
 /// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
 ///     todo!()
 /// }
@@ -57,9 +52,11 @@ pub type TileFetcher = fn(i32, i32, u8) -> Result<image::DynamicImage, Error>;
 #[derive(Debug)]
 pub struct Snapper {
     /// Function that returns an image of a map tile at specified coordinates.
+    #[allow(dead_code)]
     tile_fetcher: TileFetcher,
 
     /// Size of the image returned by the [`tile_fetcher`](Self::tile_fetcher).
+    #[allow(dead_code)]
     tile_size: u32,
 
     /// Height of generated snapshots.
@@ -69,37 +66,59 @@ pub struct Snapper {
     width: u32,
 
     /// Zoom level of generated snapshots.
+    #[allow(dead_code)]
     zoom: u8,
 }
 
 impl Snapper {
     /// Returns a snapshot centered around the provided `geometry`.
     #[cfg(feature = "drawing")]
-    pub fn generate_snapshot_from_geometry(&self, geometry: geo::Geometry, style: Option<drawing::Style>) -> Result<image::RgbaImage, Error> {
+    pub fn generate_snapshot_from_geometry(
+        &self,
+        geometry: geo::Geometry,
+        style: Option<drawing::Style>,
+    ) -> Result<image::RgbaImage, Error> {
         let geometries = geo::GeometryCollection::from(geometry);
         self.generate_snapshot_from_geometries(geometries, style)
     }
 
     /// Returns a snapshot centered around the provided `geometries`.
     #[cfg(feature = "drawing")]
-    pub fn generate_snapshot_from_geometries(&self, geometries: geo::GeometryCollection, style: Option<drawing::Style>) -> Result<image::RgbaImage, Error> {
+    pub fn generate_snapshot_from_geometries(
+        &self,
+        geometries: geo::GeometryCollection,
+        style: Option<drawing::Style>,
+    ) -> Result<image::RgbaImage, Error> {
         use drawing::DrawableGeometry;
 
         let style = style.unwrap_or_default();
 
-        self.generate_snapshot_from_geometries_with_drawer(geometries, |geometries, snapper, image, center| -> Result<(), Error> {
-            geometries.into_iter()
-                .try_for_each(|geometry| geometry.draw(snapper, image, &style, center))?;
+        self.generate_snapshot_from_geometries_with_drawer(
+            geometries,
+            |geometries, snapper, image, center| -> Result<(), Error> {
+                geometries
+                    .into_iter()
+                    .try_for_each(|geometry| geometry.draw(snapper, image, &style, center))?;
 
-            Ok(())
-        })
+                Ok(())
+            },
+        )
     }
 
     /// Returns a snapshot centered around the provided `geometries`.
     /// The drawing of each of the `geometries` is done with the given `drawer` function.
-    pub fn generate_snapshot_from_geometries_with_drawer<D>(&self, geometries: geo::GeometryCollection, drawer: D) -> Result<image::RgbaImage, Error>
+    pub fn generate_snapshot_from_geometries_with_drawer<D>(
+        &self,
+        geometries: geo::GeometryCollection,
+        drawer: D,
+    ) -> Result<image::RgbaImage, Error>
     where
-        D: Fn(geo::GeometryCollection, &Self, &mut image::RgbaImage, geo::Point) -> Result<(), Error>
+        D: Fn(
+            geo::GeometryCollection,
+            &Self,
+            &mut image::RgbaImage,
+            geo::Point,
+        ) -> Result<(), Error>,
     {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
 
@@ -145,14 +164,14 @@ impl Snapper {
         if tile.height() != self.tile_size {
             return Err(Error::IncorrectTileSize {
                 expected: self.tile_size,
-                received: tile.height()
+                received: tile.height(),
             });
         }
 
         if tile.width() != self.tile_size {
             return Err(Error::IncorrectTileSize {
                 expected: self.tile_size,
-                received: tile.height()
+                received: tile.height(),
             });
         }
 
@@ -160,7 +179,11 @@ impl Snapper {
     }
 
     /// Fills the given `image` with tiles centered around the given `epsg_3857_center` point.
-    fn overlay_backing_tiles(&self, image: &mut image::RgbaImage, center: geo::Point) -> Result<(), Error> {
+    fn overlay_backing_tiles(
+        &self,
+        image: &mut image::RgbaImage,
+        center: geo::Point,
+    ) -> Result<(), Error> {
         let required_rows = 0.5 * (self.height as f64) / (self.tile_size as f64);
         let required_columns = 0.5 * (self.width as f64) / (self.tile_size as f64);
 
@@ -174,10 +197,7 @@ impl Snapper {
 
         for x in min_x..max_x {
             for y in min_y..max_y {
-                let tile = self.get_tile(
-                    (x + n) % n,
-                    (y + n) % n,
-                )?;
+                let tile = self.get_tile((x + n) % n, (y + n) % n)?;
 
                 overlay(
                     image,

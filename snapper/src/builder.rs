@@ -1,21 +1,21 @@
 use crate::{Error, Snapper, TileFetcher};
 
 /// Builder structure for [`Snapper`].
-/// 
+///
 /// ## Example
-/// 
+///
 /// ```rust
 /// use image::DynamicImage;
 /// use snapper::SnapperBuilder;
-/// 
+///
 /// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
 ///     todo!()
 /// }
-/// 
+///
 /// let snapper = SnapperBuilder::new()
 ///     .with_tile_fetcher(tile_fetcher)
 ///     .build();
-/// 
+///
 /// assert!(snapper.is_ok());
 /// ```
 #[derive(Debug, Default)]
@@ -74,27 +74,28 @@ impl SnapperBuilder {
     }
 
     /// Attempts to construct a new [`Snapper`] from the [`SnapperBuilder`].
-    /// 
+    ///
     /// ## Example
-    /// 
+    ///
     /// ```rust
     /// use image::DynamicImage;
     /// use snapper::SnapperBuilder;
-    /// 
+    ///
     /// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
     ///     todo!()
     /// }
-    /// 
+    ///
     /// let snapper = SnapperBuilder::new()
     ///     .with_tile_fetcher(tile_fetcher)
     ///     .build();
-    /// 
+    ///
     /// assert!(snapper.is_ok());
     /// ```
     pub fn build(self) -> Result<Snapper, Error> {
         let Some(tile_fetcher) = self.tile_fetcher else {
             return Err(Error::Builder {
-                reason: "field `tile_fetcher` needs to be set prior to a `Snapper` being built".to_string()
+                reason: "field `tile_fetcher` needs to be set prior to a `Snapper` being built"
+                    .to_string(),
             });
         };
 
