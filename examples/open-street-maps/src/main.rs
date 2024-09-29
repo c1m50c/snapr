@@ -8,11 +8,13 @@ fn main() -> Result<(), snapper::Error> {
     let snapper = SnapperBuilder::new()
         .with_tile_fetcher(tile_fetcher)
         .with_tile_size(256)
-        .with_zoom(16)
+        .with_zoom(19)
         .build()?;
 
+    // Scotts Bluff, Nebraska
+    //https://www.openstreetmap.org/search?lat=41.837991&lon=-103.698382
     let geometry = geo::Geometry::Point(
-        geo::point!(x: 41.83799, y: -103.69838)
+        geo::point!(x: 41.837991, y: -103.698382)
     );
 
     let snapshot = snapper.generate_snapshot_from_geometry(geometry)?;
