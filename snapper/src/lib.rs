@@ -1,3 +1,5 @@
+use geo::Centroid;
+use image::imageops::overlay;
 use thiserror::Error;
 
 pub use builder::SnapperBuilder;
@@ -65,7 +67,14 @@ pub struct Snapper {
 impl Snapper {
     /// Returns a snapshot centered around the provided `geometry`.
     pub fn generate_snapshot_from_geometry(&self, geometry: geo::Geometry) -> Result<image::RgbaImage, Error> {
-        let output_image = image::RgbaImage::new(self.width, self.height);
+        let mut output_image = image::RgbaImage::new(self.width, self.height);
+
+        let Some(geometry_center_point) = geometry.centroid() else {
+            todo!()
+        };
+
+        self.overlay_backing_tiles(&mut output_image, geometry_center_point)?;
+
         Ok(output_image)
     }
 
@@ -97,5 +106,29 @@ impl Snapper {
         }
 
         Ok(tile)
+    }
+
+    /// Fills the given `image` with tiles centered around the given `center` point.
+    fn overlay_backing_tiles(&self, image: &mut image::RgbaImage, center: geo::Point) -> Result<(), Error> {
+        let required_rows = (self.height / self.tile_size) + 1;
+        let required_columns = (self.width / self.tile_size) + 1;
+
+        for y in 0..required_rows {
+            for x in 0..required_columns {
+                let tile = self.get_tile(
+                    center.x() as u32 + x,
+                    center.y() as u32 + y,
+                )?;
+
+                overlay(
+                    image,
+                    &tile,
+                    (x * self.tile_size) as i64,
+                    (y * self.tile_size) as i64
+                );
+            }
+        }
+
+        Ok(())
     }
 }
