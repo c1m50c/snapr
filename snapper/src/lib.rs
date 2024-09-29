@@ -1,6 +1,6 @@
 use std::f64::consts::PI;
 
-use geo::{Centroid, MapCoords};
+use geo::Centroid;
 use image::imageops::overlay;
 use thiserror::Error;
 
@@ -75,19 +75,21 @@ pub struct Snapper {
 impl Snapper {
     /// Returns a snapshot centered around the provided `geometry`.
     #[cfg(feature = "drawing")]
-    pub fn generate_snapshot_from_geometry(&self, geometry: geo::Geometry) -> Result<image::RgbaImage, Error> {
+    pub fn generate_snapshot_from_geometry(&self, geometry: geo::Geometry, style: Option<drawing::Style>) -> Result<image::RgbaImage, Error> {
         let geometries = geo::GeometryCollection::from(geometry);
-        self.generate_snapshot_from_geometries(geometries)
+        self.generate_snapshot_from_geometries(geometries, style)
     }
 
     /// Returns a snapshot centered around the provided `geometries`.
     #[cfg(feature = "drawing")]
-    pub fn generate_snapshot_from_geometries(&self, geometries: geo::GeometryCollection) -> Result<image::RgbaImage, Error> {
-        use drawing::{DrawableGeometry, Style};
+    pub fn generate_snapshot_from_geometries(&self, geometries: geo::GeometryCollection, style: Option<drawing::Style>) -> Result<image::RgbaImage, Error> {
+        use drawing::DrawableGeometry;
+
+        let style = style.unwrap_or_default();
 
         self.generate_snapshot_from_geometries_with_drawer(geometries, |geometries, snapper, image, center| -> Result<(), Error> {
             geometries.into_iter()
-                .try_for_each(|geometry| geometry.draw(snapper, image, Style::default(), center))?;
+                .try_for_each(|geometry| geometry.draw(snapper, image, &style, center))?;
 
             Ok(())
         })
