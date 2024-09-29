@@ -142,6 +142,10 @@ impl Snapper {
         let required_rows = 0.5 * (self.height as f64) / (self.tile_size as f64);
         let required_columns = 0.5 * (self.width as f64) / (self.tile_size as f64);
 
+        // FIXME: The overlay is not properly centered after being generated.
+        // This is due to us only caring about the center *tile* and not the exact center position when orienting things.
+        // We should account for the exact (floating point) position when centering the snapshot.
+
         let min_x = (epsg_3857_center.x() as f64 - required_columns).floor() as i32;
         let min_y = (epsg_3857_center.y() as f64 - required_rows).floor() as i32;
         let max_x = (epsg_3857_center.x() as f64 + required_columns).ceil() as i32;
