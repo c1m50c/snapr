@@ -1,5 +1,7 @@
+use std::f64::consts::PI;
+
 use drawing::DrawableGeometry;
-use geo::Centroid;
+use geo::{Centroid, MapCoords};
 use image::imageops::overlay;
 use thiserror::Error;
 
@@ -43,11 +45,11 @@ pub enum Error {
 /// ```rust
 /// use image::DynamicImage;
 /// 
-/// fn tile_fetcher(x: u32, y: u32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
+/// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
 ///     todo!()
 /// }
 /// ```
-pub type TileFetcher = fn(u32, u32, u8) -> Result<image::DynamicImage, Error>;
+pub type TileFetcher = fn(i32, i32, u8) -> Result<image::DynamicImage, Error>;
 
 /// Utility structure to generate snapshots.
 /// Should be normally constructed through building with [`SnapperBuilder`].
@@ -72,16 +74,8 @@ pub struct Snapper {
 impl Snapper {
     /// Returns a snapshot centered around the provided `geometry`.
     pub fn generate_snapshot_from_geometry(&self, geometry: geo::Geometry) -> Result<image::RgbaImage, Error> {
-        let mut output_image = image::RgbaImage::new(self.width, self.height);
-
-        let Some(geometry_center_point) = geometry.centroid() else {
-            todo!()
-        };
-
-        self.overlay_backing_tiles(&mut output_image, geometry_center_point)?;
-        geometry.draw(&mut output_image)?;
-
-        Ok(output_image)
+        let geometries = geo::GeometryCollection::from(geometry);
+        self.generate_snapshot_from_geometries(geometries)
     }
 
     /// Returns a snapshot centered around the provided `geometries`.
@@ -92,19 +86,38 @@ impl Snapper {
             todo!()
         };
 
-        self.overlay_backing_tiles(&mut output_image, geometry_center_point)?;
+        let reprojected_center = self.point_to_epsg_3857(geometry_center_point);
+        self.overlay_backing_tiles(&mut output_image, reprojected_center)?;
 
         geometries.into_iter()
-            .try_for_each(|geometry| geometry.draw(&mut output_image))?;
+            .try_for_each(|geometry| geometry.draw(self, &mut output_image, geometry_center_point))?;
 
         Ok(output_image)
     }
 }
 
 impl Snapper {
+    pub(crate) fn point_to_epsg_3857(&self, point: geo::Point) -> geo::Point<i32> {
+        let point_as_rad = point.to_radians();
+        let n = (1 << self.zoom as i32) as f64;
+
+        geo::point!(
+            x: (n * (point.y() + 180.0) / 360.0) as i32,
+            y: (n * (1.0 - (point_as_rad.x().tan() + (1.0 / point_as_rad.x().cos())).ln() / PI) / 2.0) as i32
+        )
+    }
+    
+    pub(crate) fn latitude_to_pixel(&self, center: geo::Point, latitude: f64) -> f64 {
+        (latitude - center.x()) * self.tile_size as f64 + self.width as f64 / 2.0
+    }
+
+    pub(crate) fn longitude_to_pixel(&self, center: geo::Point, longitude: f64) -> f64 {
+        (longitude - center.y()) * self.tile_size as f64 + self.height as f64 / 2.0
+    }
+
     /// Calls the [`tile_fetcher`](Self::tile_fetcher) function with the given coordinates and converts the returned [`image::DynamicImage`] into an [`image::RgbaImage`].
     #[inline(always)]
-    fn get_tile(&self, x: u32, y: u32) -> Result<image::RgbaImage, Error> {
+    fn get_tile(&self, x: i32, y: i32) -> Result<image::RgbaImage, Error> {
         let tile = (self.tile_fetcher)(x, y, self.zoom)?.to_rgba8();
 
         if tile.height() != self.tile_size {
@@ -124,23 +137,33 @@ impl Snapper {
         Ok(tile)
     }
 
-    /// Fills the given `image` with tiles centered around the given `center` point.
-    fn overlay_backing_tiles(&self, image: &mut image::RgbaImage, center: geo::Point) -> Result<(), Error> {
-        let required_rows = (self.height / self.tile_size) + 1;
-        let required_columns = (self.width / self.tile_size) + 1;
+    /// Fills the given `image` with tiles centered around the given `epsg_3857_center` point.
+    fn overlay_backing_tiles(&self, image: &mut image::RgbaImage, epsg_3857_center: geo::Point<i32>) -> Result<(), Error> {
+        let required_rows = 0.5 * (self.height as f64) / (self.tile_size as f64);
+        let required_columns = 0.5 * (self.width as f64) / (self.tile_size as f64);
 
-        for y in 0..required_rows {
-            for x in 0..required_columns {
+        let min_x = (epsg_3857_center.x() as f64 - required_columns).floor() as i32;
+        let min_y = (epsg_3857_center.y() as f64 - required_rows).floor() as i32;
+        let max_x = (epsg_3857_center.x() as f64 + required_columns).ceil() as i32;
+        let max_y = (epsg_3857_center.y() as f64 + required_rows).ceil() as i32;
+        let n = 1 << self.zoom as i32;
+
+        let center_as_f64 = epsg_3857_center.map_coords(|coords| {
+            geo::Coord { x: coords.x as f64, y: coords.y as f64 }
+        });
+
+        for x in min_x..max_x {
+            for y in min_y..max_y {
                 let tile = self.get_tile(
-                    center.x() as u32 + x,
-                    center.y() as u32 + y,
+                    (x as i32 + n) % n,
+                    (y as i32 + n) % n,
                 )?;
 
                 overlay(
                     image,
                     &tile,
-                    (x * self.tile_size) as i64,
-                    (y * self.tile_size) as i64
+                    self.latitude_to_pixel(center_as_f64, x as f64) as i64,
+                    self.longitude_to_pixel(center_as_f64, y as f64) as i64,
                 );
             }
         }

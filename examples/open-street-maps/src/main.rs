@@ -12,7 +12,7 @@ fn main() -> Result<(), snapper::Error> {
         .build()?;
 
     let geometry = geo::Geometry::Point(
-        geo::point!(x: 41.83799, y: 103.69838)
+        geo::point!(x: 41.83799, y: -103.69838)
     );
 
     let snapshot = snapper.generate_snapshot_from_geometry(geometry)?;
@@ -24,7 +24,7 @@ fn main() -> Result<(), snapper::Error> {
     Ok(())
 }
 
-fn tile_fetcher(x: u32, y: u32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
+fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
     let address = format!("https://a.tile.osm.org/{zoom}/{x}/{y}.png");
 
     let client = ClientBuilder::new()
