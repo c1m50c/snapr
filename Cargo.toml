@@ -15,4 +15,5 @@ license = "MIT"
 anyhow = "1.0.89"
 geo = "0.28.0"
 image = { version = "0.25.2", default-features = false, features = ["jpeg", "png"] }
+imageproc = { version = "0.25.0", features = ["rayon"] }
 thiserror = "1.0.64"

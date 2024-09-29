@@ -1,3 +1,4 @@
+use drawing::DrawableGeometry;
 use geo::Centroid;
 use image::imageops::overlay;
 use thiserror::Error;
@@ -5,6 +6,7 @@ use thiserror::Error;
 pub use builder::SnapperBuilder;
 
 mod builder;
+mod drawing;
 
 /// Error type used throughout the [`snapper`](crate) crate.
 #[derive(Debug, Error)]
@@ -22,6 +24,9 @@ pub enum Error {
         expected: u32,
         received: u32,
     },
+
+    #[error("failed to convert between primitive numbers")]
+    PrimitiveNumberConversion,
 
     /// Returned when the source of the error cannot be determined.
     #[error(transparent)]
@@ -74,13 +79,24 @@ impl Snapper {
         };
 
         self.overlay_backing_tiles(&mut output_image, geometry_center_point)?;
+        geometry.draw(&mut output_image)?;
 
         Ok(output_image)
     }
 
     /// Returns a snapshot centered around the provided `geometries`.
-    pub fn generate_snapshot_from_geometries(&self, geometries: Vec<geo::Geometry>) -> Result<image::RgbaImage, Error> {
-        let output_image = image::RgbaImage::new(self.width, self.height);
+    pub fn generate_snapshot_from_geometries(&self, geometries: geo::GeometryCollection) -> Result<image::RgbaImage, Error> {
+        let mut output_image = image::RgbaImage::new(self.width, self.height);
+
+        let Some(geometry_center_point) = geometries.centroid() else {
+            todo!()
+        };
+
+        self.overlay_backing_tiles(&mut output_image, geometry_center_point)?;
+
+        geometries.into_iter()
+            .try_for_each(|geometry| geometry.draw(&mut output_image))?;
+
         Ok(output_image)
     }
 }
