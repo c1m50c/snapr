@@ -13,9 +13,7 @@ fn main() -> Result<(), snapper::Error> {
 
     // Scotts Bluff, Nebraska
     //https://www.openstreetmap.org/search?lat=41.837991&lon=-103.698382
-    let geometry = geo::Geometry::Point(
-        geo::point!(x: 41.837991, y: -103.698382)
-    );
+    let geometry = geo::Geometry::Point(geo::point!(x: 41.837991, y: -103.698382));
 
     let snapshot = snapper.generate_snapshot_from_geometry(geometry, None)?;
 
@@ -32,32 +30,39 @@ fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::Error
     let client = ClientBuilder::new()
         .user_agent("snapper / 0.1.0")
         .build()
-        .map_err(|error| snapper::Error::Unknown { source: error.into() })?;
+        .map_err(|error| snapper::Error::Unknown {
+            source: error.into(),
+        })?;
 
-    let response = client.get(&address).send()
+    let response = client
+        .get(&address)
+        .send()
         .and_then(|response| response.error_for_status());
 
     let cursor = match response {
-        Ok(response) => {
-            match response.bytes() {
-                Ok(response) => {
-                    Cursor::new(response)
-                },
+        Ok(response) => match response.bytes() {
+            Ok(response) => Cursor::new(response),
 
-                Err(error) => {
-                    return Err(snapper::Error::Unknown { source: error.into() });
-                }
+            Err(error) => {
+                return Err(snapper::Error::Unknown {
+                    source: error.into(),
+                });
             }
         },
 
         Err(error) => {
-            return Err(snapper::Error::Unknown { source: error.into() });
+            return Err(snapper::Error::Unknown {
+                source: error.into(),
+            });
         }
     };
 
     let mut image_reader = ImageReader::new(cursor);
     image_reader.set_format(ImageFormat::Png);
 
-    image_reader.decode()
-        .map_err(|error| snapper::Error::Unknown { source: error.into() })
+    image_reader
+        .decode()
+        .map_err(|error| snapper::Error::Unknown {
+            source: error.into(),
+        })
 }
