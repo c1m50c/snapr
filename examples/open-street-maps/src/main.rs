@@ -1,7 +1,7 @@
 use std::io::Cursor;
 
 use image::{DynamicImage, ImageFormat, ImageReader};
-use reqwest::blocking::Client;
+use reqwest::blocking::ClientBuilder;
 use snapper::SnapperBuilder;
 
 fn main() -> Result<(), snapper::Error> {
@@ -26,9 +26,16 @@ fn main() -> Result<(), snapper::Error> {
 
 fn tile_fetcher(x: u32, y: u32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
     let address = format!("https://a.tile.osm.org/{zoom}/{x}/{y}.png");
-    let client = Client::new();
 
-    let cursor = match client.get(&address).send() {
+    let client = ClientBuilder::new()
+        .user_agent("snapper / 0.1.0")
+        .build()
+        .map_err(|error| snapper::Error::Unknown { source: error.into() })?;
+
+    let response = client.get(&address).send()
+        .and_then(|response| response.error_for_status());
+
+    let cursor = match response {
         Ok(response) => {
             match response.bytes() {
                 Ok(response) => {
