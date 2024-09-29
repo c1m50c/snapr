@@ -111,10 +111,9 @@ impl Snapper {
 
         Ok(output_image)
     }
-}
 
-impl Snapper {
-    pub(crate) fn point_to_epsg_3857(&self, point: geo::Point) -> geo::Point<i32> {
+    /// Converts a [`Point`](geo::Point) holding a latitude and longitude to one that holds a [`EPSG:3857`](https://epsg.io/3857) reprojection of those coordinates.
+    pub fn point_to_epsg_3857(&self, point: geo::Point) -> geo::Point<i32> {
         let point_as_rad = point.to_radians();
         let n = (1 << self.zoom as i32) as f64;
 
@@ -124,14 +123,18 @@ impl Snapper {
         )
     }
 
-    pub(crate) fn latitude_to_pixel(&self, center: geo::Point, latitude: f64) -> f64 {
+    /// Converts a given `latitude` to a valid `x` coordinate of a pixel.
+    pub fn latitude_to_pixel(&self, center: geo::Point, latitude: f64) -> f64 {
         (latitude - center.x()) * self.tile_size as f64 + self.width as f64 / 2.0
     }
 
-    pub(crate) fn longitude_to_pixel(&self, center: geo::Point, longitude: f64) -> f64 {
+    /// Converts a given `longitude` to a valid `y` coordinate of a pixel.
+    pub fn longitude_to_pixel(&self, center: geo::Point, longitude: f64) -> f64 {
         (longitude - center.y()) * self.tile_size as f64 + self.height as f64 / 2.0
     }
+}
 
+impl Snapper {
     /// Calls the [`tile_fetcher`](Self::tile_fetcher) function with the given coordinates and converts the returned [`image::DynamicImage`] into an [`image::RgbaImage`].
     #[inline(always)]
     fn get_tile(&self, x: i32, y: i32) -> Result<image::RgbaImage, Error> {
