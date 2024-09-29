@@ -8,14 +8,15 @@ fn main() -> Result<(), snapper::Error> {
     let snapper = SnapperBuilder::new()
         .with_tile_fetcher(tile_fetcher)
         .with_tile_size(256)
-        .with_zoom(19)
+        .with_zoom(15)
         .build()?;
 
-    // Scotts Bluff, Nebraska
-    // https://www.openstreetmap.org/search?lat=41.837991&lon=-103.698382
-    let geometry = geo::Geometry::Point(geo::point!(x: 41.837991, y: -103.698382));
+    // Chimney Rock, Nebraska
+    // https://www.openstreetmap.org/search?lat=41.703811459356196&lon=-103.34835922605679
+    let chimney_rock = geo::point!(x: 41.703811459356196, y: -103.34835922605679);
 
-    let snapshot = snapper.generate_snapshot_from_geometry(geometry, None)?;
+    let snapshot =
+        snapper.generate_snapshot_from_geometry(geo::Geometry::from(chimney_rock), None)?;
 
     if let Err(err) = snapshot.save("example.png") {
         return Err(snapper::Error::Unknown { source: err.into() });
