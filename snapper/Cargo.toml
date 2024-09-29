@@ -7,9 +7,13 @@ edition = "2021"
 authors = { workspace = true }
 license = { workspace = true }
 
+[features]
+default = [ "drawing" ]
+drawing = [ "dep:imageproc" ]
+
 [dependencies]
 anyhow = { workspace = true }
 geo = { workspace = true }
 image = { workspace = true }
-imageproc = { workspace = true}
+imageproc = { workspace = true, optional = true }
 thiserror = { workspace = true }

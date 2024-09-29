@@ -1,6 +1,5 @@
 use std::f64::consts::PI;
 
-use drawing::{DrawableGeometry, Style};
 use geo::{Centroid, MapCoords};
 use image::imageops::overlay;
 use thiserror::Error;
@@ -8,6 +7,8 @@ use thiserror::Error;
 pub use builder::SnapperBuilder;
 
 mod builder;
+
+#[cfg(feature = "drawing")]
 mod drawing;
 
 /// Error type used throughout the [`snapper`](crate) crate.
@@ -73,13 +74,31 @@ pub struct Snapper {
 
 impl Snapper {
     /// Returns a snapshot centered around the provided `geometry`.
+    #[cfg(feature = "drawing")]
     pub fn generate_snapshot_from_geometry(&self, geometry: geo::Geometry) -> Result<image::RgbaImage, Error> {
         let geometries = geo::GeometryCollection::from(geometry);
         self.generate_snapshot_from_geometries(geometries)
     }
 
     /// Returns a snapshot centered around the provided `geometries`.
+    #[cfg(feature = "drawing")]
     pub fn generate_snapshot_from_geometries(&self, geometries: geo::GeometryCollection) -> Result<image::RgbaImage, Error> {
+        use drawing::{DrawableGeometry, Style};
+
+        self.generate_snapshot_from_geometries_with_drawer(geometries, |geometries, snapper, image, center| -> Result<(), Error> {
+            geometries.into_iter()
+                .try_for_each(|geometry| geometry.draw(snapper, image, Style::default(), center))?;
+
+            Ok(())
+        })
+    }
+
+    /// Returns a snapshot centered around the provided `geometries`.
+    /// The drawing of each of the `geometries` is done with the given `drawer` function.
+    pub fn generate_snapshot_from_geometries_with_drawer<D>(&self, geometries: geo::GeometryCollection, drawer: D) -> Result<image::RgbaImage, Error>
+    where
+        D: Fn(geo::GeometryCollection, &Self, &mut image::RgbaImage, geo::Point) -> Result<(), Error>
+    {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
 
         let Some(geometry_center_point) = geometries.centroid() else {
@@ -88,9 +107,7 @@ impl Snapper {
 
         let reprojected_center = self.point_to_epsg_3857(geometry_center_point);
         self.overlay_backing_tiles(&mut output_image, reprojected_center)?;
-
-        geometries.into_iter()
-            .try_for_each(|geometry| geometry.draw(self, &mut output_image, Style::default(), geometry_center_point))?;
+        drawer(geometries, self, &mut output_image, geometry_center_point)?;
 
         Ok(output_image)
     }
