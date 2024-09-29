@@ -1,0 +1,102 @@
+name: Verify
+
+on:
+  pull_request:
+
+jobs:
+  verify-builds:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - identifier: Windows
+            os: windows-latest
+
+          - identifier: Ubuntu
+            os: ubuntu-latest
+
+          - identifier: MacOS
+            os: macos-latest
+
+    name: Verify - Builds - ${{ matrix.identifier }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Rust Toolchain - Stable
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          cache: true
+
+      - name: Verify - `cargo build snapper`
+        run: |
+          cargo build -p snapper --all-features --lib --release --verbose
+          cargo build -p snapper --all-features --lib --verbose
+
+  verify-lints:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - identifier: Windows
+            os: windows-latest
+
+          - identifier: Ubuntu
+            os: ubuntu-latest
+
+          - identifier: MacOS
+            os: macos-latest
+
+    name: Verify - Lints - ${{ matrix.identifier }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Rust Toolchain - Stable
+        uses: actions-rust-lang/setup-rust-toolchain@v1.10
+        with:
+          components: clippy, rustfmt
+          toolchain: stable
+          cache: true
+
+      - name: Verify - `cargo fmt`
+        run: |
+          cargo fmt --check
+
+      - name: Verify - `cargo clippy`
+        run: |
+          cargo clippy --no-deps --all-features -- -Dwarnings
+
+  verify-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - identifier: Windows
+            os: windows-latest
+
+          - identifier: Ubuntu
+            os: ubuntu-latest
+
+          - identifier: MacOS
+            os: macos-latest
+
+    name: Verify - Tests - ${{ matrix.identifier }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Rust Toolchain - Stable
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          cache: true
+
+      - name: Verify - `cargo test snapper`
+        run: |
+          cargo test snapper --all-features --lib --no-fail-fast --verbose
+          cargo test snapper --all-features --doc --no-fail-fast --verbose
