@@ -159,8 +159,8 @@ impl Snapper {
         for x in min_x..max_x {
             for y in min_y..max_y {
                 let tile = self.get_tile(
-                    (x as i32 + n) % n,
-                    (y as i32 + n) % n,
+                    (x + n) % n,
+                    (y + n) % n,
                 )?;
 
                 overlay(
