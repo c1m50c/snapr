@@ -8,11 +8,11 @@ fn main() -> Result<(), snapper::Error> {
     let snapper = SnapperBuilder::new()
         .with_tile_fetcher(tile_fetcher)
         .with_tile_size(256)
-        .with_zoom(2)
+        .with_zoom(16)
         .build()?;
 
     let geometry = geo::Geometry::Point(
-        geo::point!(x: 0.0, y: 0.0)
+        geo::point!(x: 41.83799, y: 103.69838)
     );
 
     let snapshot = snapper.generate_snapshot_from_geometry(geometry)?;
