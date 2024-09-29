@@ -105,21 +105,21 @@ impl Snapper {
             todo!()
         };
 
-        let reprojected_center = self.point_to_epsg_3857(geometry_center_point);
-        self.overlay_backing_tiles(&mut output_image, reprojected_center)?;
+        self.overlay_backing_tiles(&mut output_image, geometry_center_point)?;
         drawer(geometries, self, &mut output_image, geometry_center_point)?;
 
         Ok(output_image)
     }
 
     /// Converts a [`Point`](geo::Point) holding a latitude and longitude to one that holds a [`EPSG:3857`](https://epsg.io/3857) reprojection of those coordinates.
-    pub fn point_to_epsg_3857(&self, point: geo::Point) -> geo::Point<i32> {
+    /// Do note, that if you're attempting to use this function to call an XYZ layer you'll need to truncate the given `point` to be [`i32s`](i32).
+    pub fn point_to_epsg_3857(&self, point: geo::Point) -> geo::Point {
         let point_as_rad = point.to_radians();
         let n = (1 << self.zoom as i32) as f64;
 
         geo::point!(
-            x: (n * (point.y() + 180.0) / 360.0) as i32,
-            y: (n * (1.0 - (point_as_rad.x().tan() + (1.0 / point_as_rad.x().cos())).ln() / PI) / 2.0) as i32
+            x: (n * (point.y() + 180.0) / 360.0),
+            y: (n * (1.0 - (point_as_rad.x().tan() + (1.0 / point_as_rad.x().cos())).ln() / PI) / 2.0)
         )
     }
 
@@ -158,23 +158,17 @@ impl Snapper {
     }
 
     /// Fills the given `image` with tiles centered around the given `epsg_3857_center` point.
-    fn overlay_backing_tiles(&self, image: &mut image::RgbaImage, epsg_3857_center: geo::Point<i32>) -> Result<(), Error> {
+    fn overlay_backing_tiles(&self, image: &mut image::RgbaImage, center: geo::Point) -> Result<(), Error> {
         let required_rows = 0.5 * (self.height as f64) / (self.tile_size as f64);
         let required_columns = 0.5 * (self.width as f64) / (self.tile_size as f64);
 
-        // FIXME: The overlay is not properly centered after being generated.
-        // This is due to us only caring about the center *tile* and not the exact center position when orienting things.
-        // We should account for the exact (floating point) position when centering the snapshot.
-
-        let min_x = (epsg_3857_center.x() as f64 - required_columns).floor() as i32;
-        let min_y = (epsg_3857_center.y() as f64 - required_rows).floor() as i32;
-        let max_x = (epsg_3857_center.x() as f64 + required_columns).ceil() as i32;
-        let max_y = (epsg_3857_center.y() as f64 + required_rows).ceil() as i32;
+        let epsg_3857_center = self.point_to_epsg_3857(center);
         let n = 1 << self.zoom as i32;
 
-        let center_as_f64 = epsg_3857_center.map_coords(|coords| {
-            geo::Coord { x: coords.x as f64, y: coords.y as f64 }
-        });
+        let min_x = (epsg_3857_center.x() - required_columns).floor() as i32;
+        let min_y = (epsg_3857_center.y() - required_rows).floor() as i32;
+        let max_x = (epsg_3857_center.x() + required_columns).ceil() as i32;
+        let max_y = (epsg_3857_center.y() + required_rows).ceil() as i32;
 
         for x in min_x..max_x {
             for y in min_y..max_y {
@@ -186,8 +180,8 @@ impl Snapper {
                 overlay(
                     image,
                     &tile,
-                    self.latitude_to_pixel(center_as_f64, x as f64) as i64,
-                    self.longitude_to_pixel(center_as_f64, y as f64) as i64,
+                    self.latitude_to_pixel(epsg_3857_center, x as f64) as i64,
+                    self.longitude_to_pixel(epsg_3857_center, y as f64) as i64,
                 );
             }
         }
