@@ -104,7 +104,7 @@ impl Snapper {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
 
         let Some(geometry_center_point) = geometries.centroid() else {
-            todo!()
+            todo!("Return an `Err` or find a suitable default for `geometry_center_point`")
         };
 
         self.overlay_backing_tiles(&mut output_image, geometry_center_point)?;
