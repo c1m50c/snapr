@@ -1,6 +1,6 @@
 use std::f64::consts::PI;
 
-use drawing::DrawableGeometry;
+use drawing::{DrawableGeometry, Style};
 use geo::{Centroid, MapCoords};
 use image::imageops::overlay;
 use thiserror::Error;
@@ -90,7 +90,7 @@ impl Snapper {
         self.overlay_backing_tiles(&mut output_image, reprojected_center)?;
 
         geometries.into_iter()
-            .try_for_each(|geometry| geometry.draw(self, &mut output_image, geometry_center_point))?;
+            .try_for_each(|geometry| geometry.draw(self, &mut output_image, Style::default(), geometry_center_point))?;
 
         Ok(output_image)
     }
@@ -106,7 +106,7 @@ impl Snapper {
             y: (n * (1.0 - (point_as_rad.x().tan() + (1.0 / point_as_rad.x().cos())).ln() / PI) / 2.0) as i32
         )
     }
-    
+
     pub(crate) fn latitude_to_pixel(&self, center: geo::Point, latitude: f64) -> f64 {
         (latitude - center.x()) * self.tile_size as f64 + self.width as f64 / 2.0
     }
