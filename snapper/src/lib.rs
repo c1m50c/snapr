@@ -68,16 +68,12 @@ pub struct Snapper {
 impl Snapper {
     /// Returns a snapshot centered around the provided `geometry`.
     #[cfg(feature = "drawing")]
-    pub fn generate_snapshot_from_geometry<G>(
-        &self,
-        geometry: G,
-        style: Option<drawing::Style>,
-    ) -> Result<image::RgbaImage, Error>
+    pub fn generate_snapshot_from_geometry<G>(&self, geometry: G) -> Result<image::RgbaImage, Error>
     where
         G: Into<geo::Geometry>,
     {
         let geometries = geo::GeometryCollection::from(geometry.into());
-        self.generate_snapshot_from_geometries(geometries, style)
+        self.generate_snapshot_from_geometries(geometries)
     }
 
     /// Returns a snapshot centered around the provided `geometries`.
@@ -85,18 +81,15 @@ impl Snapper {
     pub fn generate_snapshot_from_geometries(
         &self,
         geometries: geo::GeometryCollection,
-        style: Option<drawing::Style>,
     ) -> Result<image::RgbaImage, Error> {
         use drawing::Drawable;
-
-        let style = style.unwrap_or_default();
 
         self.generate_snapshot_from_geometries_with_drawer(
             geometries,
             |geometries, snapper, pixmap, center| -> Result<(), Error> {
                 geometries
                     .into_iter()
-                    .try_for_each(|geometry| geometry.draw(snapper, pixmap, &style, center))?;
+                    .try_for_each(|geometry| geometry.draw(snapper, pixmap, center))?;
 
                 Ok(())
             },

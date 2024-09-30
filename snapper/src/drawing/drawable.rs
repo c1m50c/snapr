@@ -1,15 +1,14 @@
-use tiny_skia::{FillRule, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
+use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::Snapper;
 
-use super::{epsg_4326_point_to_pixel_point, style};
+use super::epsg_4326_point_to_pixel_point;
 
 pub trait Drawable {
     fn draw(
         &self,
         snapper: &Snapper,
         pixmap: &mut Pixmap,
-        style: &style::Style,
         center: geo::Point,
     ) -> Result<(), crate::Error>;
 }
@@ -22,7 +21,6 @@ where
         &self,
         snapper: &Snapper,
         pixmap: &mut Pixmap,
-        style: &style::Style,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
         let mut points = self
@@ -44,7 +42,7 @@ where
             pixmap.stroke_path(
                 &line,
                 &Paint {
-                    shader: Shader::SolidColor(style.background),
+                    shader: Shader::SolidColor(Color::from_rgba8(26, 26, 26, 255)),
                     anti_alias: true,
                     ..Paint::default()
                 },
@@ -59,7 +57,7 @@ where
             pixmap.stroke_path(
                 &line,
                 &Paint {
-                    shader: Shader::SolidColor(style.foreground),
+                    shader: Shader::SolidColor(Color::from_rgba8(200, 200, 200, 255)),
                     anti_alias: true,
                     ..Paint::default()
                 },
@@ -73,7 +71,7 @@ where
         }
 
         for point in self.points() {
-            point.draw(snapper, pixmap, style, center)?;
+            point.draw(snapper, pixmap, center)?;
         }
 
         Ok(())
@@ -88,7 +86,6 @@ where
         &self,
         snapper: &Snapper,
         pixmap: &mut Pixmap,
-        style: &style::Style,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
         let point = epsg_4326_point_to_pixel_point(snapper, center, self)?;
@@ -100,7 +97,7 @@ where
             pixmap.fill_path(
                 &circle,
                 &Paint {
-                    shader: Shader::SolidColor(style.foreground),
+                    shader: Shader::SolidColor(Color::from_rgba8(248, 248, 248, 255)),
                     anti_alias: true,
                     ..Paint::default()
                 },
@@ -112,7 +109,7 @@ where
             pixmap.stroke_path(
                 &circle,
                 &Paint {
-                    shader: Shader::SolidColor(style.background),
+                    shader: Shader::SolidColor(Color::from_rgba8(26, 26, 26, 255)),
                     anti_alias: true,
                     ..Paint::default()
                 },
@@ -137,12 +134,11 @@ where
         &self,
         snapper: &Snapper,
         pixmap: &mut Pixmap,
-        style: &style::Style,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
         match self {
-            Self::Point(point) => point.draw(snapper, pixmap, style, center),
-            Self::LineString(line_string) => line_string.draw(snapper, pixmap, style, center),
+            Self::Point(point) => point.draw(snapper, pixmap, center),
+            Self::LineString(line_string) => line_string.draw(snapper, pixmap, center),
             _ => todo!("Implement drawing function for all `geo::Geometry` variants"),
         }
     }

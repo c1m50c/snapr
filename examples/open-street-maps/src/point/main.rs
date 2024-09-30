@@ -27,7 +27,7 @@ fn main() -> Result<(), anyhow::Error> {
     ];
 
     snapper
-        .generate_snapshot_from_geometries(geo::GeometryCollection::from(geometries), None)?
+        .generate_snapshot_from_geometries(geo::GeometryCollection::from(geometries))?
         .save("example.png")?;
 
     Ok(())
