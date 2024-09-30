@@ -3,6 +3,7 @@ use std::f64::consts::PI;
 use geo::{Centroid, MapCoords};
 use image::imageops::overlay;
 use thiserror::Error;
+use tiny_skia::Pixmap;
 
 pub use builder::SnapperBuilder;
 
@@ -86,16 +87,16 @@ impl Snapper {
         geometries: geo::GeometryCollection,
         style: Option<drawing::Style>,
     ) -> Result<image::RgbaImage, Error> {
-        use drawing::DrawableGeometry;
+        use drawing::Drawable;
 
         let style = style.unwrap_or_default();
 
         self.generate_snapshot_from_geometries_with_drawer(
             geometries,
-            |geometries, snapper, image, center| -> Result<(), Error> {
+            |geometries, snapper, pixmap, center| -> Result<(), Error> {
                 geometries
                     .into_iter()
-                    .try_for_each(|geometry| geometry.draw(snapper, image, &style, center))?;
+                    .try_for_each(|geometry| geometry.draw(snapper, pixmap, &style, center))?;
 
                 Ok(())
             },
@@ -110,21 +111,29 @@ impl Snapper {
         drawer: D,
     ) -> Result<image::RgbaImage, Error>
     where
-        D: Fn(
-            geo::GeometryCollection,
-            &Self,
-            &mut image::RgbaImage,
-            geo::Point,
-        ) -> Result<(), Error>,
+        D: Fn(geo::GeometryCollection, &Self, &mut Pixmap, geo::Point) -> Result<(), Error>,
     {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
+
+        let Some(mut pixmap) = Pixmap::new(self.width, self.height) else {
+            todo!("Return an `Err` or find some way to safely go forward with the function")
+        };
 
         let Some(geometry_center_point) = geometries.centroid() else {
             todo!("Return an `Err` or find a suitable default for `geometry_center_point`")
         };
 
         self.overlay_backing_tiles(&mut output_image, geometry_center_point)?;
-        drawer(geometries, self, &mut output_image, geometry_center_point)?;
+        drawer(geometries, self, &mut pixmap, geometry_center_point)?;
+
+        let pixmap_image = image::ImageBuffer::from_fn(self.width, self.height, |x, y| {
+            let pixel = pixmap.pixel(x, y)
+                .expect("pixel coordinates should exactly match across `image::ImageBuffer` and `tiny_skia::Pixmap` instances");
+
+            image::Rgba([pixel.red(), pixel.green(), pixel.blue(), pixel.alpha()])
+        });
+
+        overlay(&mut output_image, &pixmap_image, 0, 0);
 
         Ok(output_image)
     }
