@@ -1,6 +1,6 @@
 use std::f64::consts::PI;
 
-use geo::Centroid;
+use geo::{Centroid, MapCoords};
 use image::imageops::overlay;
 use thiserror::Error;
 
@@ -132,9 +132,9 @@ impl Snapper {
         Ok(output_image)
     }
 
-    /// Converts a [`Point`](geo::Point) holding a latitude and longitude to one that holds a [`EPSG:3857`](https://epsg.io/3857) reprojection of those coordinates.
+    /// Converts a [`EPSG:4326`](https://epsg.io/4326) coordinate to a [`EPSG:3857`](https://epsg.io/3857) reprojection of said coordinate.
     /// Do note, that if you're attempting to use this function to call an XYZ layer you'll need to truncate the given `point` to be [`i32s`](i32).
-    pub fn point_to_epsg_3857(&self, point: geo::Point) -> geo::Point {
+    pub fn epsg_4326_to_epsg_3857(&self, point: geo::Point) -> geo::Point {
         let point_as_rad = point.to_radians();
         let n = (1 << self.zoom as i32) as f64;
 
@@ -144,14 +144,15 @@ impl Snapper {
         )
     }
 
-    /// Converts a given `latitude` to a valid `x` coordinate of a pixel.
-    pub fn latitude_to_pixel(&self, center: geo::Point, latitude: f64) -> f64 {
-        (latitude - center.x()) * self.tile_size as f64 + self.width as f64 / 2.0
-    }
+    /// Converts a [`EPSG:4326`](https://epsg.io/4326) coordinate to the corresponding pixel coordinate in a snapshot.
+    pub fn epsg_4326_to_pixel(&self, center: geo::Point, point: geo::Point) -> geo::Point<i32> {
+        let epsg_3857_point =
+            self.epsg_4326_to_epsg_3857(point) - self.epsg_4326_to_epsg_3857(center);
 
-    /// Converts a given `longitude` to a valid `y` coordinate of a pixel.
-    pub fn longitude_to_pixel(&self, center: geo::Point, longitude: f64) -> f64 {
-        (longitude - center.y()) * self.tile_size as f64 + self.height as f64 / 2.0
+        geo::point!(
+            x: (epsg_3857_point.x().fract() * self.tile_size as f64 + self.width as f64 / 2.0).round() as i32,
+            y: (epsg_3857_point.y().fract() * self.tile_size as f64 + self.height as f64 / 2.0).round() as i32,
+        )
     }
 }
 
@@ -187,7 +188,7 @@ impl Snapper {
         let required_rows = 0.5 * (self.height as f64) / (self.tile_size as f64);
         let required_columns = 0.5 * (self.width as f64) / (self.tile_size as f64);
 
-        let epsg_3857_center = self.point_to_epsg_3857(center);
+        let epsg_3857_center = self.epsg_4326_to_epsg_3857(center);
         let n = 1 << self.zoom as i32;
 
         let min_x = (epsg_3857_center.x() - required_columns).floor() as i32;
@@ -199,12 +200,13 @@ impl Snapper {
             for y in min_y..max_y {
                 let tile = self.get_tile((x + n) % n, (y + n) % n)?;
 
-                overlay(
-                    image,
-                    &tile,
-                    self.latitude_to_pixel(epsg_3857_center, x as f64) as i64,
-                    self.longitude_to_pixel(epsg_3857_center, y as f64) as i64,
-                );
+                let tile_coords = (geo::Point::from((x as f64, y as f64)) - epsg_3857_center)
+                    .map_coords(|coord| geo::Coord {
+                        x: coord.x * self.tile_size as f64 + self.width as f64 / 2.0,
+                        y: coord.y * self.tile_size as f64 + self.height as f64 / 2.0,
+                    });
+
+                overlay(image, &tile, tile_coords.x() as i64, tile_coords.y() as i64);
             }
         }
 

@@ -30,18 +30,17 @@ where
         let x = self
             .x()
             .to_f64()
-            .ok_or(crate::Error::PrimitiveNumberConversion)
-            .map(|x| snapper.latitude_to_pixel(center, x))?;
+            .ok_or(crate::Error::PrimitiveNumberConversion)?;
 
         let y = self
             .y()
             .to_f64()
-            .ok_or(crate::Error::PrimitiveNumberConversion)
-            .map(|y| snapper.longitude_to_pixel(center, y))?;
+            .ok_or(crate::Error::PrimitiveNumberConversion)?;
 
-        draw_filled_circle_mut(image, (x as i32, y as i32), 4, style.background);
+        let point = snapper.epsg_4326_to_pixel(center, geo::point!(x: x, y: y));
 
-        draw_filled_circle_mut(image, (x as i32, y as i32), 3, style.foreground);
+        draw_filled_circle_mut(image, (point.x(), point.y()), 4, style.background);
+        draw_filled_circle_mut(image, (point.x(), point.y()), 3, style.foreground);
 
         Ok(())
     }
