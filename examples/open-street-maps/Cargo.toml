@@ -17,3 +17,7 @@ snapper = { path = "../../snapper" }
 [[bin]]
 path = "src/point/main.rs"
 name = "point"
+
+[[bin]]
+path = "src/line/main.rs"
+name = "line"
