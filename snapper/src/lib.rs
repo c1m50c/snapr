@@ -28,10 +28,7 @@ pub enum Error {
 
     /// Returned when the source of the error cannot be determined.
     #[error(transparent)]
-    Unknown {
-        #[from]
-        source: anyhow::Error,
-    },
+    Unknown(#[from] anyhow::Error),
 }
 
 /// Function that takes coordinates and a zoom level as arguments and returns an [`Image`](image::DynamicImage) of the map tile at the given position.

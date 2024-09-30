@@ -59,7 +59,7 @@ where
     ) -> Result<(), crate::Error> {
         match self {
             Self::Point(point) => point.draw(snapper, image, style, center),
-            _ => unimplemented!(),
+            _ => todo!("Implement drawing function for all `geo::Geometry` variants"),
         }
     }
 }

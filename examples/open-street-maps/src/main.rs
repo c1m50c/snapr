@@ -4,7 +4,7 @@ use image::{DynamicImage, ImageFormat, ImageReader};
 use reqwest::blocking::ClientBuilder;
 use snapper::SnapperBuilder;
 
-fn main() -> Result<(), snapper::Error> {
+fn main() -> Result<(), anyhow::Error> {
     let snapper = SnapperBuilder::new()
         .with_tile_fetcher(tile_fetcher)
         .with_tile_size(256)
@@ -29,12 +29,9 @@ fn main() -> Result<(), snapper::Error> {
         geo::Geometry::from(chimney_rock_museum),
     ];
 
-    let snapshot = snapper
-        .generate_snapshot_from_geometries(geo::GeometryCollection::from(geometries), None)?;
-
-    if let Err(err) = snapshot.save("example.png") {
-        return Err(snapper::Error::Unknown { source: err.into() });
-    }
+    snapper
+        .generate_snapshot_from_geometries(geo::GeometryCollection::from(geometries), None)?
+        .save("example.png")?;
 
     Ok(())
 }
@@ -45,39 +42,20 @@ fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::Error
     let client = ClientBuilder::new()
         .user_agent("snapper / 0.1.0")
         .build()
-        .map_err(|error| snapper::Error::Unknown {
-            source: error.into(),
-        })?;
+        .map_err(anyhow::Error::from)?;
 
-    let response = client
+    let cursor = client
         .get(&address)
         .send()
-        .and_then(|response| response.error_for_status());
-
-    let cursor = match response {
-        Ok(response) => match response.bytes() {
-            Ok(response) => Cursor::new(response),
-
-            Err(error) => {
-                return Err(snapper::Error::Unknown {
-                    source: error.into(),
-                });
-            }
-        },
-
-        Err(error) => {
-            return Err(snapper::Error::Unknown {
-                source: error.into(),
-            });
-        }
-    };
+        .and_then(|response| response.error_for_status())
+        .and_then(|response| response.bytes())
+        .map(|bytes| Cursor::new(bytes))
+        .map_err(anyhow::Error::from)?;
 
     let mut image_reader = ImageReader::new(cursor);
     image_reader.set_format(ImageFormat::Png);
 
-    image_reader
-        .decode()
-        .map_err(|error| snapper::Error::Unknown {
-            source: error.into(),
-        })
+    let image = image_reader.decode().map_err(anyhow::Error::from)?;
+
+    Ok(image)
 }

@@ -8,6 +8,7 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
+anyhow = { workspace = true }
 geo = { workspace = true }
 image = { workspace = true }
 reqwest = { version = "0.12.7", features = ["blocking"] }
