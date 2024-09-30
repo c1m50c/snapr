@@ -15,8 +15,22 @@ fn main() -> Result<(), snapper::Error> {
     // https://www.openstreetmap.org/search?lat=41.703811459356196&lon=-103.34835922605679
     let chimney_rock = geo::point!(x: 41.703811459356196, y: -103.34835922605679);
 
-    let snapshot =
-        snapper.generate_snapshot_from_geometry(geo::Geometry::from(chimney_rock), None)?;
+    // Chimney Rock Cemetery, Nebraska
+    // https://www.openstreetmap.org/search?lat=41.702909695820175&lon=-103.33250120288363
+    let chimney_rock_cemetery = geo::point!(x: 41.69996628239992, y: -103.34170814251178);
+
+    // Chimney Rock Museum, Nebraska
+    // https://www.openstreetmap.org/search?lat=41.702909695820175&lon=-103.33250120288363
+    let chimney_rock_museum = geo::point!(x: 41.702909695820175, y: -103.33250120288363);
+
+    let geometries = vec![
+        geo::Geometry::from(chimney_rock),
+        geo::Geometry::from(chimney_rock_cemetery),
+        geo::Geometry::from(chimney_rock_museum),
+    ];
+
+    let snapshot = snapper
+        .generate_snapshot_from_geometries(geo::GeometryCollection::from(geometries), None)?;
 
     if let Err(err) = snapshot.save("example.png") {
         return Err(snapper::Error::Unknown { source: err.into() });
