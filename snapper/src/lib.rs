@@ -67,12 +67,15 @@ pub struct Snapper {
 impl Snapper {
     /// Returns a snapshot centered around the provided `geometry`.
     #[cfg(feature = "drawing")]
-    pub fn generate_snapshot_from_geometry(
+    pub fn generate_snapshot_from_geometry<G>(
         &self,
-        geometry: geo::Geometry,
+        geometry: G,
         style: Option<drawing::Style>,
-    ) -> Result<image::RgbaImage, Error> {
-        let geometries = geo::GeometryCollection::from(geometry);
+    ) -> Result<image::RgbaImage, Error>
+    where
+        G: Into<geo::Geometry>,
+    {
+        let geometries = geo::GeometryCollection::from(geometry.into());
         self.generate_snapshot_from_geometries(geometries, style)
     }
 
