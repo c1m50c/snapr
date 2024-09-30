@@ -49,11 +49,9 @@ pub type TileFetcher = fn(i32, i32, u8) -> Result<image::DynamicImage, Error>;
 #[derive(Debug)]
 pub struct Snapper {
     /// Function that returns an image of a map tile at specified coordinates.
-    #[allow(dead_code)]
     tile_fetcher: TileFetcher,
 
     /// Size of the image returned by the [`tile_fetcher`](Self::tile_fetcher).
-    #[allow(dead_code)]
     tile_size: u32,
 
     /// Height of generated snapshots.
@@ -63,7 +61,6 @@ pub struct Snapper {
     width: u32,
 
     /// Zoom level of generated snapshots.
-    #[allow(dead_code)]
     zoom: u8,
 }
 
