@@ -445,11 +445,18 @@ where
 {
     fn draw(
         &self,
-        _snapper: &crate::Snapper,
-        _pixmap: &mut tiny_skia::Pixmap,
-        _center: geo::Point,
+        snapper: &crate::Snapper,
+        pixmap: &mut tiny_skia::Pixmap,
+        center: geo::Point,
     ) -> Result<(), crate::Error> {
-        unimplemented!()
+        let StyledMultiLineString(geometry, options) = &self;
+
+        for line_string in geometry.into_iter() {
+            let styled = StyledLineString(line_string.clone(), options.line_string_options.clone());
+            styled.draw(snapper, pixmap, center)?;
+        }
+
+        Ok(())
     }
 }
 
