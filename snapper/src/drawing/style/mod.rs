@@ -120,6 +120,8 @@ pub struct StyledPointOptions {
     pub shape: Shape,
 }
 
+impl_styled!(Point, StyledPoint, StyledPointOptions);
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct StyledLineOptions {
     pub color_options: ColorOptions,
@@ -143,6 +145,8 @@ impl Default for StyledLineOptions {
     }
 }
 
+impl_styled!(Line, StyledLine, StyledLineOptions);
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct StyledLineStringOptions {
     pub color_options: ColorOptions,
@@ -164,15 +168,53 @@ impl Default for StyledLineStringOptions {
     }
 }
 
-impl_styled!(Point, StyledPoint, StyledPointOptions);
-impl_styled!(Line, StyledLine, StyledLineOptions);
 impl_styled!(LineString, StyledLineString, StyledLineStringOptions);
-impl_styled!(Polygon, StyledPolygon, ColorOptions);
-impl_styled!(MultiPoint, StyledMultiPoint, ColorOptions);
-impl_styled!(MultiLineString, StyledMultiLineString, ColorOptions);
-impl_styled!(MultiPolygon, StyledMultiPolygon, ColorOptions);
-impl_styled!(Rect, StyledRect, ColorOptions);
-impl_styled!(Triangle, StyledTriangle, ColorOptions);
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct StyledPolygonOptions {
+    pub color_options: ColorOptions,
+}
+
+impl_styled!(Polygon, StyledPolygon, StyledPolygonOptions);
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct StyledMultiPointOptions {
+    pub color_options: ColorOptions,
+}
+
+impl_styled!(MultiPoint, StyledMultiPoint, StyledMultiPointOptions);
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct StyledMultiLineStringOptions {
+    pub color_options: ColorOptions,
+}
+
+impl_styled!(
+    MultiLineString,
+    StyledMultiLineString,
+    StyledMultiLineStringOptions
+);
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct StyledMultiPolygonOptions {
+    pub color_options: ColorOptions,
+}
+
+impl_styled!(MultiPolygon, StyledMultiPolygon, StyledMultiPolygonOptions);
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct StyledRectOptions {
+    pub color_options: ColorOptions,
+}
+
+impl_styled!(Rect, StyledRect, StyledRectOptions);
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct StyledTriangleOptions {
+    pub color_options: ColorOptions,
+}
+
+impl_styled!(Triangle, StyledTriangle, StyledTriangleOptions);
 
 impl<T> Drawable for StyledPoint<T>
 where
