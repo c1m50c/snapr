@@ -43,7 +43,7 @@ Each [`Geometry`](https://docs.rs/geo/latest/geo/geometry/enum.Geometry.html) pr
 
 ## Examples
 
-### Open Street Maps
+### [Open Street Maps](./examples/open-street-maps/)
 
 Demonstrates how to use the <https://a.tile.osm.org> tile provider with this library.
 
