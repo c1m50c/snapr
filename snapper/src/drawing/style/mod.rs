@@ -1,12 +1,12 @@
 use std::ops::{Deref, DerefMut};
-use tiny_skia::Color;
+use tiny_skia::{Color, FillRule, Paint, PathBuilder, Shader, Stroke, Transform};
 
-use super::Drawable;
+use super::{epsg_4326_point_to_pixel_point, Drawable};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ColorOptions {
     pub foreground: Color,
-    pub background: Option<Color>,
+    pub background: Color,
     pub anti_alias: bool,
     pub bordered: bool,
 }
@@ -15,7 +15,7 @@ impl Default for ColorOptions {
     fn default() -> Self {
         Self {
             foreground: Color::from_rgba8(248, 248, 248, 255),
-            background: Some(Color::from_rgba8(26, 26, 26, 255)),
+            background: Color::from_rgba8(26, 26, 26, 255),
             anti_alias: true,
             bordered: true,
         }
@@ -100,11 +100,47 @@ where
 {
     fn draw(
         &self,
-        _snapper: &crate::Snapper,
-        _pixmap: &mut tiny_skia::Pixmap,
-        _center: geo::Point,
+        snapper: &crate::Snapper,
+        pixmap: &mut tiny_skia::Pixmap,
+        center: geo::Point,
     ) -> Result<(), crate::Error> {
-        unimplemented!()
+        let point = epsg_4326_point_to_pixel_point(snapper, center, self)?;
+
+        let mut path_builder = PathBuilder::new();
+        path_builder.push_circle(point.x() as f32, point.y() as f32, 4.0);
+
+        if let Some(circle) = path_builder.finish() {
+            pixmap.fill_path(
+                &circle,
+                &Paint {
+                    shader: Shader::SolidColor(self.1.foreground),
+                    anti_alias: self.1.anti_alias,
+                    ..Paint::default()
+                },
+                FillRule::default(),
+                Transform::default(),
+                None,
+            );
+
+            if self.1.bordered {
+                pixmap.stroke_path(
+                    &circle,
+                    &Paint {
+                        shader: Shader::SolidColor(self.1.background),
+                        anti_alias: self.1.anti_alias,
+                        ..Paint::default()
+                    },
+                    &Stroke {
+                        width: 1.0,
+                        ..Stroke::default()
+                    },
+                    Transform::default(),
+                    None,
+                );
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -128,11 +164,64 @@ where
 {
     fn draw(
         &self,
-        _snapper: &crate::Snapper,
-        _pixmap: &mut tiny_skia::Pixmap,
-        _center: geo::Point,
+        snapper: &crate::Snapper,
+        pixmap: &mut tiny_skia::Pixmap,
+        center: geo::Point,
     ) -> Result<(), crate::Error> {
-        unimplemented!()
+        let converted_points = self
+            .points()
+            .flat_map(|point| epsg_4326_point_to_pixel_point(snapper, center, &point))
+            .enumerate();
+
+        let mut path_builder = PathBuilder::new();
+
+        for (index, point) in converted_points {
+            if index == 0 {
+                path_builder.move_to(point.x() as f32, point.y() as f32);
+            } else {
+                path_builder.line_to(point.x() as f32, point.y() as f32);
+            }
+        }
+
+        if let Some(lines) = path_builder.finish() {
+            if self.1.bordered {
+                pixmap.stroke_path(
+                    &lines,
+                    &Paint {
+                        shader: Shader::SolidColor(self.1.background),
+                        anti_alias: self.1.anti_alias,
+                        ..Paint::default()
+                    },
+                    &Stroke {
+                        width: 3.0,
+                        ..Stroke::default()
+                    },
+                    Transform::default(),
+                    None,
+                );
+            }
+
+            pixmap.stroke_path(
+                &lines,
+                &Paint {
+                    shader: Shader::SolidColor(self.1.foreground),
+                    anti_alias: self.1.anti_alias,
+                    ..Paint::default()
+                },
+                &Stroke {
+                    width: 2.0,
+                    ..Stroke::default()
+                },
+                Transform::default(),
+                None,
+            );
+        }
+
+        for point in self.points() {
+            StyledPoint::from(point).draw(snapper, pixmap, center)?;
+        }
+
+        Ok(())
     }
 }
 
