@@ -179,6 +179,8 @@ impl_styled!(LineString, StyledLineString, StyledLineStringOptions);
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct StyledPolygonOptions {
     pub color_options: ColorOptions,
+    pub point_options: StyledPointOptions,
+    pub line_string_options: StyledLineStringOptions,
 }
 
 impl_styled!(Polygon, StyledPolygon, StyledPolygonOptions);
@@ -410,11 +412,81 @@ where
 {
     fn draw(
         &self,
-        _snapper: &crate::Snapper,
-        _pixmap: &mut tiny_skia::Pixmap,
-        _center: geo::Point,
+        snapper: &crate::Snapper,
+        pixmap: &mut tiny_skia::Pixmap,
+        center: geo::Point,
     ) -> Result<(), crate::Error> {
-        unimplemented!()
+        let StyledPolygon(geometry, options) = &self;
+
+        let converted_points = geometry
+            .exterior()
+            .points()
+            .flat_map(|point| epsg_4326_point_to_pixel_point(snapper, center, &point))
+            .enumerate();
+
+        let mut path_builder = PathBuilder::new();
+
+        for (index, point) in converted_points {
+            if index == 0 {
+                path_builder.move_to(point.x() as f32, point.y() as f32);
+            } else {
+                path_builder.line_to(point.x() as f32, point.y() as f32);
+            }
+        }
+
+        if let Some(lines) = path_builder.finish() {
+            pixmap.fill_path(
+                &lines,
+                &Paint {
+                    shader: Shader::SolidColor(options.color_options.foreground),
+                    anti_alias: options.color_options.anti_alias,
+                    ..Paint::default()
+                },
+                FillRule::default(),
+                Transform::default(),
+                None,
+            );
+
+            if let Some(border) = options.line_string_options.color_options.border {
+                pixmap.stroke_path(
+                    &lines,
+                    &Paint {
+                        shader: Shader::SolidColor(options.line_string_options.color_options.background),
+                        anti_alias: options.line_string_options.color_options.anti_alias,
+                        ..Paint::default()
+                    },
+                    &Stroke {
+                        width: border,
+                        ..Stroke::default()
+                    },
+                    Transform::default(),
+                    None,
+                );
+            }
+
+            pixmap.stroke_path(
+                &lines,
+                &Paint {
+                    shader: Shader::SolidColor(options.line_string_options.color_options.foreground),
+                    anti_alias: options.line_string_options.color_options.anti_alias,
+                    ..Paint::default()
+                },
+                &Stroke {
+                    width: options.line_string_options.width,
+                    ..Stroke::default()
+                },
+                Transform::default(),
+                None,
+            );
+
+            
+        }
+
+        geometry.exterior().points().try_for_each(|point| {
+            StyledPoint(point, options.point_options.clone()).draw(snapper, pixmap, center)
+        })?;
+
+        Ok(())
     }
 }
 
