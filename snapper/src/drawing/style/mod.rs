@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use tiny_skia::Color;
 
 pub mod geo;
@@ -17,10 +19,10 @@ impl<O: Default, P> Default for Style<O, P> {
 impl<O: Clone, P> Style<O, P> {
     /// Returns the inner option of the [`StyleOptions`].
     #[inline(always)]
-    pub fn options(&self, parent: &P) -> O {
+    pub fn options<'a>(&'a self, parent: &P) -> Cow<'a, O> {
         match self {
-            Self::Static(options) => options.clone(),
-            Self::Dynamic(getter) => getter(parent),
+            Self::Static(options) => Cow::Borrowed(options),
+            Self::Dynamic(getter) => Cow::Owned(getter(parent)),
         }
     }
 }

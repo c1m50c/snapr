@@ -197,7 +197,7 @@ where
         }
 
         geometry.points().try_for_each(|point| {
-            StyledPoint(point, Style::Static(options.clone().point_options))
+            StyledPoint(point, Style::Static(options.point_options.clone()))
                 .draw(snapper, pixmap, center)
         })?;
 
