@@ -16,7 +16,7 @@ pub fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::E
         .send()
         .and_then(|response| response.error_for_status())
         .and_then(|response| response.bytes())
-        .map(|bytes| Cursor::new(bytes))
+        .map(Cursor::new)
         .map_err(anyhow::Error::from)?;
 
     let mut image_reader = ImageReader::new(cursor);

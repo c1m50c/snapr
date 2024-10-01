@@ -64,6 +64,7 @@ pub enum StyledGeometry<T: geo::CoordNum = f64> {
 // FIXME: The below `Into` implementation should probably be a `From` implementation.
 // We don't currently represent a styled variant of `GeometryCollection`, but we probably should.
 
+#[allow(clippy::from_over_into)]
 impl<T: geo::CoordNum> Into<geo::Geometry<T>> for StyledGeometry<T> {
     fn into(self) -> geo::Geometry<T> {
         match self {
@@ -98,6 +99,7 @@ macro_rules! impl_styled {
             }
         }
 
+        #[allow(clippy::from_over_into)]
         impl<T: geo::CoordNum> Into<StyledGeometry<T>> for $styled<T> {
             fn into(self) -> StyledGeometry<T> {
                 StyledGeometry::$base(self)
