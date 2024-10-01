@@ -1,10 +1,10 @@
 # snapper
 
-Easily generate snapshots of maps with stylized geometries.
+Flexible and frictionless way to render snapshots of maps with stylized geometries.
 
 ## Features
 
-### Flexible
+### Flexibility
 
 The [`snapper`](.) crate is designed with extensibility in mind.
 
