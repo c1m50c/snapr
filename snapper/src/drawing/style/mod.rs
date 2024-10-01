@@ -1,12 +1,18 @@
+//! Contains utilities and implementations for stylable [`Drawables`](super::Drawable).
+
 use std::borrow::Cow;
 
 use tiny_skia::Color;
 
 pub mod geo;
 
+/// Contains a [`Static`](Style::Static) or [`Dynamic`](Style::Dynamic) style option to be used when _drawing_ [`Drawables`](super::Drawable).
 #[derive(Clone, Debug, PartialEq)]
 pub enum Style<O, P> {
+    /// Represents style options that are static and don't typically change.
     Static(O),
+
+    /// Represents style options that are dynamic and are fetched via a function.
     Dynamic(fn(&P) -> O),
 }
 
@@ -17,7 +23,7 @@ impl<O: Default, P> Default for Style<O, P> {
 }
 
 impl<O: Clone, P> Style<O, P> {
-    /// Returns the inner option of the [`StyleOptions`].
+    /// Returns the inner option of the [`Style`].
     #[inline(always)]
     pub fn options<'a>(&'a self, parent: &P) -> Cow<'a, O> {
         match self {
@@ -27,6 +33,7 @@ impl<O: Clone, P> Style<O, P> {
     }
 }
 
+/// Standard options for coloring [`Drawables`](super::Drawable) found throughout most style options.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ColorOptions {
     pub foreground: Color,
