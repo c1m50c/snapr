@@ -19,5 +19,5 @@ path = "src/point/main.rs"
 name = "point"
 
 [[bin]]
-path = "src/line/main.rs"
-name = "line"
+path = "src/line_string/main.rs"
+name = "line_string"
