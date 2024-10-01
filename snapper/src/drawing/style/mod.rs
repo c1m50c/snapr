@@ -176,11 +176,25 @@ impl Default for StyledLineStringOptions {
 
 impl_styled!(LineString, StyledLineString, StyledLineStringOptions);
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct StyledPolygonOptions {
     pub color_options: ColorOptions,
     pub point_options: StyledPointOptions,
     pub line_string_options: StyledLineStringOptions,
+}
+
+impl Default for StyledPolygonOptions {
+    fn default() -> Self {
+        Self {
+            color_options: ColorOptions {
+                foreground: Color::from_rgba8(248, 248, 248, 64),
+                border: None,
+                ..ColorOptions::default()
+            },
+            point_options: StyledPointOptions::default(),
+            line_string_options: StyledLineStringOptions::default(),
+        }
+    }
 }
 
 impl_styled!(Polygon, StyledPolygon, StyledPolygonOptions);
