@@ -2,7 +2,7 @@ use crate::Snapper;
 
 pub use drawable::Drawable;
 
-pub mod styled;
+pub mod styled_geo;
 
 mod drawable;
 
