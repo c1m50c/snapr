@@ -1,5 +1,7 @@
 use std::ops::{Deref, DerefMut};
-use tiny_skia::{Color, FillRule, Paint, Path, PathBuilder, Shader, Stroke, Transform};
+use tiny_skia::{Color, FillRule, Paint, Path, PathBuilder, Pixmap, Shader, Stroke, Transform};
+
+use crate::Snapper;
 
 use super::{epsg_4326_point_to_pixel_point, Drawable};
 
@@ -59,6 +61,30 @@ pub enum StyledGeometry<T: geo::CoordNum = f64> {
     MultiPolygon(StyledMultiPolygon<T>),
     Rect(StyledRect<T>),
     Triangle(StyledTriangle<T>),
+}
+
+impl<T> Drawable for StyledGeometry<T>
+where
+    T: geo::CoordNum,
+{
+    fn draw(
+        &self,
+        snapper: &Snapper,
+        pixmap: &mut Pixmap,
+        center: geo::Point,
+    ) -> Result<(), crate::Error> {
+        match self {
+            Self::Point(geometry) => geometry.draw(snapper, pixmap, center),
+            Self::Line(geometry) => geometry.draw(snapper, pixmap, center),
+            Self::LineString(geometry) => geometry.draw(snapper, pixmap, center),
+            Self::Polygon(geometry) => geometry.draw(snapper, pixmap, center),
+            Self::MultiPoint(geometry) => geometry.draw(snapper, pixmap, center),
+            Self::MultiLineString(geometry) => geometry.draw(snapper, pixmap, center),
+            Self::MultiPolygon(geometry) => geometry.draw(snapper, pixmap, center),
+            Self::Rect(geometry) => geometry.draw(snapper, pixmap, center),
+            Self::Triangle(geometry) => geometry.draw(snapper, pixmap, center),
+        }
+    }
 }
 
 // FIXME: The below `Into` implementation should probably be a `From` implementation.
@@ -246,8 +272,8 @@ where
 {
     fn draw(
         &self,
-        snapper: &crate::Snapper,
-        pixmap: &mut tiny_skia::Pixmap,
+        snapper: &Snapper,
+        pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
         let StyledPoint(geometry, options) = &self;
@@ -294,8 +320,8 @@ where
 {
     fn draw(
         &self,
-        snapper: &crate::Snapper,
-        pixmap: &mut tiny_skia::Pixmap,
+        snapper: &Snapper,
+        pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
         let StyledLine(geometry, options) = &self;
@@ -359,8 +385,8 @@ where
 {
     fn draw(
         &self,
-        snapper: &crate::Snapper,
-        pixmap: &mut tiny_skia::Pixmap,
+        snapper: &Snapper,
+        pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
         let StyledLineString(geometry, options) = &self;
@@ -428,8 +454,8 @@ where
 {
     fn draw(
         &self,
-        snapper: &crate::Snapper,
-        pixmap: &mut tiny_skia::Pixmap,
+        snapper: &Snapper,
+        pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
         let StyledPolygon(geometry, options) = &self;
@@ -516,8 +542,8 @@ where
 {
     fn draw(
         &self,
-        snapper: &crate::Snapper,
-        pixmap: &mut tiny_skia::Pixmap,
+        snapper: &Snapper,
+        pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
         let StyledMultiPoint(geometry, options) = &self;
@@ -537,8 +563,8 @@ where
 {
     fn draw(
         &self,
-        snapper: &crate::Snapper,
-        pixmap: &mut tiny_skia::Pixmap,
+        snapper: &Snapper,
+        pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
         let StyledMultiLineString(geometry, options) = &self;
@@ -558,8 +584,8 @@ where
 {
     fn draw(
         &self,
-        snapper: &crate::Snapper,
-        pixmap: &mut tiny_skia::Pixmap,
+        snapper: &Snapper,
+        pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
         let StyledMultiPolygon(geometry, options) = &self;
@@ -579,8 +605,8 @@ where
 {
     fn draw(
         &self,
-        snapper: &crate::Snapper,
-        pixmap: &mut tiny_skia::Pixmap,
+        snapper: &Snapper,
+        pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
         let StyledRect(geometry, options) = &self;
@@ -598,8 +624,8 @@ where
 {
     fn draw(
         &self,
-        snapper: &crate::Snapper,
-        pixmap: &mut tiny_skia::Pixmap,
+        snapper: &Snapper,
+        pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
         let StyledTriangle(geometry, options) = &self;
