@@ -185,14 +185,14 @@ impl_styled!(Polygon, StyledPolygon, StyledPolygonOptions);
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct StyledMultiPointOptions {
-    pub color_options: ColorOptions,
+    pub point_options: StyledPointOptions,
 }
 
 impl_styled!(MultiPoint, StyledMultiPoint, StyledMultiPointOptions);
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct StyledMultiLineStringOptions {
-    pub color_options: ColorOptions,
+    pub line_string_options: StyledLineStringOptions,
 }
 
 impl_styled!(
@@ -203,7 +203,7 @@ impl_styled!(
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct StyledMultiPolygonOptions {
-    pub color_options: ColorOptions,
+    pub polygon_options: StyledPolygonOptions,
 }
 
 impl_styled!(MultiPolygon, StyledMultiPolygon, StyledMultiPolygonOptions);
