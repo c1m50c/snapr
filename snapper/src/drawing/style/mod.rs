@@ -448,6 +448,8 @@ where
             }
         }
 
+        path_builder.close();
+
         if let Some(lines) = path_builder.finish() {
             pixmap.fill_path(
                 &lines,
