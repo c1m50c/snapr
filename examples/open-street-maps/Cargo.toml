@@ -26,3 +26,7 @@ name = "line_string"
 [[bin]]
 path = "src/point/main.rs"
 name = "point"
+
+[[bin]]
+path = "src/polygon/main.rs"
+name = "polygon"
