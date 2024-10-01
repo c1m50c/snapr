@@ -1,5 +1,5 @@
 use std::ops::{Deref, DerefMut};
-use tiny_skia::{Color, FillRule, Paint, PathBuilder, Shader, Stroke, Transform};
+use tiny_skia::{Color, FillRule, Paint, Path, PathBuilder, Shader, Stroke, Transform};
 
 use super::{epsg_4326_point_to_pixel_point, Drawable};
 
@@ -8,7 +8,7 @@ pub struct ColorOptions {
     pub foreground: Color,
     pub background: Color,
     pub anti_alias: bool,
-    pub bordered: bool,
+    pub border: Option<f32>,
 }
 
 impl Default for ColorOptions {
@@ -17,8 +17,34 @@ impl Default for ColorOptions {
             foreground: Color::from_rgba8(248, 248, 248, 255),
             background: Color::from_rgba8(26, 26, 26, 255),
             anti_alias: true,
-            bordered: true,
+            border: Some(1.0),
         }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Shape {
+    Circle { radius: f32 },
+}
+
+impl Shape {
+    /// Converts the [`Shape`] to a [`Path`] modeling the selected variant.
+    pub fn to_path(&self, x: f32, y: f32) -> Result<Path, crate::Error> {
+        let mut path_builder = PathBuilder::new();
+
+        match self {
+            Self::Circle { radius } => {
+                path_builder.push_circle(x, y, *radius);
+            }
+        }
+
+        path_builder.finish().ok_or(crate::Error::PathConstruction)
+    }
+}
+
+impl Default for Shape {
+    fn default() -> Self {
+        Self::Circle { radius: 4.0 }
     }
 }
 
@@ -54,20 +80,21 @@ impl<T: geo::CoordNum> Into<geo::Geometry<T>> for StyledGeometry<T> {
     }
 }
 
+/// Macro for implementing requirements for a styled geometry type.
 macro_rules! impl_styled {
-    ($base: ident, $styled: ident) => {
+    ($base: ident, $styled: ident, $options: ident) => {
         #[derive(Clone, Debug, PartialEq)]
-        pub struct $styled<T: geo::CoordNum = f64>(pub geo::$base<T>, pub ColorOptions);
+        pub struct $styled<T: geo::CoordNum = f64>(pub geo::$base<T>, pub $options);
 
         impl<T: geo::CoordNum> From<geo::$base<T>> for $styled<T> {
             fn from(value: geo::$base<T>) -> Self {
-                Self(value, ColorOptions::default())
+                Self(value, $options::default())
             }
         }
 
         impl<T: geo::CoordNum> From<geo::$base<T>> for StyledGeometry<T> {
             fn from(value: geo::$base<T>) -> Self {
-                Self::$base($styled(value, ColorOptions::default()))
+                Self::$base($styled(value, $options::default()))
             }
         }
 
@@ -87,15 +114,42 @@ macro_rules! impl_styled {
     };
 }
 
-impl_styled!(Point, StyledPoint);
-impl_styled!(Line, StyledLine);
-impl_styled!(LineString, StyledLineString);
-impl_styled!(Polygon, StyledPolygon);
-impl_styled!(MultiPoint, StyledMultiPoint);
-impl_styled!(MultiLineString, StyledMultiLineString);
-impl_styled!(MultiPolygon, StyledMultiPolygon);
-impl_styled!(Rect, StyledRect);
-impl_styled!(Triangle, StyledTriangle);
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct StyledPointOptions {
+    pub color_options: ColorOptions,
+    pub shape: Shape,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct StyledLineStringOptions {
+    pub color_options: ColorOptions,
+    pub point_options: StyledPointOptions,
+    pub width: f32,
+}
+
+impl Default for StyledLineStringOptions {
+    fn default() -> Self {
+        Self {
+            color_options: ColorOptions {
+                foreground: Color::from_rgba8(196, 196, 196, 255),
+                border: Some(4.0),
+                ..ColorOptions::default()
+            },
+            point_options: StyledPointOptions::default(),
+            width: 3.0,
+        }
+    }
+}
+
+impl_styled!(Point, StyledPoint, StyledPointOptions);
+impl_styled!(Line, StyledLine, ColorOptions);
+impl_styled!(LineString, StyledLineString, StyledLineStringOptions);
+impl_styled!(Polygon, StyledPolygon, ColorOptions);
+impl_styled!(MultiPoint, StyledMultiPoint, ColorOptions);
+impl_styled!(MultiLineString, StyledMultiLineString, ColorOptions);
+impl_styled!(MultiPolygon, StyledMultiPolygon, ColorOptions);
+impl_styled!(Rect, StyledRect, ColorOptions);
+impl_styled!(Triangle, StyledTriangle, ColorOptions);
 
 impl<T> Drawable for StyledPoint<T>
 where
@@ -107,40 +161,38 @@ where
         pixmap: &mut tiny_skia::Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
-        let point = epsg_4326_point_to_pixel_point(snapper, center, self)?;
+        let StyledPoint(geometry, options) = &self;
 
-        let mut path_builder = PathBuilder::new();
-        path_builder.push_circle(point.x() as f32, point.y() as f32, 4.0);
+        let point = epsg_4326_point_to_pixel_point(snapper, center, geometry)?;
+        let shape = options.shape.to_path(point.x() as f32, point.y() as f32)?;
 
-        if let Some(circle) = path_builder.finish() {
-            pixmap.fill_path(
-                &circle,
+        pixmap.fill_path(
+            &shape,
+            &Paint {
+                shader: Shader::SolidColor(options.color_options.foreground),
+                anti_alias: options.color_options.anti_alias,
+                ..Paint::default()
+            },
+            FillRule::default(),
+            Transform::default(),
+            None,
+        );
+
+        if let Some(border) = options.color_options.border {
+            pixmap.stroke_path(
+                &shape,
                 &Paint {
-                    shader: Shader::SolidColor(self.1.foreground),
-                    anti_alias: self.1.anti_alias,
+                    shader: Shader::SolidColor(options.color_options.background),
+                    anti_alias: options.color_options.anti_alias,
                     ..Paint::default()
                 },
-                FillRule::default(),
+                &Stroke {
+                    width: border,
+                    ..Stroke::default()
+                },
                 Transform::default(),
                 None,
             );
-
-            if self.1.bordered {
-                pixmap.stroke_path(
-                    &circle,
-                    &Paint {
-                        shader: Shader::SolidColor(self.1.background),
-                        anti_alias: self.1.anti_alias,
-                        ..Paint::default()
-                    },
-                    &Stroke {
-                        width: 1.0,
-                        ..Stroke::default()
-                    },
-                    Transform::default(),
-                    None,
-                );
-            }
         }
 
         Ok(())
@@ -171,7 +223,9 @@ where
         pixmap: &mut tiny_skia::Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
-        let converted_points = self
+        let StyledLineString(geometry, options) = &self;
+
+        let converted_points = geometry
             .points()
             .flat_map(|point| epsg_4326_point_to_pixel_point(snapper, center, &point))
             .enumerate();
@@ -187,16 +241,16 @@ where
         }
 
         if let Some(lines) = path_builder.finish() {
-            if self.1.bordered {
+            if let Some(border) = options.color_options.border {
                 pixmap.stroke_path(
                     &lines,
                     &Paint {
-                        shader: Shader::SolidColor(self.1.background),
-                        anti_alias: self.1.anti_alias,
+                        shader: Shader::SolidColor(options.color_options.background),
+                        anti_alias: options.color_options.anti_alias,
                         ..Paint::default()
                     },
                     &Stroke {
-                        width: 3.0,
+                        width: border,
                         ..Stroke::default()
                     },
                     Transform::default(),
@@ -207,12 +261,12 @@ where
             pixmap.stroke_path(
                 &lines,
                 &Paint {
-                    shader: Shader::SolidColor(self.1.foreground),
-                    anti_alias: self.1.anti_alias,
+                    shader: Shader::SolidColor(options.color_options.foreground),
+                    anti_alias: options.color_options.anti_alias,
                     ..Paint::default()
                 },
                 &Stroke {
-                    width: 2.0,
+                    width: options.width,
                     ..Stroke::default()
                 },
                 Transform::default(),
@@ -220,9 +274,9 @@ where
             );
         }
 
-        for point in self.points() {
-            StyledPoint::from(point).draw(snapper, pixmap, center)?;
-        }
+        geometry.points().try_for_each(|point| {
+            StyledPoint(point, options.clone().point_options).draw(snapper, pixmap, center)
+        })?;
 
         Ok(())
     }

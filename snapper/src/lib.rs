@@ -30,6 +30,9 @@ pub enum Error {
     #[error("failed to convert between primitive numbers")]
     PrimitiveNumberConversion,
 
+    #[error("failed to construct path")]
+    PathConstruction,
+
     /// Returned when the source of the error cannot be determined.
     #[error(transparent)]
     Unknown(#[from] anyhow::Error),
