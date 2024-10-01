@@ -34,7 +34,7 @@ fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<image::DynamicImage, snapper
 }
 ```
 
-See [`examples/open-street-maps/lib.rs`](./examples/open-street-maps/lib.rs) for an example implementation of fetching tiles from <https://a.tile.osm.org> using [`reqwest`](https://crates.io/crates/reqwest).
+See [`examples/open-street-maps/lib.rs`](./examples/open-street-maps/src/lib.rs) for an example implementation of fetching tiles from <https://a.tile.osm.org> using [`reqwest`](https://crates.io/crates/reqwest).
 
 ### Styling
 
