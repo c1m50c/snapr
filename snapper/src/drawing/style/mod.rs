@@ -121,6 +121,29 @@ pub struct StyledPointOptions {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct StyledLineOptions {
+    pub color_options: ColorOptions,
+    pub start_point_options: StyledPointOptions,
+    pub end_point_options: StyledPointOptions,
+    pub width: f32,
+}
+
+impl Default for StyledLineOptions {
+    fn default() -> Self {
+        Self {
+            color_options: ColorOptions {
+                foreground: Color::from_rgba8(196, 196, 196, 255),
+                border: Some(4.0),
+                ..ColorOptions::default()
+            },
+            start_point_options: StyledPointOptions::default(),
+            end_point_options: StyledPointOptions::default(),
+            width: 3.0,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct StyledLineStringOptions {
     pub color_options: ColorOptions,
     pub point_options: StyledPointOptions,
@@ -142,7 +165,7 @@ impl Default for StyledLineStringOptions {
 }
 
 impl_styled!(Point, StyledPoint, StyledPointOptions);
-impl_styled!(Line, StyledLine, ColorOptions);
+impl_styled!(Line, StyledLine, StyledLineOptions);
 impl_styled!(LineString, StyledLineString, StyledLineStringOptions);
 impl_styled!(Polygon, StyledPolygon, ColorOptions);
 impl_styled!(MultiPoint, StyledMultiPoint, ColorOptions);
@@ -205,11 +228,62 @@ where
 {
     fn draw(
         &self,
-        _snapper: &crate::Snapper,
-        _pixmap: &mut tiny_skia::Pixmap,
-        _center: geo::Point,
+        snapper: &crate::Snapper,
+        pixmap: &mut tiny_skia::Pixmap,
+        center: geo::Point,
     ) -> Result<(), crate::Error> {
-        unimplemented!()
+        let StyledLine(geometry, options) = &self;
+
+        let start_point = epsg_4326_point_to_pixel_point(snapper, center, &geometry.start_point())?;
+        let end_point = epsg_4326_point_to_pixel_point(snapper, center, &geometry.end_point())?;
+
+        let mut path_builder = PathBuilder::new();
+        path_builder.move_to(start_point.x() as f32, start_point.y() as f32);
+        path_builder.line_to(end_point.x() as f32, end_point.y() as f32);
+
+        let line = path_builder
+            .finish()
+            .ok_or(crate::Error::PathConstruction)?;
+
+        if let Some(border) = options.color_options.border {
+            pixmap.stroke_path(
+                &line,
+                &Paint {
+                    shader: Shader::SolidColor(options.color_options.background),
+                    anti_alias: options.color_options.anti_alias,
+                    ..Paint::default()
+                },
+                &Stroke {
+                    width: border,
+                    ..Stroke::default()
+                },
+                Transform::default(),
+                None,
+            );
+        }
+
+        pixmap.stroke_path(
+            &line,
+            &Paint {
+                shader: Shader::SolidColor(options.color_options.foreground),
+                anti_alias: options.color_options.anti_alias,
+                ..Paint::default()
+            },
+            &Stroke {
+                width: options.width,
+                ..Stroke::default()
+            },
+            Transform::default(),
+            None,
+        );
+
+        StyledPoint(geometry.start_point(), options.start_point_options.clone())
+            .draw(snapper, pixmap, center)?;
+
+        StyledPoint(geometry.end_point(), options.end_point_options.clone())
+            .draw(snapper, pixmap, center)?;
+
+        Ok(())
     }
 }
 
