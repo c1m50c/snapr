@@ -424,11 +424,18 @@ where
 {
     fn draw(
         &self,
-        _snapper: &crate::Snapper,
-        _pixmap: &mut tiny_skia::Pixmap,
-        _center: geo::Point,
+        snapper: &crate::Snapper,
+        pixmap: &mut tiny_skia::Pixmap,
+        center: geo::Point,
     ) -> Result<(), crate::Error> {
-        unimplemented!()
+        let StyledMultiPoint(geometry, options) = &self;
+
+        for point in geometry.into_iter() {
+            let styled = StyledPoint(*point, options.point_options.clone());
+            styled.draw(snapper, pixmap, center)?;
+        }
+
+        Ok(())
     }
 }
 
