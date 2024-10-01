@@ -8,8 +8,8 @@ use tiny_skia::Pixmap;
 #[cfg(feature = "drawing")]
 use drawing::style::geo::StyledGeometry;
 
-pub use {geo, image, tiny_skia};
 pub use builder::SnapperBuilder;
+pub use {geo, image, tiny_skia};
 
 mod builder;
 
