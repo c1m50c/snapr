@@ -226,14 +226,14 @@ impl_styled!(MultiPolygon, StyledMultiPolygon, StyledMultiPolygonOptions);
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct StyledRectOptions {
-    pub color_options: ColorOptions,
+    pub polygon_options: StyledPolygonOptions,
 }
 
 impl_styled!(Rect, StyledRect, StyledRectOptions);
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct StyledTriangleOptions {
-    pub color_options: ColorOptions,
+    pub polygon_options: StyledPolygonOptions,
 }
 
 impl_styled!(Triangle, StyledTriangle, StyledTriangleOptions);
@@ -577,11 +577,16 @@ where
 {
     fn draw(
         &self,
-        _snapper: &crate::Snapper,
-        _pixmap: &mut tiny_skia::Pixmap,
-        _center: geo::Point,
+        snapper: &crate::Snapper,
+        pixmap: &mut tiny_skia::Pixmap,
+        center: geo::Point,
     ) -> Result<(), crate::Error> {
-        unimplemented!()
+        let StyledRect(geometry, options) = &self;
+
+        let polygon = StyledPolygon(geometry.to_polygon(), options.polygon_options.clone());
+        polygon.draw(snapper, pixmap, center)?;
+
+        Ok(())
     }
 }
 
@@ -591,10 +596,15 @@ where
 {
     fn draw(
         &self,
-        _snapper: &crate::Snapper,
-        _pixmap: &mut tiny_skia::Pixmap,
-        _center: geo::Point,
+        snapper: &crate::Snapper,
+        pixmap: &mut tiny_skia::Pixmap,
+        center: geo::Point,
     ) -> Result<(), crate::Error> {
-        unimplemented!()
+        let StyledTriangle(geometry, options) = &self;
+
+        let polygon = StyledPolygon(geometry.to_polygon(), options.polygon_options.clone());
+        polygon.draw(snapper, pixmap, center)?;
+
+        Ok(())
     }
 }
