@@ -98,6 +98,12 @@ macro_rules! impl_styled {
             }
         }
 
+        impl<T: geo::CoordNum> Into<StyledGeometry<T>> for $styled<T> {
+            fn into(self) -> StyledGeometry<T> {
+                StyledGeometry::$base(self)
+            }
+        }
+
         impl<T: geo::CoordNum> Deref for $styled<T> {
             type Target = geo::$base<T>;
 
