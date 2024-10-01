@@ -210,17 +210,43 @@ impl Snapper {
         let max_x = (epsg_3857_center.x() + required_columns).ceil() as i32;
         let max_y = (epsg_3857_center.y() + required_rows).ceil() as i32;
 
-        for x in min_x..max_x {
-            for y in min_y..max_y {
-                let tile = self.get_tile((x + n) % n, (y + n) % n)?;
+        let x_y_to_tile = |(x, y): (i32, i32)| -> Result<(image::RgbaImage, i64, i64), Error> {
+            let tile = self.get_tile((x + n) % n, (y + n) % n)?;
 
-                let tile_coords = (geo::Point::from((x as f64, y as f64)) - epsg_3857_center)
-                    .map_coords(|coord| geo::Coord {
-                        x: coord.x * self.tile_size as f64 + self.width as f64 / 2.0,
-                        y: coord.y * self.tile_size as f64 + self.height as f64 / 2.0,
-                    });
+            let tile_coords = (geo::Point::from((x as f64, y as f64)) - epsg_3857_center)
+                .map_coords(|coord| geo::Coord {
+                    x: coord.x * self.tile_size as f64 + self.width as f64 / 2.0,
+                    y: coord.y * self.tile_size as f64 + self.height as f64 / 2.0,
+                });
 
-                overlay(image, &tile, tile_coords.x() as i64, tile_coords.y() as i64);
+            Ok((tile, tile_coords.x() as i64, tile_coords.y() as i64))
+        };
+
+        #[cfg(feature = "rayon")]
+        {
+            use rayon::prelude::*;
+
+            let matrix_iter = (min_x..max_x)
+                .map(|x| (x, min_y..max_y))
+                .flat_map(|(x, y)| y.map(move |y| (x, y)));
+
+            let tiles = matrix_iter
+                .par_bridge()
+                .flat_map(x_y_to_tile)
+                .collect::<Vec<_>>();
+
+            tiles
+                .into_iter()
+                .for_each(|(tile, x, y)| overlay(image, &tile, x, y));
+        }
+
+        #[cfg(not(feature = "rayon"))]
+        {
+            for x in min_x..max_x {
+                for y in min_y..max_y {
+                    let (tile, x, y) = x_y_to_tile((x, y))?;
+                    overlay(image, &tile, x, y);
+                }
             }
         }
 
