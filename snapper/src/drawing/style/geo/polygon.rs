@@ -1,7 +1,11 @@
 use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::{
-    drawing::{epsg_4326_point_to_pixel_point, style::ColorOptions, Drawable},
+    drawing::{
+        epsg_4326_point_to_pixel_point,
+        style::{ColorOptions, Style},
+        Drawable,
+    },
     Snapper,
 };
 
@@ -44,7 +48,8 @@ where
         pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
-        let StyledPolygon(geometry, options) = &self;
+        let StyledPolygon(geometry, style) = &self;
+        let options = style.options(self);
 
         let converted_points = geometry
             .exterior()
@@ -115,7 +120,8 @@ where
         }
 
         geometry.exterior().points().try_for_each(|point| {
-            StyledPoint(point, options.point_options.clone()).draw(snapper, pixmap, center)
+            StyledPoint(point, Style::Static(options.point_options.clone()))
+                .draw(snapper, pixmap, center)
         })?;
 
         Ok(())
@@ -139,10 +145,14 @@ where
         pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
-        let StyledMultiPolygon(geometry, options) = &self;
+        let StyledMultiPolygon(geometry, style) = &self;
+        let options = style.options(self);
 
         for polygon in geometry.into_iter() {
-            let styled = StyledPolygon(polygon.clone(), options.polygon_options.clone());
+            let styled = StyledPolygon(
+                polygon.clone(),
+                Style::Static(options.polygon_options.clone()),
+            );
             styled.draw(snapper, pixmap, center)?;
         }
 
@@ -167,9 +177,13 @@ where
         pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
-        let StyledRect(geometry, options) = &self;
+        let StyledRect(geometry, style) = &self;
+        let options = style.options(self);
 
-        let polygon = StyledPolygon(geometry.to_polygon(), options.polygon_options.clone());
+        let polygon = StyledPolygon(
+            geometry.to_polygon(),
+            Style::Static(options.polygon_options.clone()),
+        );
         polygon.draw(snapper, pixmap, center)?;
 
         Ok(())
@@ -193,9 +207,13 @@ where
         pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
-        let StyledTriangle(geometry, options) = &self;
+        let StyledTriangle(geometry, style) = &self;
+        let options = style.options(self);
 
-        let polygon = StyledPolygon(geometry.to_polygon(), options.polygon_options.clone());
+        let polygon = StyledPolygon(
+            geometry.to_polygon(),
+            Style::Static(options.polygon_options.clone()),
+        );
         polygon.draw(snapper, pixmap, center)?;
 
         Ok(())

@@ -94,24 +94,31 @@ mod macros {
     macro_rules! impl_styled {
         ($base: ident, $styled: ident, $options: ident) => {
             #[derive(Clone, Debug, PartialEq)]
-            pub struct $styled<T: geo::CoordNum = f64>(pub geo::$base<T>, pub $options);
+            pub struct $styled<T: geo::CoordNum = f64>(
+                pub geo::$base<T>,
+                pub crate::drawing::style::Style<$options, $styled<T>>,
+            );
 
             impl<T: geo::CoordNum> From<geo::$base<T>> for $styled<T> {
                 fn from(value: geo::$base<T>) -> Self {
-                    Self(value, $options::default())
+                    Self(value, crate::drawing::style::Style::default())
                 }
             }
 
-            impl<T: geo::CoordNum> From<geo::$base<T>> for super::StyledGeometry<T> {
+            impl<T: geo::CoordNum> From<geo::$base<T>>
+                for crate::drawing::style::geo::StyledGeometry<T>
+            {
                 fn from(value: geo::$base<T>) -> Self {
-                    Self::$base($styled(value, $options::default()))
+                    Self::$base($styled(value, crate::drawing::style::Style::default()))
                 }
             }
 
             #[allow(clippy::from_over_into)]
-            impl<T: geo::CoordNum> Into<super::StyledGeometry<T>> for $styled<T> {
-                fn into(self) -> super::StyledGeometry<T> {
-                    super::StyledGeometry::$base(self)
+            impl<T: geo::CoordNum> Into<crate::drawing::style::geo::StyledGeometry<T>>
+                for $styled<T>
+            {
+                fn into(self) -> crate::drawing::style::geo::StyledGeometry<T> {
+                    crate::drawing::style::geo::StyledGeometry::$base(self)
                 }
             }
 

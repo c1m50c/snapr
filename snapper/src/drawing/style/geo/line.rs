@@ -1,7 +1,11 @@
 use tiny_skia::{Color, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::{
-    drawing::{epsg_4326_point_to_pixel_point, style::ColorOptions, Drawable},
+    drawing::{
+        epsg_4326_point_to_pixel_point,
+        style::{ColorOptions, Style},
+        Drawable,
+    },
     Snapper,
 };
 
@@ -45,7 +49,8 @@ where
         pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
-        let StyledLine(geometry, options) = &self;
+        let StyledLine(geometry, style) = &self;
+        let options = style.options(self);
 
         let start_point = epsg_4326_point_to_pixel_point(snapper, center, &geometry.start_point())?;
         let end_point = epsg_4326_point_to_pixel_point(snapper, center, &geometry.end_point())?;
@@ -90,11 +95,17 @@ where
             None,
         );
 
-        StyledPoint(geometry.start_point(), options.start_point_options.clone())
-            .draw(snapper, pixmap, center)?;
+        StyledPoint(
+            geometry.start_point(),
+            Style::Static(options.start_point_options.clone()),
+        )
+        .draw(snapper, pixmap, center)?;
 
-        StyledPoint(geometry.end_point(), options.end_point_options.clone())
-            .draw(snapper, pixmap, center)?;
+        StyledPoint(
+            geometry.end_point(),
+            Style::Static(options.end_point_options.clone()),
+        )
+        .draw(snapper, pixmap, center)?;
 
         Ok(())
     }
@@ -133,7 +144,8 @@ where
         pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
-        let StyledLineString(geometry, options) = &self;
+        let StyledLineString(geometry, style) = &self;
+        let options = style.options(self);
 
         let converted_points = geometry
             .points()
@@ -185,7 +197,8 @@ where
         }
 
         geometry.points().try_for_each(|point| {
-            StyledPoint(point, options.clone().point_options).draw(snapper, pixmap, center)
+            StyledPoint(point, Style::Static(options.clone().point_options))
+                .draw(snapper, pixmap, center)
         })?;
 
         Ok(())
@@ -213,10 +226,14 @@ where
         pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
-        let StyledMultiLineString(geometry, options) = &self;
+        let StyledMultiLineString(geometry, style) = &self;
+        let options = style.options(self);
 
         for line_string in geometry.into_iter() {
-            let styled = StyledLineString(line_string.clone(), options.line_string_options.clone());
+            let styled = StyledLineString(
+                line_string.clone(),
+                Style::Static(options.line_string_options.clone()),
+            );
             styled.draw(snapper, pixmap, center)?;
         }
 

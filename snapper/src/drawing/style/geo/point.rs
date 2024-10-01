@@ -1,7 +1,11 @@
 use tiny_skia::{FillRule, Paint, Pixmap, Shader, Stroke, Transform};
 
 use crate::{
-    drawing::{epsg_4326_point_to_pixel_point, style::ColorOptions, Drawable},
+    drawing::{
+        epsg_4326_point_to_pixel_point,
+        style::{ColorOptions, Style},
+        Drawable,
+    },
     Snapper,
 };
 
@@ -25,7 +29,8 @@ where
         pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
-        let StyledPoint(geometry, options) = &self;
+        let StyledPoint(geometry, style) = &self;
+        let options = style.options(self);
 
         let point = epsg_4326_point_to_pixel_point(snapper, center, geometry)?;
         let shape = options.shape.to_path(point.x() as f32, point.y() as f32)?;
@@ -80,10 +85,11 @@ where
         pixmap: &mut Pixmap,
         center: geo::Point,
     ) -> Result<(), crate::Error> {
-        let StyledMultiPoint(geometry, options) = &self;
+        let StyledMultiPoint(geometry, style) = &self;
+        let options = style.options(self);
 
         for point in geometry.into_iter() {
-            let styled = StyledPoint(*point, options.point_options.clone());
+            let styled = StyledPoint(*point, Style::Static(options.point_options.clone()));
             styled.draw(snapper, pixmap, center)?;
         }
 

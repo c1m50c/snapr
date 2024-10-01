@@ -1,17 +1,5 @@
 use open_street_maps::tile_fetcher;
-use snapper::{
-    drawing::style::{
-        geo::{
-            line::{StyledLine, StyledLineOptions},
-            point::StyledPointOptions,
-            StyledGeometry,
-        },
-        ColorOptions,
-    },
-    SnapperBuilder,
-};
-use tiny_skia::Color;
-
+use snapper::SnapperBuilder;
 fn main() -> Result<(), anyhow::Error> {
     let snapper = SnapperBuilder::new()
         .with_tile_fetcher(tile_fetcher)
@@ -28,33 +16,8 @@ fn main() -> Result<(), anyhow::Error> {
         geo::coord! { x: 41.702909695820175, y: -103.33250120288363 },
     );
 
-    let start_point_options = StyledPointOptions {
-        color_options: ColorOptions {
-            foreground: Color::from_rgba8(16, 248, 16, 255),
-            ..ColorOptions::default()
-        },
-        ..StyledPointOptions::default()
-    };
-
-    let end_point_options = StyledPointOptions {
-        color_options: ColorOptions {
-            foreground: Color::from_rgba8(248, 16, 16, 255),
-            ..ColorOptions::default()
-        },
-        ..StyledPointOptions::default()
-    };
-
-    let styled_line = StyledLine(
-        line,
-        StyledLineOptions {
-            start_point_options,
-            end_point_options,
-            ..StyledLineOptions::default()
-        },
-    );
-
     snapper
-        .generate_snapshot_from_geometry(StyledGeometry::Line(styled_line))?
+        .generate_snapshot_from_geometry(line)?
         .save("example.png")?;
 
     Ok(())
