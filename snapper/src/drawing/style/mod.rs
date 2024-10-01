@@ -467,7 +467,9 @@ where
                 pixmap.stroke_path(
                     &lines,
                     &Paint {
-                        shader: Shader::SolidColor(options.line_string_options.color_options.background),
+                        shader: Shader::SolidColor(
+                            options.line_string_options.color_options.background,
+                        ),
                         anti_alias: options.line_string_options.color_options.anti_alias,
                         ..Paint::default()
                     },
@@ -483,7 +485,9 @@ where
             pixmap.stroke_path(
                 &lines,
                 &Paint {
-                    shader: Shader::SolidColor(options.line_string_options.color_options.foreground),
+                    shader: Shader::SolidColor(
+                        options.line_string_options.color_options.foreground,
+                    ),
                     anti_alias: options.line_string_options.color_options.anti_alias,
                     ..Paint::default()
                 },
@@ -494,8 +498,6 @@ where
                 Transform::default(),
                 None,
             );
-
-            
         }
 
         geometry.exterior().points().try_for_each(|point| {
