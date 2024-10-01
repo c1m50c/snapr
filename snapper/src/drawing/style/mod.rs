@@ -35,6 +35,9 @@ pub enum StyledGeometry<T: geo::CoordNum = f64> {
     Triangle(StyledTriangle<T>),
 }
 
+// FIXME: The below `Into` implementation should probably be a `From` implementation.
+// We don't currently represent a styled variant of `GeometryCollection`, but we probably should.
+
 impl<T: geo::CoordNum> Into<geo::Geometry<T>> for StyledGeometry<T> {
     fn into(self) -> geo::Geometry<T> {
         match self {
