@@ -2,7 +2,7 @@ use tiny_skia::Pixmap;
 
 use crate::Snapper;
 
-use super::style::StyledGeometry;
+use super::styled::StyledGeometry;
 
 pub trait Drawable {
     fn draw(

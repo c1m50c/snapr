@@ -6,7 +6,7 @@ use thiserror::Error;
 use tiny_skia::Pixmap;
 
 #[cfg(feature = "drawing")]
-use drawing::style::StyledGeometry;
+use drawing::styled::StyledGeometry;
 
 pub use builder::SnapperBuilder;
 

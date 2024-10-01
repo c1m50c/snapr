@@ -2,7 +2,7 @@ use crate::Snapper;
 
 pub use drawable::Drawable;
 
-pub mod style;
+pub mod styled;
 
 mod drawable;
 

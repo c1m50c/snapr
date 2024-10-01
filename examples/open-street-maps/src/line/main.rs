@@ -1,6 +1,6 @@
 use open_street_maps::tile_fetcher;
 use snapper::{
-    drawing::style::{
+    drawing::styled::{
         ColorOptions, StyledGeometry, StyledLine, StyledLineOptions, StyledPointOptions,
     },
     SnapperBuilder,
