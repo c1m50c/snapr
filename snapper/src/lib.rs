@@ -13,7 +13,7 @@ pub use builder::SnapperBuilder;
 mod builder;
 
 #[cfg(feature = "drawing")]
-mod drawing;
+pub mod drawing;
 
 /// Error type used throughout the [`snapper`](crate) crate.
 #[derive(Debug, Error)]
