@@ -40,6 +40,7 @@ use crate::Snapper;
 pub mod style;
 
 /// Represents a _drawable_ object.
+///
 /// A [`Drawable`] object will _draw_ to the given `pixmap` based on the `snapper` and `center` arguments.
 /// See [`drawing`](self) for more details.
 pub trait Drawable {
