@@ -21,13 +21,13 @@ fn main() -> Result<(), anyhow::Error> {
     let chimney_rock_museum = geo::point!(x: 41.702909695820175, y: -103.33250120288363);
 
     let geometries = vec![
-        geo::Geometry::from(chimney_rock),
-        geo::Geometry::from(chimney_rock_cemetery),
-        geo::Geometry::from(chimney_rock_museum),
+        chimney_rock.into(),
+        chimney_rock_cemetery.into(),
+        chimney_rock_museum.into(),
     ];
 
     snapper
-        .generate_snapshot_from_geometries(geo::GeometryCollection::from(geometries))?
+        .generate_snapshot_from_geometries(geometries)?
         .save("example.png")?;
 
     Ok(())

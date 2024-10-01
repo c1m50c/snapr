@@ -5,6 +5,9 @@ use image::imageops::overlay;
 use thiserror::Error;
 use tiny_skia::Pixmap;
 
+#[cfg(feature = "drawing")]
+use drawing::style::StyledGeometry;
+
 pub use builder::SnapperBuilder;
 
 mod builder;
@@ -70,9 +73,9 @@ impl Snapper {
     #[cfg(feature = "drawing")]
     pub fn generate_snapshot_from_geometry<G>(&self, geometry: G) -> Result<image::RgbaImage, Error>
     where
-        G: Into<geo::Geometry>,
+        G: Into<StyledGeometry>,
     {
-        let geometries = geo::GeometryCollection::from(geometry.into());
+        let geometries = vec![geometry.into()];
         self.generate_snapshot_from_geometries(geometries)
     }
 
@@ -80,7 +83,7 @@ impl Snapper {
     #[cfg(feature = "drawing")]
     pub fn generate_snapshot_from_geometries(
         &self,
-        geometries: geo::GeometryCollection,
+        geometries: Vec<StyledGeometry>,
     ) -> Result<image::RgbaImage, Error> {
         use drawing::Drawable;
 
@@ -98,21 +101,30 @@ impl Snapper {
 
     /// Returns a snapshot centered around the provided `geometries`.
     /// The drawing of each of the `geometries` is done with the given `drawer` function.
-    pub fn generate_snapshot_from_geometries_with_drawer<D>(
+    pub fn generate_snapshot_from_geometries_with_drawer<G, D>(
         &self,
-        geometries: geo::GeometryCollection,
+        geometries: Vec<G>,
         drawer: D,
     ) -> Result<image::RgbaImage, Error>
     where
-        D: Fn(geo::GeometryCollection, &Self, &mut Pixmap, geo::Point) -> Result<(), Error>,
+        G: Clone + Into<geo::Geometry>,
+        D: Fn(Vec<G>, &Self, &mut Pixmap, geo::Point) -> Result<(), Error>,
     {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
+
+        let geometry_collection = geometries
+            .iter()
+            .cloned()
+            .map(|geometry| geometry.into())
+            .collect();
+
+        let geometry_collection = geo::GeometryCollection::new_from(geometry_collection);
 
         let Some(mut pixmap) = Pixmap::new(self.width, self.height) else {
             todo!("Return an `Err` or find some way to safely go forward with the function")
         };
 
-        let Some(geometry_center_point) = geometries.centroid() else {
+        let Some(geometry_center_point) = geometry_collection.centroid() else {
             todo!("Return an `Err` or find a suitable default for `geometry_center_point`")
         };
 

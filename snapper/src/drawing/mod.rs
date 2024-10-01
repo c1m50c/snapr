@@ -2,6 +2,8 @@ use crate::Snapper;
 
 pub use drawable::Drawable;
 
+pub mod style;
+
 mod drawable;
 
 fn epsg_4326_point_to_pixel_point<T: geo::CoordNum>(
