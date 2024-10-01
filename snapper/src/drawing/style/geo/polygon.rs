@@ -1,3 +1,5 @@
+//! Stylable wrappers of [`geo::Polygon`], [`geo::MultiPolygon`], [`geo::Rect`] and [`geo::Triangle`].
+
 use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::{
@@ -15,6 +17,7 @@ use super::{
     point::{StyledPoint, StyledPointOptions},
 };
 
+/// Style options for [`StyledPolygon`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct StyledPolygonOptions {
     pub color_options: ColorOptions,
@@ -128,6 +131,7 @@ where
     }
 }
 
+/// Style options for [`StyledMultiPolygon`].
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct StyledMultiPolygonOptions {
     pub polygon_options: StyledPolygonOptions,
@@ -160,6 +164,7 @@ where
     }
 }
 
+/// Style options for [`StyledRect`].
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct StyledRectOptions {
     pub polygon_options: StyledPolygonOptions,
@@ -190,6 +195,7 @@ where
     }
 }
 
+/// Style options for [`StyledTriangle`].
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct StyledTriangleOptions {
     pub polygon_options: StyledPolygonOptions,

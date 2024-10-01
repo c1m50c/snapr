@@ -1,3 +1,5 @@
+//! Stylable wrappers of [`geo::Line`], [`geo::LineString`], and [`geo::MultiLineString`].
+
 use tiny_skia::{Color, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::{
@@ -14,6 +16,7 @@ use super::{
     point::{StyledPoint, StyledPointOptions},
 };
 
+/// Style options for [`StyledLine`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct StyledLineOptions {
     pub color_options: ColorOptions,
@@ -111,6 +114,7 @@ where
     }
 }
 
+/// Style options for [`StyledLineString`].
 #[derive(Clone, Debug, PartialEq)]
 pub struct StyledLineStringOptions {
     pub color_options: ColorOptions,
@@ -205,6 +209,7 @@ where
     }
 }
 
+/// Style options for [`StyledMultiLineString`].
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct StyledMultiLineStringOptions {
     pub line_string_options: StyledLineStringOptions,

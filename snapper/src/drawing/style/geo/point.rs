@@ -1,3 +1,5 @@
+//! Stylable wrappers of [`geo::Point`], and [`geo::MultiPoint`].
+
 use tiny_skia::{FillRule, Paint, Pixmap, Shader, Stroke, Transform};
 
 use crate::{
@@ -11,6 +13,7 @@ use crate::{
 
 use super::{macros::impl_styled, Shape};
 
+/// Style options for [`StyledPoint`].
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct StyledPointOptions {
     pub color_options: ColorOptions,
@@ -68,6 +71,7 @@ where
     }
 }
 
+/// Style options for [`StyledMultiPoint`].
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct StyledMultiPointOptions {
     pub point_options: StyledPointOptions,

@@ -1,3 +1,5 @@
+//! Stylable and [`Drawable`] wrappers around [`geo`] primitive types.
+
 use tiny_skia::{Path, PathBuilder, Pixmap};
 
 use crate::{drawing::Drawable, Snapper};
@@ -10,6 +12,7 @@ pub mod line;
 pub mod point;
 pub mod polygon;
 
+/// Represents an easily [`Drawable`] _shape_.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Shape {
     Circle { radius: f32 },
@@ -36,6 +39,7 @@ impl Default for Shape {
     }
 }
 
+/// Contains variants for each stylable [`geo`] primitive type wrapper.
 #[derive(Clone, Debug, PartialEq)]
 pub enum StyledGeometry<T: geo::CoordNum = f64> {
     Point(point::StyledPoint<T>),
@@ -98,6 +102,7 @@ mod macros {
     macro_rules! impl_styled {
         ($base: ident, $styled: ident, $options: ident) => {
             #[derive(Clone, Debug, PartialEq)]
+            #[doc = concat!("Wrapper around [`", stringify!($base), "`](geo::", stringify!($base), ") that enables styling with [`", stringify!($options), "`].")]
             pub struct $styled<T: geo::CoordNum = f64>(
                 pub geo::$base<T>,
                 pub crate::drawing::style::Style<$options, geo::$base<T>>,
