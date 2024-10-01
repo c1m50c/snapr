@@ -2,6 +2,10 @@ use tiny_skia::{Path, PathBuilder, Pixmap};
 
 use crate::{drawing::Drawable, Snapper};
 
+pub use line::*;
+pub use point::*;
+pub use polygon::*;
+
 pub mod line;
 pub mod point;
 pub mod polygon;
