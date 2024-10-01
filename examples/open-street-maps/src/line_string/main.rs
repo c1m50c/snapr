@@ -9,7 +9,7 @@ fn main() -> Result<(), anyhow::Error> {
         .with_zoom(15)
         .build()?;
 
-    let line = geo::line_string![
+    let line_string = geo::line_string![
         // Chimney Rock, Nebraska
         // https://www.openstreetmap.org/search?lat=41.703811459356196&lon=-103.34835922605679
         (x: 41.703811459356196, y: -103.34835922605679),
@@ -24,7 +24,7 @@ fn main() -> Result<(), anyhow::Error> {
     ];
 
     snapper
-        .generate_snapshot_from_geometry(line)?
+        .generate_snapshot_from_geometry(line_string)?
         .save("example.png")?;
 
     Ok(())
