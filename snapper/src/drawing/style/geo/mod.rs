@@ -100,7 +100,7 @@ mod macros {
             #[derive(Clone, Debug, PartialEq)]
             pub struct $styled<T: geo::CoordNum = f64>(
                 pub geo::$base<T>,
-                pub crate::drawing::style::Style<$options, $styled<T>>,
+                pub crate::drawing::style::Style<$options, geo::$base<T>>,
             );
 
             impl<T: geo::CoordNum> From<geo::$base<T>> for $styled<T> {
