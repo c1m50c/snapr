@@ -2,7 +2,13 @@ use std::io::Cursor;
 
 use image::{DynamicImage, ImageFormat, ImageReader};
 use reqwest::blocking::ClientBuilder;
-use snapper::{drawing::style::{geo::{Shape, StyledPoint, StyledPointOptions}, ColorOptions, Style}, SnapperBuilder};
+use snapper::{
+    drawing::style::{
+        geo::{Shape, StyledPoint, StyledPointOptions},
+        ColorOptions, Style,
+    },
+    SnapperBuilder,
+};
 use tiny_skia::Color;
 
 fn main() -> Result<(), anyhow::Error> {
@@ -28,11 +34,31 @@ fn main() -> Result<(), anyhow::Error> {
     };
 
     let geometries = vec![
-        StyledPoint(geo::point!(x: 42.85643, y: -103.58290), Style::Dynamic(styler)).into(),
-        StyledPoint(geo::point!(x: 42.82386, y: -103.59335), Style::Dynamic(styler)).into(),
-        StyledPoint(geo::point!(x: 42.82336, y: -103.58356), Style::Dynamic(styler)).into(),
-        StyledPoint(geo::point!(x: 42.86754, y: -103.49842), Style::Dynamic(styler)).into(),
-        StyledPoint(geo::point!(x: 42.85873, y: -103.49636), Style::Dynamic(styler)).into(),
+        StyledPoint(
+            geo::point!(x: 42.85643, y: -103.58290),
+            Style::Dynamic(styler),
+        )
+        .into(),
+        StyledPoint(
+            geo::point!(x: 42.82386, y: -103.59335),
+            Style::Dynamic(styler),
+        )
+        .into(),
+        StyledPoint(
+            geo::point!(x: 42.82336, y: -103.58356),
+            Style::Dynamic(styler),
+        )
+        .into(),
+        StyledPoint(
+            geo::point!(x: 42.86754, y: -103.49842),
+            Style::Dynamic(styler),
+        )
+        .into(),
+        StyledPoint(
+            geo::point!(x: 42.85873, y: -103.49636),
+            Style::Dynamic(styler),
+        )
+        .into(),
     ];
 
     snapper
