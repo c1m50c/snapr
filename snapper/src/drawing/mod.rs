@@ -1,10 +1,17 @@
+use tiny_skia::Pixmap;
+
 use crate::Snapper;
 
-pub use drawable::Drawable;
+pub mod style;
 
-pub mod styled_geo;
-
-mod drawable;
+pub trait Drawable {
+    fn draw(
+        &self,
+        snapper: &Snapper,
+        pixmap: &mut Pixmap,
+        center: geo::Point,
+    ) -> Result<(), crate::Error>;
+}
 
 fn epsg_4326_point_to_pixel_point<T: geo::CoordNum>(
     snapper: &Snapper,
