@@ -53,3 +53,13 @@ Demonstrates how to use the <https://a.tile.osm.org> tile provider with this lib
 # Multiple binaries to show off drawing different geometries.
 cargo run -p "open-street-maps" --bin <line|line_string|point|polygon>
 ```
+
+### [Styling](./examples/styling/)
+
+Demonstrates how to use the styling system with geometries.
+
+#### Running
+
+```shell
+cargo run -p "styling"
+```

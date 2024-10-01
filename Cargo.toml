@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "examples/open-street-maps",
+    "examples/styling",
     "snapper"
 ]
 resolver = "2"
