@@ -466,11 +466,18 @@ where
 {
     fn draw(
         &self,
-        _snapper: &crate::Snapper,
-        _pixmap: &mut tiny_skia::Pixmap,
-        _center: geo::Point,
+        snapper: &crate::Snapper,
+        pixmap: &mut tiny_skia::Pixmap,
+        center: geo::Point,
     ) -> Result<(), crate::Error> {
-        unimplemented!()
+        let StyledMultiPolygon(geometry, options) = &self;
+
+        for polygon in geometry.into_iter() {
+            let styled = StyledPolygon(polygon.clone(), options.polygon_options.clone());
+            styled.draw(snapper, pixmap, center)?;
+        }
+
+        Ok(())
     }
 }
 
