@@ -62,10 +62,25 @@ impl Drawable for Svg {
 }
 
 /// Options used when drawing a label.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct LabelOptions {
     pub color_options: ColorOptions,
+    pub font_family: String,
+    pub font_size: f32,
+    pub offset: (i32, i32),
     pub text: String,
+}
+
+impl Default for LabelOptions {
+    fn default() -> Self {
+        Self {
+            color_options: ColorOptions::default(),
+            font_family: "Arial".to_string(),
+            font_size: 16.0,
+            offset: (0, 12),
+            text: String::default(),
+        }
+    }
 }
 
 impl LabelOptions {
@@ -74,10 +89,14 @@ impl LabelOptions {
         let raw_svg = format!(
             r##"
             <svg xmlns="http://www.w3.org/2000/svg">
-                <text x="0" y="0">{text}</text>
+                <text x="{offset_x}" y="{offset_y}" style="font-family: {font_family:?}; font-size: {font_size}px;">{text}</text>
             </svg>
             "##,
-            text = self.text
+            offset_x = self.offset.0,
+            offset_y = self.offset.1,
+            text = self.text,
+            font_family = self.font_family,
+            font_size = self.font_size,
         );
 
         let mut options = Options::default();
