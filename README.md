@@ -63,3 +63,13 @@ Demonstrates how to use the styling system with geometries.
 ```shell
 cargo run -p "styling"
 ```
+
+### [SVG](./examples/svg/)
+
+Demonstrates how to use `SvgOptions` to draw an SVG on a `StyledPoint`.
+
+#### Running
+
+```shell
+cargo run -p "styling"
+```
