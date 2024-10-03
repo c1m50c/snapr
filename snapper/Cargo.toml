@@ -7,8 +7,18 @@ edition = "2021"
 authors = { workspace = true }
 license = { workspace = true }
 
+[features]
+default = [ "drawing", "rayon", "svg" ]
+drawing = [ "dep:hex", "dep:tiny-skia" ]
+rayon = [ "dep:rayon" ]
+svg = [ "dep:resvg", "drawing" ]
+
 [dependencies]
-anyhow = "1.0.89"
-geo = "0.28.0"
-image = { version = "0.25.2", default-features = false, features = ["jpeg", "png"] }
-thiserror = "1.0.64"
+anyhow = { workspace = true }
+geo = { workspace = true }
+hex = { workspace = true, optional = true }
+image = { workspace = true }
+rayon = { workspace = true, optional = true }
+resvg = { workspace = true, optional = true }
+thiserror = { workspace = true }
+tiny-skia = { workspace = true, optional = true }

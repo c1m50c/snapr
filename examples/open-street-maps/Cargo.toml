@@ -1,0 +1,32 @@
+[package]
+name = "open-street-maps"
+edition = "2021"
+publish = false
+
+# Shared Package Configuration
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+geo = { workspace = true }
+image = { workspace = true }
+reqwest = { version = "0.12.7", features = ["blocking"] }
+snapper = { path = "../../snapper" }
+tiny-skia = { workspace = true }
+
+[[bin]]
+path = "src/line/main.rs"
+name = "line"
+
+[[bin]]
+path = "src/line_string/main.rs"
+name = "line_string"
+
+[[bin]]
+path = "src/point/main.rs"
+name = "point"
+
+[[bin]]
+path = "src/polygon/main.rs"
+name = "polygon"

@@ -1,3 +1,85 @@
 # snapper
 
-Easily generate snapshots of a map with drawn geometries. 
+Flexible and frictionless way to render snapshots of maps with stylized geometries.
+
+## Features
+
+### Flexibility
+
+The [`snapper`](.) crate is designed with extensibility in mind.
+
+#### Examples
+
+##### Drawing
+
+If you think our drawing solution sucks, don't use it! It can simply be disabled by removing the `drawing` feature flag. You can choose how you draw geometries via the `Snapper::generate_snapshot_from_geometries_with_drawer` method.
+
+##### Tiles
+
+We don't provide a default `TileFetcher` because we don't want to make the decision on how you choose to do so. We'll provide examples for common approaches to fetching tiles, but there are many crates and ways to do so, and we don't feel like restricting you to what we think is best. It's up to you how map tiles are fetched for the snapshots.
+
+### Rendering
+
+#### Geometry
+
+Supports rendering all [`Geometry`](https://docs.rs/geo/latest/geo/geometry/enum.Geometry.html) primitives from the [`geo`](https://crates.io/crates/geo) crate out of the box through the `drawing` feature flag.
+
+#### Map
+
+Supports rendering map tiles from just about any tile provider. All tile-fetching is done through the a `TileFetcher` function, which is just a type alias for the following:
+
+```rust
+fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<image::DynamicImage, snapper::Error> {
+    todo!()
+}
+```
+
+See [`examples/open-street-maps/lib.rs`](./examples/open-street-maps/src/lib.rs) for an example implementation of fetching tiles from <https://a.tile.osm.org> using [`reqwest`](https://crates.io/crates/reqwest).
+
+### Styling
+
+Easy to use styling system to control how geometry is drawn.
+Each [`Geometry`](https://docs.rs/geo/latest/geo/geometry/enum.Geometry.html) primitive has a `Styled` counterpart that can be configured for additional aesthetics.
+
+## Examples
+
+### [Label](./examples/label/)
+
+Demonstrates how to use `LabelOptions` to draw a label on a geometry.
+
+#### Running
+
+```shell
+cargo run -p "label"
+```
+
+### [Open Street Maps](./examples/open-street-maps/)
+
+Demonstrates how to use the <https://a.tile.osm.org> tile provider with this library.
+
+#### Running
+
+```shell
+# Multiple binaries to show off drawing different geometries.
+cargo run -p "open-street-maps" --bin <line|line_string|point|polygon>
+```
+
+### [Styling](./examples/styling/)
+
+Demonstrates how to use the styling system with geometries.
+
+#### Running
+
+```shell
+cargo run -p "styling"
+```
+
+### [SVG](./examples/svg/)
+
+Demonstrates how to use `SvgOptions` to draw an SVG on a `StyledPoint`.
+
+#### Running
+
+```shell
+cargo run -p "styling"
+```

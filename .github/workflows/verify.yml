@@ -30,10 +30,10 @@ jobs:
           toolchain: stable
           cache: true
 
-      - name: Verify - `cargo build snapper`
+      - name: Verify - `cargo build`
         run: |
-          cargo build -p snapper --all-features --lib --release --verbose
-          cargo build -p snapper --all-features --lib --verbose
+          cargo build --all-features --release --verbose --workspace
+          cargo build --all-features --verbose --workspace
 
   verify-lints:
     strategy:
@@ -96,7 +96,6 @@ jobs:
           toolchain: stable
           cache: true
 
-      - name: Verify - `cargo test snapper`
+      - name: Verify - `cargo test`
         run: |
-          cargo test snapper --all-features --lib --no-fail-fast --verbose
-          cargo test snapper --all-features --doc --no-fail-fast --verbose
+          cargo test --all-features --no-fail-fast --verbose --workspace

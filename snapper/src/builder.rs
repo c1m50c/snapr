@@ -8,7 +8,7 @@ use crate::{Error, Snapper, TileFetcher};
 /// use image::DynamicImage;
 /// use snapper::SnapperBuilder;
 ///
-/// fn tile_fetcher(x: u32, y: u32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
+/// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
 ///     todo!()
 /// }
 ///
@@ -81,7 +81,7 @@ impl SnapperBuilder {
     /// use image::DynamicImage;
     /// use snapper::SnapperBuilder;
     ///
-    /// fn tile_fetcher(x: u32, y: u32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
+    /// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
     ///     todo!()
     /// }
     ///
@@ -102,7 +102,7 @@ impl SnapperBuilder {
         let tile_size = self.tile_size.unwrap_or(256);
         let height = self.height.unwrap_or(600);
         let width = self.width.unwrap_or(800);
-        let zoom = self.zoom.unwrap_or(15);
+        let zoom = self.zoom;
 
         let snapper = Snapper {
             tile_fetcher,
