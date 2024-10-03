@@ -62,17 +62,18 @@ where
         snapper: &Snapper,
         pixmap: &mut Pixmap,
         center: geo::Point,
+        zoom: u8,
     ) -> Result<(), crate::Error> {
         match self {
-            Self::Point(geometry) => geometry.draw(snapper, pixmap, center),
-            Self::Line(geometry) => geometry.draw(snapper, pixmap, center),
-            Self::LineString(geometry) => geometry.draw(snapper, pixmap, center),
-            Self::Polygon(geometry) => geometry.draw(snapper, pixmap, center),
-            Self::MultiPoint(geometry) => geometry.draw(snapper, pixmap, center),
-            Self::MultiLineString(geometry) => geometry.draw(snapper, pixmap, center),
-            Self::MultiPolygon(geometry) => geometry.draw(snapper, pixmap, center),
-            Self::Rect(geometry) => geometry.draw(snapper, pixmap, center),
-            Self::Triangle(geometry) => geometry.draw(snapper, pixmap, center),
+            Self::Point(geometry) => geometry.draw(snapper, pixmap, center, zoom),
+            Self::Line(geometry) => geometry.draw(snapper, pixmap, center, zoom),
+            Self::LineString(geometry) => geometry.draw(snapper, pixmap, center, zoom),
+            Self::Polygon(geometry) => geometry.draw(snapper, pixmap, center, zoom),
+            Self::MultiPoint(geometry) => geometry.draw(snapper, pixmap, center, zoom),
+            Self::MultiLineString(geometry) => geometry.draw(snapper, pixmap, center, zoom),
+            Self::MultiPolygon(geometry) => geometry.draw(snapper, pixmap, center, zoom),
+            Self::Rect(geometry) => geometry.draw(snapper, pixmap, center, zoom),
+            Self::Triangle(geometry) => geometry.draw(snapper, pixmap, center, zoom),
         }
     }
 }

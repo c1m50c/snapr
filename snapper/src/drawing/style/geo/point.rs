@@ -50,11 +50,12 @@ where
         snapper: &Snapper,
         pixmap: &mut Pixmap,
         center: geo::Point,
+        zoom: u8,
     ) -> Result<(), crate::Error> {
         let StyledPoint(geometry, style) = &self;
         let options = style.options(self);
 
-        let point = epsg_4326_point_to_pixel_point(snapper, center, geometry)?;
+        let point = epsg_4326_point_to_pixel_point(snapper, zoom, center, geometry)?;
 
         let shape = match &options.representation {
             Representation::Shape(shape) => shape,
@@ -62,7 +63,7 @@ where
             #[cfg(feature = "svg")]
             Representation::Svg(svg) => {
                 let svg = svg.try_as_svg((point.x(), point.y()))?;
-                svg.draw(snapper, pixmap, center)?;
+                svg.draw(snapper, pixmap, center, zoom)?;
 
                 return Ok(());
             }
@@ -102,7 +103,7 @@ where
         #[cfg(feature = "svg")]
         if let Some(label_options) = &options.label_options {
             let svg = label_options.try_as_svg((point.x(), point.y()))?;
-            svg.draw(snapper, pixmap, center)?;
+            svg.draw(snapper, pixmap, center, zoom)?;
         }
 
         Ok(())
@@ -126,13 +127,14 @@ where
         snapper: &Snapper,
         pixmap: &mut Pixmap,
         center: geo::Point,
+        zoom: u8,
     ) -> Result<(), crate::Error> {
         let StyledMultiPoint(geometry, style) = &self;
         let options = style.options(self);
 
         for point in geometry.into_iter() {
             let styled = StyledPoint(*point, Style::Static(options.point_options.clone()));
-            styled.draw(snapper, pixmap, center)?;
+            styled.draw(snapper, pixmap, center, zoom)?;
         }
 
         Ok(())

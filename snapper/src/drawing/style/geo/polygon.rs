@@ -50,6 +50,7 @@ where
         snapper: &Snapper,
         pixmap: &mut Pixmap,
         center: geo::Point,
+        zoom: u8,
     ) -> Result<(), crate::Error> {
         let StyledPolygon(geometry, style) = &self;
         let options = style.options(self);
@@ -57,7 +58,7 @@ where
         let converted_points = geometry
             .exterior()
             .points()
-            .flat_map(|point| epsg_4326_point_to_pixel_point(snapper, center, &point))
+            .flat_map(|point| epsg_4326_point_to_pixel_point(snapper, zoom, center, &point))
             .enumerate();
 
         let mut path_builder = PathBuilder::new();
@@ -124,7 +125,7 @@ where
 
         geometry.exterior().points().try_for_each(|point| {
             StyledPoint(point, Style::Static(options.point_options.clone()))
-                .draw(snapper, pixmap, center)
+                .draw(snapper, pixmap, center, zoom)
         })?;
 
         Ok(())
@@ -148,6 +149,7 @@ where
         snapper: &Snapper,
         pixmap: &mut Pixmap,
         center: geo::Point,
+        zoom: u8,
     ) -> Result<(), crate::Error> {
         let StyledMultiPolygon(geometry, style) = &self;
         let options = style.options(self);
@@ -157,7 +159,7 @@ where
                 polygon.clone(),
                 Style::Static(options.polygon_options.clone()),
             );
-            styled.draw(snapper, pixmap, center)?;
+            styled.draw(snapper, pixmap, center, zoom)?;
         }
 
         Ok(())
@@ -181,6 +183,7 @@ where
         snapper: &Snapper,
         pixmap: &mut Pixmap,
         center: geo::Point,
+        zoom: u8,
     ) -> Result<(), crate::Error> {
         let StyledRect(geometry, style) = &self;
         let options = style.options(self);
@@ -189,7 +192,7 @@ where
             geometry.to_polygon(),
             Style::Static(options.polygon_options.clone()),
         );
-        polygon.draw(snapper, pixmap, center)?;
+        polygon.draw(snapper, pixmap, center, zoom)?;
 
         Ok(())
     }
@@ -212,6 +215,7 @@ where
         snapper: &Snapper,
         pixmap: &mut Pixmap,
         center: geo::Point,
+        zoom: u8,
     ) -> Result<(), crate::Error> {
         let StyledTriangle(geometry, style) = &self;
         let options = style.options(self);
@@ -220,7 +224,7 @@ where
             geometry.to_polygon(),
             Style::Static(options.polygon_options.clone()),
         );
-        polygon.draw(snapper, pixmap, center)?;
+        polygon.draw(snapper, pixmap, center, zoom)?;
 
         Ok(())
     }

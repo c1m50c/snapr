@@ -102,7 +102,7 @@ impl SnapperBuilder {
         let tile_size = self.tile_size.unwrap_or(256);
         let height = self.height.unwrap_or(600);
         let width = self.width.unwrap_or(800);
-        let zoom = self.zoom.unwrap_or(15);
+        let zoom = self.zoom;
 
         let snapper = Snapper {
             tile_fetcher,

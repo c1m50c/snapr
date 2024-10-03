@@ -54,6 +54,7 @@ pub trait Drawable {
         snapper: &Snapper,
         pixmap: &mut Pixmap,
         center: geo::Point,
+        zoom: u8,
     ) -> Result<(), crate::Error>;
 }
 
@@ -61,6 +62,7 @@ pub trait Drawable {
 /// Used as a shortcut in converting coordinates during drawing.
 pub fn epsg_4326_point_to_pixel_point<T: geo::CoordNum>(
     snapper: &Snapper,
+    zoom: u8,
     center: geo::Point<f64>,
     point: &geo::Point<T>,
 ) -> Result<geo::Point<i32>, crate::Error> {
@@ -74,5 +76,5 @@ pub fn epsg_4326_point_to_pixel_point<T: geo::CoordNum>(
         .to_f64()
         .ok_or(crate::Error::PrimitiveNumberConversion)?;
 
-    Ok(snapper.epsg_4326_to_pixel(center, geo::point!(x: x, y: y)))
+    Ok(snapper.epsg_4326_to_pixel(zoom, center, geo::point!(x: x, y: y)))
 }

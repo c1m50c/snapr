@@ -2,7 +2,7 @@
 
 use std::f64::consts::PI;
 
-use geo::{Centroid, MapCoords};
+use geo::{BoundingRect, Centroid, Coord, MapCoords};
 use image::imageops::overlay;
 use thiserror::Error;
 use tiny_skia::Pixmap;
@@ -76,7 +76,7 @@ pub struct Snapper {
     width: u32,
 
     /// Zoom level of generated snapshots.
-    zoom: u8,
+    zoom: Option<u8>,
 }
 
 impl Snapper {
@@ -100,10 +100,10 @@ impl Snapper {
 
         self.generate_snapshot_from_geometries_with_drawer(
             geometries,
-            |geometries, snapper, pixmap, center| -> Result<(), Error> {
+            |geometries, snapper, pixmap, center, zoom| -> Result<(), Error> {
                 geometries
                     .into_iter()
-                    .try_for_each(|geometry| geometry.draw(snapper, pixmap, center))?;
+                    .try_for_each(|geometry| geometry.draw(snapper, pixmap, center, zoom))?;
 
                 Ok(())
             },
@@ -119,7 +119,7 @@ impl Snapper {
     ) -> Result<image::RgbaImage, Error>
     where
         G: Clone + Into<geo::Geometry>,
-        D: Fn(Vec<G>, &Self, &mut Pixmap, geo::Point) -> Result<(), Error>,
+        D: Fn(Vec<G>, &Self, &mut Pixmap, geo::Point, u8) -> Result<(), Error>,
     {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
 
@@ -139,8 +139,16 @@ impl Snapper {
             todo!("Return an `Err` or find a suitable default for `geometry_center_point`")
         };
 
-        self.overlay_backing_tiles(&mut output_image, geometry_center_point)?;
-        drawer(geometries, self, &mut pixmap, geometry_center_point)?;
+        let zoom = match self.zoom {
+            Some(zoom) => zoom,
+            None => match geometry_collection.bounding_rect() {
+                Some(bounding_box) => self.zoom_from_geometries(bounding_box),
+                None => todo!("Return an `Err` or find a suitable default for `bounding_box`"),
+            },
+        };
+
+        self.overlay_backing_tiles(&mut output_image, geometry_center_point, zoom)?;
+        drawer(geometries, self, &mut pixmap, geometry_center_point, zoom)?;
 
         let pixmap_image = image::ImageBuffer::from_fn(self.width, self.height, |x, y| {
             let pixel = pixmap.pixel(x, y)
@@ -156,9 +164,9 @@ impl Snapper {
 
     /// Converts a [`EPSG:4326`](https://epsg.io/4326) coordinate to a [`EPSG:3857`](https://epsg.io/3857) reprojection of said coordinate.
     /// Do note, that if you're attempting to use this function to call an XYZ layer you'll need to truncate the given `point` to be [`i32s`](i32).
-    pub fn epsg_4326_to_epsg_3857(&self, point: geo::Point) -> geo::Point {
+    pub fn epsg_4326_to_epsg_3857(zoom: u8, point: geo::Point) -> geo::Point {
         let point_as_rad = point.to_radians();
-        let n = (1 << self.zoom as i32) as f64;
+        let n = (1 << zoom as i32) as f64;
 
         geo::point!(
             x: (n * (point.y() + 180.0) / 360.0),
@@ -167,9 +175,14 @@ impl Snapper {
     }
 
     /// Converts a [`EPSG:4326`](https://epsg.io/4326) coordinate to the corresponding pixel coordinate in a snapshot.
-    pub fn epsg_4326_to_pixel(&self, center: geo::Point, point: geo::Point) -> geo::Point<i32> {
+    pub fn epsg_4326_to_pixel(
+        &self,
+        zoom: u8,
+        center: geo::Point,
+        point: geo::Point,
+    ) -> geo::Point<i32> {
         let epsg_3857_point =
-            self.epsg_4326_to_epsg_3857(point) - self.epsg_4326_to_epsg_3857(center);
+            Self::epsg_4326_to_epsg_3857(zoom, point) - Self::epsg_4326_to_epsg_3857(zoom, center);
 
         geo::point!(
             x: (epsg_3857_point.x().fract() * self.tile_size as f64 + self.width as f64 / 2.0).round() as i32,
@@ -179,10 +192,40 @@ impl Snapper {
 }
 
 impl Snapper {
+    /// Calculates the [`zoom`](Self::zoom) level to use when [`zoom`](Self::zoom) itself is [`None`].
+    fn zoom_from_geometries(&self, bounding_box: geo::Rect) -> u8 {
+        let mut zoom = 1;
+
+        for level in (0..=17).rev() {
+            let bounding_box = bounding_box.map_coords(|coords| {
+                let converted = Self::epsg_4326_to_epsg_3857(level, geo::Point::from(coords));
+
+                Coord {
+                    x: converted.x(),
+                    y: converted.y(),
+                }
+            });
+
+            let distance = geo::coord! { x: bounding_box.max().x - bounding_box.min().x, y: bounding_box.min().y - bounding_box.max().y }
+                * self.tile_size as f64;
+
+            let dimensions = geo::point!(x: self.width as f64, y: self.height as f64).0;
+
+            if distance.x > dimensions.x || distance.y > dimensions.y {
+                continue;
+            }
+
+            zoom = level;
+            break;
+        }
+
+        dbg!(zoom)
+    }
+
     /// Calls the [`tile_fetcher`](Self::tile_fetcher) function with the given coordinates and converts the returned [`image::DynamicImage`] into an [`image::RgbaImage`].
     #[inline(always)]
-    fn get_tile(&self, x: i32, y: i32) -> Result<image::RgbaImage, Error> {
-        let tile = (self.tile_fetcher)(x, y, self.zoom)?.to_rgba8();
+    fn get_tile(&self, x: i32, y: i32, zoom: u8) -> Result<image::RgbaImage, Error> {
+        let tile = (self.tile_fetcher)(x, y, zoom)?.to_rgba8();
 
         if tile.height() != self.tile_size {
             return Err(Error::IncorrectTileSize {
@@ -206,12 +249,13 @@ impl Snapper {
         &self,
         image: &mut image::RgbaImage,
         center: geo::Point,
+        zoom: u8,
     ) -> Result<(), Error> {
         let required_rows = 0.5 * (self.height as f64) / (self.tile_size as f64);
         let required_columns = 0.5 * (self.width as f64) / (self.tile_size as f64);
 
-        let epsg_3857_center = self.epsg_4326_to_epsg_3857(center);
-        let n = 1 << self.zoom as i32;
+        let epsg_3857_center = Self::epsg_4326_to_epsg_3857(zoom, center);
+        let n = 1 << zoom as i32;
 
         let min_x = (epsg_3857_center.x() - required_columns).floor() as i32;
         let min_y = (epsg_3857_center.y() - required_rows).floor() as i32;
@@ -219,7 +263,7 @@ impl Snapper {
         let max_y = (epsg_3857_center.y() + required_rows).ceil() as i32;
 
         let x_y_to_tile = |(x, y): (i32, i32)| -> Result<(image::RgbaImage, i64, i64), Error> {
-            let tile = self.get_tile((x + n) % n, (y + n) % n)?;
+            let tile = self.get_tile((x + n) % n, (y + n) % n, zoom)?;
 
             let tile_coords = (geo::Point::from((x as f64, y as f64)) - epsg_3857_center)
                 .map_coords(|coord| geo::Coord {

@@ -51,12 +51,16 @@ where
         snapper: &Snapper,
         pixmap: &mut Pixmap,
         center: geo::Point,
+        zoom: u8,
     ) -> Result<(), crate::Error> {
         let StyledLine(geometry, style) = &self;
         let options = style.options(self);
 
-        let start_point = epsg_4326_point_to_pixel_point(snapper, center, &geometry.start_point())?;
-        let end_point = epsg_4326_point_to_pixel_point(snapper, center, &geometry.end_point())?;
+        let start_point =
+            epsg_4326_point_to_pixel_point(snapper, zoom, center, &geometry.start_point())?;
+
+        let end_point =
+            epsg_4326_point_to_pixel_point(snapper, zoom, center, &geometry.end_point())?;
 
         let mut path_builder = PathBuilder::new();
         path_builder.move_to(start_point.x() as f32, start_point.y() as f32);
@@ -102,13 +106,13 @@ where
             geometry.start_point(),
             Style::Static(options.start_point_options.clone()),
         )
-        .draw(snapper, pixmap, center)?;
+        .draw(snapper, pixmap, center, zoom)?;
 
         StyledPoint(
             geometry.end_point(),
             Style::Static(options.end_point_options.clone()),
         )
-        .draw(snapper, pixmap, center)?;
+        .draw(snapper, pixmap, center, zoom)?;
 
         Ok(())
     }
@@ -147,13 +151,14 @@ where
         snapper: &Snapper,
         pixmap: &mut Pixmap,
         center: geo::Point,
+        zoom: u8,
     ) -> Result<(), crate::Error> {
         let StyledLineString(geometry, style) = &self;
         let options = style.options(self);
 
         let converted_points = geometry
             .points()
-            .flat_map(|point| epsg_4326_point_to_pixel_point(snapper, center, &point))
+            .flat_map(|point| epsg_4326_point_to_pixel_point(snapper, zoom, center, &point))
             .enumerate();
 
         let mut path_builder = PathBuilder::new();
@@ -202,7 +207,7 @@ where
 
         geometry.points().try_for_each(|point| {
             StyledPoint(point, Style::Static(options.point_options.clone()))
-                .draw(snapper, pixmap, center)
+                .draw(snapper, pixmap, center, zoom)
         })?;
 
         Ok(())
@@ -230,6 +235,7 @@ where
         snapper: &Snapper,
         pixmap: &mut Pixmap,
         center: geo::Point,
+        zoom: u8,
     ) -> Result<(), crate::Error> {
         let StyledMultiLineString(geometry, style) = &self;
         let options = style.options(self);
@@ -239,7 +245,7 @@ where
                 line_string.clone(),
                 Style::Static(options.line_string_options.clone()),
             );
-            styled.draw(snapper, pixmap, center)?;
+            styled.draw(snapper, pixmap, center, zoom)?;
         }
 
         Ok(())

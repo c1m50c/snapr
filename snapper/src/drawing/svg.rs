@@ -43,6 +43,7 @@ impl Drawable for Svg {
         _: &crate::Snapper,
         pixmap: &mut tiny_skia::Pixmap,
         _: geo::Point,
+        _: u8,
     ) -> Result<(), crate::Error> {
         let Svg { pixel, tree } = self;
 
