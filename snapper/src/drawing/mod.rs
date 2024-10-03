@@ -11,8 +11,8 @@
 //! struct PointWrapper(Point<f64>);
 //!
 //! impl Drawable for PointWrapper {
-//!     fn draw(&self, snapper: &Snapper, pixmap: &mut Pixmap, center: Point) -> Result<(), Error> {
-//!         let pixel_point = epsg_4326_point_to_pixel_point(snapper, center, &self.0)?;
+//!     fn draw(&self, snapper: &Snapper, pixmap: &mut Pixmap, center: Point, zoom: u8) -> Result<(), Error> {
+//!         let pixel_point = epsg_4326_point_to_pixel_point(snapper, zoom, center, &self.0)?;
 //!
 //!         let mut path_builder = PathBuilder::new();
 //!         path_builder.push_circle(0.0, 0.0, 3.0);
