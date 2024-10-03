@@ -12,5 +12,5 @@ anyhow = { workspace = true }
 geo = { workspace = true }
 image = { workspace = true }
 reqwest = { version = "0.12.7", features = ["blocking"] }
-snapper = { path = "../../snapper" }
+snapr = { path = "../../snapr" }
 tiny-skia = { workspace = true }

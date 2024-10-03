@@ -1,9 +1,9 @@
 use geo::line_string;
 use open_street_maps::tile_fetcher;
-use snapper::SnapperBuilder;
+use snapr::SnaprBuilder;
 
 fn main() -> Result<(), anyhow::Error> {
-    let snapper = SnapperBuilder::new()
+    let snapr = SnaprBuilder::new()
         .with_tile_fetcher(tile_fetcher)
         .with_tile_size(256)
         .with_zoom(15)
@@ -23,7 +23,7 @@ fn main() -> Result<(), anyhow::Error> {
         (x: 41.702909695820175, y: -103.33250120288363),
     ];
 
-    snapper
+    snapr
         .generate_snapshot_from_geometry(line_string)?
         .save("example.png")?;
 

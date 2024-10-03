@@ -3,11 +3,11 @@ use std::io::Cursor;
 use image::{DynamicImage, ImageFormat, ImageReader};
 use reqwest::blocking::ClientBuilder;
 
-pub fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
+pub fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> {
     let address = format!("https://a.tile.osm.org/{zoom}/{x}/{y}.png");
 
     let client = ClientBuilder::new()
-        .user_agent("snapper / 0.1.0")
+        .user_agent("snapr / 0.1.0")
         .build()
         .map_err(anyhow::Error::from)?;
 

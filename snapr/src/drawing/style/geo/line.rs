@@ -8,7 +8,7 @@ use crate::{
         style::{ColorOptions, Style},
         Drawable,
     },
-    Snapper,
+    Snapr,
 };
 
 use super::{
@@ -48,7 +48,7 @@ where
 {
     fn draw(
         &self,
-        snapper: &Snapper,
+        snapr: &Snapr,
         pixmap: &mut Pixmap,
         center: geo::Point,
         zoom: u8,
@@ -57,10 +57,9 @@ where
         let options = style.options(self);
 
         let start_point =
-            epsg_4326_point_to_pixel_point(snapper, zoom, center, &geometry.start_point())?;
+            epsg_4326_point_to_pixel_point(snapr, zoom, center, &geometry.start_point())?;
 
-        let end_point =
-            epsg_4326_point_to_pixel_point(snapper, zoom, center, &geometry.end_point())?;
+        let end_point = epsg_4326_point_to_pixel_point(snapr, zoom, center, &geometry.end_point())?;
 
         let mut path_builder = PathBuilder::new();
         path_builder.move_to(start_point.x() as f32, start_point.y() as f32);
@@ -106,13 +105,13 @@ where
             geometry.start_point(),
             Style::Static(options.start_point_options.clone()),
         )
-        .draw(snapper, pixmap, center, zoom)?;
+        .draw(snapr, pixmap, center, zoom)?;
 
         StyledPoint(
             geometry.end_point(),
             Style::Static(options.end_point_options.clone()),
         )
-        .draw(snapper, pixmap, center, zoom)?;
+        .draw(snapr, pixmap, center, zoom)?;
 
         Ok(())
     }
@@ -148,7 +147,7 @@ where
 {
     fn draw(
         &self,
-        snapper: &Snapper,
+        snapr: &Snapr,
         pixmap: &mut Pixmap,
         center: geo::Point,
         zoom: u8,
@@ -158,7 +157,7 @@ where
 
         let converted_points = geometry
             .points()
-            .flat_map(|point| epsg_4326_point_to_pixel_point(snapper, zoom, center, &point))
+            .flat_map(|point| epsg_4326_point_to_pixel_point(snapr, zoom, center, &point))
             .enumerate();
 
         let mut path_builder = PathBuilder::new();
@@ -207,7 +206,7 @@ where
 
         geometry.points().try_for_each(|point| {
             StyledPoint(point, Style::Static(options.point_options.clone()))
-                .draw(snapper, pixmap, center, zoom)
+                .draw(snapr, pixmap, center, zoom)
         })?;
 
         Ok(())
@@ -232,7 +231,7 @@ where
 {
     fn draw(
         &self,
-        snapper: &Snapper,
+        snapr: &Snapr,
         pixmap: &mut Pixmap,
         center: geo::Point,
         zoom: u8,
@@ -245,7 +244,7 @@ where
                 line_string.clone(),
                 Style::Static(options.line_string_options.clone()),
             );
-            styled.draw(snapper, pixmap, center, zoom)?;
+            styled.draw(snapr, pixmap, center, zoom)?;
         }
 
         Ok(())

@@ -1,8 +1,8 @@
 use open_street_maps::tile_fetcher;
-use snapper::SnapperBuilder;
+use snapr::SnaprBuilder;
 
 fn main() -> Result<(), anyhow::Error> {
-    let snapper = SnapperBuilder::new()
+    let snapr = SnaprBuilder::new()
         .with_tile_fetcher(tile_fetcher)
         .with_tile_size(256)
         .with_zoom(15)
@@ -26,7 +26,7 @@ fn main() -> Result<(), anyhow::Error> {
         chimney_rock_museum.into(),
     ];
 
-    snapper
+    snapr
         .generate_snapshot_from_geometries(geometries)?
         .save("example.png")?;
 

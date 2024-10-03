@@ -1,4 +1,4 @@
-# snapper
+# snapr
 
 Flexible and frictionless way to render snapshots of maps with stylized geometries.
 
@@ -6,13 +6,13 @@ Flexible and frictionless way to render snapshots of maps with stylized geometri
 
 ### Flexibility
 
-The [`snapper`](.) crate is designed with extensibility in mind.
+The [`snapr`](.) crate is designed with extensibility in mind.
 
 #### Examples
 
 ##### Drawing
 
-If you think our drawing solution sucks, don't use it! It can simply be disabled by removing the `drawing` feature flag. You can choose how you draw geometries via the `Snapper::generate_snapshot_from_geometries_with_drawer` method.
+If you think our drawing solution sucks, don't use it! It can simply be disabled by removing the `drawing` feature flag. You can choose how you draw geometries via the `Snapr::generate_snapshot_from_geometries_with_drawer` method.
 
 ##### Tiles
 
@@ -29,7 +29,7 @@ Supports rendering all [`Geometry`](https://docs.rs/geo/latest/geo/geometry/enum
 Supports rendering map tiles from just about any tile provider. All tile-fetching is done through the a `TileFetcher` function, which is just a type alias for the following:
 
 ```rust
-fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<image::DynamicImage, snapper::Error> {
+fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<image::DynamicImage, snapr::Error> {
     todo!()
 }
 ```

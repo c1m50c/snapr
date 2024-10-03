@@ -8,7 +8,7 @@ use crate::{
         style::{ColorOptions, Style},
         Drawable,
     },
-    Snapper,
+    Snapr,
 };
 
 use super::{
@@ -47,7 +47,7 @@ where
 {
     fn draw(
         &self,
-        snapper: &Snapper,
+        snapr: &Snapr,
         pixmap: &mut Pixmap,
         center: geo::Point,
         zoom: u8,
@@ -58,7 +58,7 @@ where
         let converted_points = geometry
             .exterior()
             .points()
-            .flat_map(|point| epsg_4326_point_to_pixel_point(snapper, zoom, center, &point))
+            .flat_map(|point| epsg_4326_point_to_pixel_point(snapr, zoom, center, &point))
             .enumerate();
 
         let mut path_builder = PathBuilder::new();
@@ -125,7 +125,7 @@ where
 
         geometry.exterior().points().try_for_each(|point| {
             StyledPoint(point, Style::Static(options.point_options.clone()))
-                .draw(snapper, pixmap, center, zoom)
+                .draw(snapr, pixmap, center, zoom)
         })?;
 
         Ok(())
@@ -146,7 +146,7 @@ where
 {
     fn draw(
         &self,
-        snapper: &Snapper,
+        snapr: &Snapr,
         pixmap: &mut Pixmap,
         center: geo::Point,
         zoom: u8,
@@ -159,7 +159,7 @@ where
                 polygon.clone(),
                 Style::Static(options.polygon_options.clone()),
             );
-            styled.draw(snapper, pixmap, center, zoom)?;
+            styled.draw(snapr, pixmap, center, zoom)?;
         }
 
         Ok(())
@@ -180,7 +180,7 @@ where
 {
     fn draw(
         &self,
-        snapper: &Snapper,
+        snapr: &Snapr,
         pixmap: &mut Pixmap,
         center: geo::Point,
         zoom: u8,
@@ -192,7 +192,7 @@ where
             geometry.to_polygon(),
             Style::Static(options.polygon_options.clone()),
         );
-        polygon.draw(snapper, pixmap, center, zoom)?;
+        polygon.draw(snapr, pixmap, center, zoom)?;
 
         Ok(())
     }
@@ -212,7 +212,7 @@ where
 {
     fn draw(
         &self,
-        snapper: &Snapper,
+        snapr: &Snapr,
         pixmap: &mut Pixmap,
         center: geo::Point,
         zoom: u8,
@@ -224,7 +224,7 @@ where
             geometry.to_polygon(),
             Style::Static(options.polygon_options.clone()),
         );
-        polygon.draw(snapper, pixmap, center, zoom)?;
+        polygon.draw(snapr, pixmap, center, zoom)?;
 
         Ok(())
     }

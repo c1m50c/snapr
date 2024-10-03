@@ -2,7 +2,7 @@
 
 use tiny_skia::{Path, PathBuilder, Pixmap};
 
-use crate::{drawing::Drawable, Snapper};
+use crate::{drawing::Drawable, Snapr};
 
 pub use line::*;
 pub use point::*;
@@ -59,21 +59,21 @@ where
 {
     fn draw(
         &self,
-        snapper: &Snapper,
+        snapr: &Snapr,
         pixmap: &mut Pixmap,
         center: geo::Point,
         zoom: u8,
     ) -> Result<(), crate::Error> {
         match self {
-            Self::Point(geometry) => geometry.draw(snapper, pixmap, center, zoom),
-            Self::Line(geometry) => geometry.draw(snapper, pixmap, center, zoom),
-            Self::LineString(geometry) => geometry.draw(snapper, pixmap, center, zoom),
-            Self::Polygon(geometry) => geometry.draw(snapper, pixmap, center, zoom),
-            Self::MultiPoint(geometry) => geometry.draw(snapper, pixmap, center, zoom),
-            Self::MultiLineString(geometry) => geometry.draw(snapper, pixmap, center, zoom),
-            Self::MultiPolygon(geometry) => geometry.draw(snapper, pixmap, center, zoom),
-            Self::Rect(geometry) => geometry.draw(snapper, pixmap, center, zoom),
-            Self::Triangle(geometry) => geometry.draw(snapper, pixmap, center, zoom),
+            Self::Point(geometry) => geometry.draw(snapr, pixmap, center, zoom),
+            Self::Line(geometry) => geometry.draw(snapr, pixmap, center, zoom),
+            Self::LineString(geometry) => geometry.draw(snapr, pixmap, center, zoom),
+            Self::Polygon(geometry) => geometry.draw(snapr, pixmap, center, zoom),
+            Self::MultiPoint(geometry) => geometry.draw(snapr, pixmap, center, zoom),
+            Self::MultiLineString(geometry) => geometry.draw(snapr, pixmap, center, zoom),
+            Self::MultiPolygon(geometry) => geometry.draw(snapr, pixmap, center, zoom),
+            Self::Rect(geometry) => geometry.draw(snapr, pixmap, center, zoom),
+            Self::Triangle(geometry) => geometry.draw(snapr, pixmap, center, zoom),
         }
     }
 }
