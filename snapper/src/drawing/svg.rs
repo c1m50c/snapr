@@ -17,9 +17,12 @@ pub struct SvgOptions {
 impl SvgOptions {
     /// Attempts to convert the [`SvgOptions`] into a valid [`Svg`].
     pub(crate) fn try_as_svg(&self, pixel: (i32, i32)) -> Result<Svg, crate::Error> {
+        let mut options = Options::default();
+        options.fontdb_mut().load_system_fonts();
+
         let svg = Svg {
             pixel,
-            tree: Tree::from_str(&self.svg, &Options::default())?,
+            tree: Tree::from_str(&self.svg, &options)?,
         };
 
         Ok(svg)
@@ -46,7 +49,7 @@ impl Drawable for Svg {
         let (x, y) = *pixel;
 
         render(
-            dbg!(tree),
+            tree,
             Transform::from_translate(
                 x as f32 - (svg_size.width() / 2.0),
                 y as f32 - (svg_size.height() / 2.0),
@@ -77,9 +80,12 @@ impl LabelOptions {
             text = self.text
         );
 
+        let mut options = Options::default();
+        options.fontdb_mut().load_system_fonts();
+
         let svg = Svg {
             pixel,
-            tree: Tree::from_str(&raw_svg, &Options::default())?,
+            tree: Tree::from_str(&raw_svg, &options)?,
         };
 
         Ok(svg)
