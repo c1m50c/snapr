@@ -6,7 +6,7 @@ use crate::{
     drawing::{
         epsg_4326_point_to_pixel_point,
         style::{ColorOptions, Style},
-        svg::SvgOptions,
+        svg::{LabelOptions, SvgOptions},
         Drawable,
     },
     Snapper,
@@ -34,6 +34,9 @@ impl Default for Representation {
 pub struct StyledPointOptions {
     pub color_options: ColorOptions,
     pub representation: Representation,
+
+    #[cfg(feature = "svg")]
+    pub label_options: Option<LabelOptions>,
 }
 
 impl_styled!(Point, StyledPoint, StyledPointOptions);
@@ -94,6 +97,12 @@ where
                 Transform::default(),
                 None,
             );
+        }
+
+        #[cfg(feature = "svg")]
+        if let Some(label_options) = &options.label_options {
+            let svg = label_options.try_as_svg((point.x(), point.y()))?;
+            svg.draw(snapper, pixmap, center)?;
         }
 
         Ok(())
