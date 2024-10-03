@@ -36,7 +36,9 @@ pub enum Error {
     #[error("failed to construct path")]
     PathConstruction,
 
+    /// Transparent errors returned from [`resvg::usvg`] functions.
     #[error(transparent)]
+    #[cfg(feature = "svg")]
     Usvg(#[from] resvg::usvg::Error),
 
     /// Returned when the source of the error cannot be determined.
