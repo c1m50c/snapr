@@ -2,17 +2,17 @@ use std::io::Cursor;
 
 use image::{DynamicImage, ImageFormat, ImageReader};
 use reqwest::blocking::ClientBuilder;
-use snapper::{
+use snapr::{
     drawing::style::{
         geo::{Representation, Shape, StyledPoint, StyledPointOptions},
         ColorOptions, Style,
     },
-    SnapperBuilder,
+    SnaprBuilder,
 };
 use tiny_skia::Color;
 
 fn main() -> Result<(), anyhow::Error> {
-    let snapper = SnapperBuilder::new()
+    let snapr = SnaprBuilder::new()
         .with_tile_fetcher(tile_fetcher)
         .with_tile_size(256)
         .with_zoom(12)
@@ -61,18 +61,18 @@ fn main() -> Result<(), anyhow::Error> {
         .into(),
     ];
 
-    snapper
+    snapr
         .generate_snapshot_from_geometries(geometries)?
         .save("example.png")?;
 
     Ok(())
 }
 
-fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
+fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> {
     let address = format!("https://a.tile.osm.org/{zoom}/{x}/{y}.png");
 
     let client = ClientBuilder::new()
-        .user_agent("snapper / 0.1.0")
+        .user_agent("snapr / 0.1.0")
         .build()
         .map_err(anyhow::Error::from)?;
 

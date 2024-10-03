@@ -4,15 +4,15 @@
 //!
 //! ```rust
 //! use geo::Point;
-//! use snapper::{drawing::{epsg_4326_point_to_pixel_point, Drawable}, Error, Snapper};
+//! use snapr::{drawing::{epsg_4326_point_to_pixel_point, Drawable}, Error, snapr};
 //! use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Shader, Transform};
 //!
 //! #[derive(Debug)]
 //! struct PointWrapper(Point<f64>);
 //!
 //! impl Drawable for PointWrapper {
-//!     fn draw(&self, snapper: &Snapper, pixmap: &mut Pixmap, center: Point, zoom: u8) -> Result<(), Error> {
-//!         let pixel_point = epsg_4326_point_to_pixel_point(snapper, zoom, center, &self.0)?;
+//!     fn draw(&self, snapr: &snapr, pixmap: &mut Pixmap, center: Point, zoom: u8) -> Result<(), Error> {
+//!         let pixel_point = epsg_4326_point_to_pixel_point(snapr, zoom, center, &self.0)?;
 //!
 //!         let mut path_builder = PathBuilder::new();
 //!         path_builder.push_circle(0.0, 0.0, 3.0);
@@ -35,7 +35,7 @@
 
 use tiny_skia::Pixmap;
 
-use crate::Snapper;
+use crate::Snapr;
 
 pub mod style;
 
@@ -44,14 +44,14 @@ pub mod svg;
 
 /// Represents a _drawable_ object.
 ///
-/// A [`Drawable`] object will _draw_ to the given `pixmap` based on the `snapper` and `center` arguments.
+/// A [`Drawable`] object will _draw_ to the given `pixmap` based on the `snapr` and `center` arguments.
 /// See [`drawing`](self) for more details.
 pub trait Drawable {
     /// Function that's called when its time for an object to be drawn.
     /// See [`Drawable`] for more details.
     fn draw(
         &self,
-        snapper: &Snapper,
+        snapr: &Snapr,
         pixmap: &mut Pixmap,
         center: geo::Point,
         zoom: u8,
@@ -61,7 +61,7 @@ pub trait Drawable {
 /// Converts an [`EPSG:4326`](https://epsg.io/4326) point to one that represents a pixel in a snapshot.
 /// Used as a shortcut in converting coordinates during drawing.
 pub fn epsg_4326_point_to_pixel_point<T: geo::CoordNum>(
-    snapper: &Snapper,
+    snapr: &Snapr,
     zoom: u8,
     center: geo::Point<f64>,
     point: &geo::Point<T>,
@@ -76,5 +76,5 @@ pub fn epsg_4326_point_to_pixel_point<T: geo::CoordNum>(
         .to_f64()
         .ok_or(crate::Error::PrimitiveNumberConversion)?;
 
-    Ok(snapper.epsg_4326_to_pixel(zoom, center, geo::point!(x: x, y: y)))
+    Ok(snapr.epsg_4326_to_pixel(zoom, center, geo::point!(x: x, y: y)))
 }

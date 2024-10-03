@@ -10,7 +10,7 @@ use tiny_skia::Pixmap;
 #[cfg(feature = "drawing")]
 use drawing::style::geo::StyledGeometry;
 
-pub use builder::SnapperBuilder;
+pub use builder::SnaprBuilder;
 pub use {geo, image, tiny_skia};
 
 mod builder;
@@ -18,15 +18,15 @@ mod builder;
 #[cfg(feature = "drawing")]
 pub mod drawing;
 
-/// Error type used throughout the [`snapper`](crate) crate.
+/// Error type used throughout the [`snapr`](crate) crate.
 #[derive(Debug, Error)]
 pub enum Error {
-    /// Returned by [`SnapperBuilder`] when attempting to call [`build`](`SnapperBuilder::build()`) on an incomplete builder.
+    /// Returned by [`snaprBuilder`] when attempting to call [`build`](`snaprBuilder::build()`) on an incomplete builder.
     /// Contains an inner [`reason`](Error::Builder::reason) explaining the specifics of the error.
     #[error("failed to build structure")]
     Builder { reason: String },
 
-    /// Returned by [`Snapper`] when a fetched tile does not match the expected [`tile_size`](Snapper::tile_size).
+    /// Returned by [`snapr`] when a fetched tile does not match the expected [`tile_size`](snapr::tile_size).
     #[error("incorrect tile size")]
     IncorrectTileSize { expected: u32, received: u32 },
 
@@ -53,16 +53,16 @@ pub enum Error {
 /// ```rust
 /// use image::DynamicImage;
 ///
-/// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
+/// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> {
 ///     todo!()
 /// }
 /// ```
 pub type TileFetcher = fn(i32, i32, u8) -> Result<image::DynamicImage, Error>;
 
 /// Utility structure to generate snapshots.
-/// Should be normally constructed through building with [`SnapperBuilder`].
+/// Should be normally constructed through building with [`SnaprBuilder`].
 #[derive(Debug)]
-pub struct Snapper {
+pub struct Snapr {
     /// Function that returns an image of a map tile at specified coordinates.
     tile_fetcher: TileFetcher,
 
@@ -79,7 +79,7 @@ pub struct Snapper {
     zoom: Option<u8>,
 }
 
-impl Snapper {
+impl Snapr {
     /// Returns a snapshot centered around the provided `geometry`.
     #[cfg(feature = "drawing")]
     pub fn generate_snapshot_from_geometry<G>(&self, geometry: G) -> Result<image::RgbaImage, Error>
@@ -100,10 +100,10 @@ impl Snapper {
 
         self.generate_snapshot_from_geometries_with_drawer(
             geometries,
-            |geometries, snapper, pixmap, center, zoom| -> Result<(), Error> {
+            |geometries, snapr, pixmap, center, zoom| -> Result<(), Error> {
                 geometries
                     .into_iter()
-                    .try_for_each(|geometry| geometry.draw(snapper, pixmap, center, zoom))?;
+                    .try_for_each(|geometry| geometry.draw(snapr, pixmap, center, zoom))?;
 
                 Ok(())
             },
@@ -191,7 +191,7 @@ impl Snapper {
     }
 }
 
-impl Snapper {
+impl Snapr {
     /// Calculates the [`zoom`](Self::zoom) level to use when [`zoom`](Self::zoom) itself is [`None`].
     fn zoom_from_geometries(&self, bounding_box: geo::Rect) -> u8 {
         let mut zoom = 1;

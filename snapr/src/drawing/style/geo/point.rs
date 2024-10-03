@@ -9,7 +9,7 @@ use crate::{
         svg::{LabelOptions, SvgOptions},
         Drawable,
     },
-    Snapper,
+    Snapr,
 };
 
 use super::{macros::impl_styled, Shape};
@@ -47,7 +47,7 @@ where
 {
     fn draw(
         &self,
-        snapper: &Snapper,
+        snapr: &Snapr,
         pixmap: &mut Pixmap,
         center: geo::Point,
         zoom: u8,
@@ -55,7 +55,7 @@ where
         let StyledPoint(geometry, style) = &self;
         let options = style.options(self);
 
-        let point = epsg_4326_point_to_pixel_point(snapper, zoom, center, geometry)?;
+        let point = epsg_4326_point_to_pixel_point(snapr, zoom, center, geometry)?;
 
         let shape = match &options.representation {
             Representation::Shape(shape) => shape,
@@ -63,7 +63,7 @@ where
             #[cfg(feature = "svg")]
             Representation::Svg(svg) => {
                 let svg = svg.try_as_svg((point.x(), point.y()))?;
-                svg.draw(snapper, pixmap, center, zoom)?;
+                svg.draw(snapr, pixmap, center, zoom)?;
 
                 return Ok(());
             }
@@ -103,7 +103,7 @@ where
         #[cfg(feature = "svg")]
         if let Some(label_options) = &options.label_options {
             let svg = label_options.try_as_svg((point.x(), point.y()))?;
-            svg.draw(snapper, pixmap, center, zoom)?;
+            svg.draw(snapr, pixmap, center, zoom)?;
         }
 
         Ok(())
@@ -124,7 +124,7 @@ where
 {
     fn draw(
         &self,
-        snapper: &Snapper,
+        snapr: &Snapr,
         pixmap: &mut Pixmap,
         center: geo::Point,
         zoom: u8,
@@ -134,7 +134,7 @@ where
 
         for point in geometry.into_iter() {
             let styled = StyledPoint(*point, Style::Static(options.point_options.clone()));
-            styled.draw(snapper, pixmap, center, zoom)?;
+            styled.draw(snapr, pixmap, center, zoom)?;
         }
 
         Ok(())

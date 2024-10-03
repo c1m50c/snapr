@@ -4,7 +4,9 @@ use resvg::{
     render,
     usvg::{Options, Tree},
 };
-use tiny_skia::Transform;
+use tiny_skia::{Pixmap, Transform};
+
+use crate::Snapr;
 
 use super::{style::ColorOptions, Drawable};
 
@@ -40,8 +42,8 @@ pub(crate) struct Svg {
 impl Drawable for Svg {
     fn draw(
         &self,
-        _: &crate::Snapper,
-        pixmap: &mut tiny_skia::Pixmap,
+        _: &Snapr,
+        pixmap: &mut Pixmap,
         _: geo::Point,
         _: u8,
     ) -> Result<(), crate::Error> {

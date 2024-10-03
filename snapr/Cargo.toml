@@ -1,7 +1,11 @@
 [package]
-name = "snapper"
+name = "snapr"
 version = "0.1.0"
 edition = "2021"
+description = "Flexible and frictionless way to render snapshots of maps with stylized geometries."
+categories = ["science::geo"]
+keywords = ["geo", "geography", "geospatial", "maps"]
+repository = "https://github.com/c1m50c/snapr"
 
 # Shared Package Configuration
 authors = { workspace = true }

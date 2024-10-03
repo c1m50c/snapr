@@ -4,7 +4,7 @@ members = [
     "examples/open-street-maps",
     "examples/styling",
     "examples/svg",
-    "snapper",
+    "snapr",
 ]
 resolver = "2"
 

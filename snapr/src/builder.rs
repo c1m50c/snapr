@@ -1,25 +1,25 @@
-use crate::{Error, Snapper, TileFetcher};
+use crate::{Error, Snapr, TileFetcher};
 
-/// Builder structure for [`Snapper`].
+/// Builder structure for [`snapr`].
 ///
 /// ## Example
 ///
 /// ```rust
 /// use image::DynamicImage;
-/// use snapper::SnapperBuilder;
+/// use snapr::SnaprBuilder;
 ///
-/// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
+/// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> {
 ///     todo!()
 /// }
 ///
-/// let snapper = SnapperBuilder::new()
+/// let snapr = SnaprBuilder::new()
 ///     .with_tile_fetcher(tile_fetcher)
 ///     .build();
 ///
-/// assert!(snapper.is_ok());
+/// assert!(snapr.is_ok());
 /// ```
 #[derive(Debug, Default)]
-pub struct SnapperBuilder {
+pub struct SnaprBuilder {
     tile_fetcher: Option<TileFetcher>,
     tile_size: Option<u32>,
     height: Option<u32>,
@@ -27,13 +27,13 @@ pub struct SnapperBuilder {
     zoom: Option<u8>,
 }
 
-impl SnapperBuilder {
-    /// Constructs a new [`SnapperBuilder`] to be used in constructing a [`Snapper`].
+impl SnaprBuilder {
+    /// Constructs a new [`SnaprBuilder`] to be used in constructing a [`snapr`].
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Configures a [`TileFetcher`] to be used in the [`Snapper::tile_fetcher`] field.
+    /// Configures a [`TileFetcher`] to be used in the [`snapr::tile_fetcher`] field.
     pub fn with_tile_fetcher(self, tile_fetcher: TileFetcher) -> Self {
         Self {
             tile_fetcher: Some(tile_fetcher),
@@ -41,7 +41,7 @@ impl SnapperBuilder {
         }
     }
 
-    /// Configures the `tile_size` to be used in the [`Snapper::tile_size`] field.
+    /// Configures the `tile_size` to be used in the [`snapr::tile_size`] field.
     pub fn with_tile_size(self, tile_size: u32) -> Self {
         Self {
             tile_size: Some(tile_size),
@@ -49,7 +49,7 @@ impl SnapperBuilder {
         }
     }
 
-    /// Configures the `height` to be used in the [`Snapper::height`] field.
+    /// Configures the `height` to be used in the [`snapr::height`] field.
     pub fn with_height(self, height: u32) -> Self {
         Self {
             height: Some(height),
@@ -57,7 +57,7 @@ impl SnapperBuilder {
         }
     }
 
-    /// Configures the `width` to be used in the [`Snapper::width`] field.
+    /// Configures the `width` to be used in the [`snapr::width`] field.
     pub fn with_width(self, width: u32) -> Self {
         Self {
             width: Some(width),
@@ -65,7 +65,7 @@ impl SnapperBuilder {
         }
     }
 
-    /// Configures the `zoom` to be used in the [`Snapper::zoom`] field.
+    /// Configures the `zoom` to be used in the [`snapr::zoom`] field.
     pub fn with_zoom(self, zoom: u8) -> Self {
         Self {
             zoom: Some(zoom),
@@ -73,28 +73,28 @@ impl SnapperBuilder {
         }
     }
 
-    /// Attempts to construct a new [`Snapper`] from the [`SnapperBuilder`].
+    /// Attempts to construct a new [`snapr`] from the [`SnaprBuilder`].
     ///
     /// ## Example
     ///
     /// ```rust
     /// use image::DynamicImage;
-    /// use snapper::SnapperBuilder;
+    /// use snapr::SnaprBuilder;
     ///
-    /// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapper::Error> {
+    /// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> {
     ///     todo!()
     /// }
     ///
-    /// let snapper = SnapperBuilder::new()
+    /// let snapr = SnaprBuilder::new()
     ///     .with_tile_fetcher(tile_fetcher)
     ///     .build();
     ///
-    /// assert!(snapper.is_ok());
+    /// assert!(snapr.is_ok());
     /// ```
-    pub fn build(self) -> Result<Snapper, Error> {
+    pub fn build(self) -> Result<Snapr, Error> {
         let Some(tile_fetcher) = self.tile_fetcher else {
             return Err(Error::Builder {
-                reason: "field `tile_fetcher` needs to be set prior to a `Snapper` being built"
+                reason: "field `tile_fetcher` needs to be set prior to a `snapr` being built"
                     .to_string(),
             });
         };
@@ -104,7 +104,7 @@ impl SnapperBuilder {
         let width = self.width.unwrap_or(800);
         let zoom = self.zoom;
 
-        let snapper = Snapper {
+        let snapr = Snapr {
             tile_fetcher,
             tile_size,
             height,
@@ -112,6 +112,6 @@ impl SnapperBuilder {
             zoom,
         };
 
-        Ok(snapper)
+        Ok(snapr)
     }
 }
