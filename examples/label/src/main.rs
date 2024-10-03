@@ -6,7 +6,7 @@ use snapper::{
     drawing::{
         style::{
             geo::{StyledPoint, StyledPointOptions},
-            Style,
+            ColorOptions, Style,
         },
         svg::LabelOptions,
     },
@@ -22,6 +22,10 @@ fn main() -> Result<(), anyhow::Error> {
 
     let style = StyledPointOptions {
         label_options: Some(LabelOptions {
+            color_options: ColorOptions {
+                border: Some(1.5),
+                ..Default::default()
+            },
             text: "Water".to_string(),
             ..Default::default()
         }),

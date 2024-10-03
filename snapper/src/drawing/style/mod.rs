@@ -42,6 +42,36 @@ pub struct ColorOptions {
     pub border: Option<f32>,
 }
 
+impl ColorOptions {
+    /// Converts the [`foreground`](Self::foreground) to a color hex code.
+    pub fn foreground_as_hex_code(&self) -> String {
+        let u8_color = self.foreground.to_color_u8();
+
+        let array = [
+            u8_color.red(),
+            u8_color.green(),
+            u8_color.blue(),
+            u8_color.alpha(),
+        ];
+
+        format!("#{hex}", hex = hex::encode(&array))
+    }
+
+    /// Converts the [`background`](Self::background) to a color hex code.
+    pub fn background_as_hex_code(&self) -> String {
+        let u8_color = self.background.to_color_u8();
+
+        let array = [
+            u8_color.red(),
+            u8_color.green(),
+            u8_color.blue(),
+            u8_color.alpha(),
+        ];
+
+        format!("#{hex}", hex = hex::encode(&array))
+    }
+}
+
 impl Default for ColorOptions {
     fn default() -> Self {
         Self {

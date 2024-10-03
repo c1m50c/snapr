@@ -11,6 +11,7 @@ use super::{style::ColorOptions, Drawable};
 /// Options used when constructing a [`Drawable`] SVG.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct SvgOptions {
+    pub offset: (i32, i32),
     pub svg: String,
 }
 
@@ -21,7 +22,7 @@ impl SvgOptions {
         options.fontdb_mut().load_system_fonts();
 
         let svg = Svg {
-            pixel,
+            pixel: (pixel.0 - self.offset.0, pixel.1 - self.offset.1),
             tree: Tree::from_str(&self.svg, &options)?,
         };
 
@@ -89,21 +90,22 @@ impl LabelOptions {
         let raw_svg = format!(
             r##"
             <svg xmlns="http://www.w3.org/2000/svg">
-                <text x="{offset_x}" y="{offset_y}" style="font-family: {font_family:?}; font-size: {font_size}px;">{text}</text>
+                <text style="fill: {foreground}; font-family: '{font_family}'; font-size: {font_size}px; paint-order: stroke; stroke: {background}; stroke-width: {border}px;">{text}</text>
             </svg>
             "##,
-            offset_x = self.offset.0,
-            offset_y = self.offset.1,
-            text = self.text,
+            foreground = self.color_options.foreground_as_hex_code(),
             font_family = self.font_family,
             font_size = self.font_size,
+            background = self.color_options.background_as_hex_code(),
+            border = self.color_options.border.unwrap_or(0.0),
+            text = self.text,
         );
 
         let mut options = Options::default();
         options.fontdb_mut().load_system_fonts();
 
         let svg = Svg {
-            pixel,
+            pixel: (pixel.0 - self.offset.0, pixel.1 - self.offset.1),
             tree: Tree::from_str(&raw_svg, &options)?,
         };
 

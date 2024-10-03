@@ -46,6 +46,7 @@ fn main() -> Result<(), anyhow::Error> {
     let style = StyledPointOptions {
         representation: Representation::Svg(SvgOptions {
             svg: SVG.to_string(),
+            ..Default::default()
         }),
         ..Default::default()
     };
