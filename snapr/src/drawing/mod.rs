@@ -4,14 +4,14 @@
 //!
 //! ```rust
 //! use geo::Point;
-//! use snapr::{drawing::{epsg_4326_point_to_pixel_point, Drawable}, Error, snapr};
+//! use snapr::{drawing::{epsg_4326_point_to_pixel_point, Drawable}, Error, Snapr};
 //! use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Shader, Transform};
 //!
 //! #[derive(Debug)]
 //! struct PointWrapper(Point<f64>);
 //!
 //! impl Drawable for PointWrapper {
-//!     fn draw(&self, snapr: &snapr, pixmap: &mut Pixmap, center: Point, zoom: u8) -> Result<(), Error> {
+//!     fn draw(&self, snapr: &Snapr, pixmap: &mut Pixmap, center: Point, zoom: u8) -> Result<(), Error> {
 //!         let pixel_point = epsg_4326_point_to_pixel_point(snapr, zoom, center, &self.0)?;
 //!
 //!         let mut path_builder = PathBuilder::new();

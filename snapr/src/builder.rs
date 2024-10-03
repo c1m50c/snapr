@@ -28,12 +28,12 @@ pub struct SnaprBuilder {
 }
 
 impl SnaprBuilder {
-    /// Constructs a new [`SnaprBuilder`] to be used in constructing a [`snapr`].
+    /// Constructs a new [`SnaprBuilder`] to be used in constructing a [`Snapr`].
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Configures a [`TileFetcher`] to be used in the [`snapr::tile_fetcher`] field.
+    /// Configures a [`TileFetcher`] to be used in the [`Snapr::tile_fetcher`] field.
     pub fn with_tile_fetcher(self, tile_fetcher: TileFetcher) -> Self {
         Self {
             tile_fetcher: Some(tile_fetcher),
@@ -41,7 +41,7 @@ impl SnaprBuilder {
         }
     }
 
-    /// Configures the `tile_size` to be used in the [`snapr::tile_size`] field.
+    /// Configures the `tile_size` to be used in the [`Snapr::tile_size`] field.
     pub fn with_tile_size(self, tile_size: u32) -> Self {
         Self {
             tile_size: Some(tile_size),
@@ -49,7 +49,7 @@ impl SnaprBuilder {
         }
     }
 
-    /// Configures the `height` to be used in the [`snapr::height`] field.
+    /// Configures the `height` to be used in the [`Snapr::height`] field.
     pub fn with_height(self, height: u32) -> Self {
         Self {
             height: Some(height),
@@ -57,7 +57,7 @@ impl SnaprBuilder {
         }
     }
 
-    /// Configures the `width` to be used in the [`snapr::width`] field.
+    /// Configures the `width` to be used in the [`Snapr::width`] field.
     pub fn with_width(self, width: u32) -> Self {
         Self {
             width: Some(width),
@@ -65,7 +65,7 @@ impl SnaprBuilder {
         }
     }
 
-    /// Configures the `zoom` to be used in the [`snapr::zoom`] field.
+    /// Configures the `zoom` to be used in the [`Snapr::zoom`] field.
     pub fn with_zoom(self, zoom: u8) -> Self {
         Self {
             zoom: Some(zoom),
@@ -73,7 +73,7 @@ impl SnaprBuilder {
         }
     }
 
-    /// Attempts to construct a new [`snapr`] from the [`SnaprBuilder`].
+    /// Attempts to construct a new [`Snapr`] from the [`SnaprBuilder`].
     ///
     /// ## Example
     ///

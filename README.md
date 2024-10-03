@@ -12,7 +12,7 @@ The [`snapr`](.) crate is designed with extensibility in mind.
 
 ##### Drawing
 
-If you think our drawing solution sucks, don't use it! It can simply be disabled by removing the `drawing` feature flag. You can choose how you draw geometries via the `snapr::generate_snapshot_from_geometries_with_drawer` method.
+If you think our drawing solution sucks, don't use it! It can simply be disabled by removing the `drawing` feature flag. You can choose how you draw geometries via the `Snapr::generate_snapshot_from_geometries_with_drawer` method.
 
 ##### Tiles
 

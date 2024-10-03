@@ -21,12 +21,12 @@ pub mod drawing;
 /// Error type used throughout the [`snapr`](crate) crate.
 #[derive(Debug, Error)]
 pub enum Error {
-    /// Returned by [`snaprBuilder`] when attempting to call [`build`](`snaprBuilder::build()`) on an incomplete builder.
+    /// Returned by [`SnaprBuilder`] when attempting to call [`build`](`SnaprBuilder::build()`) on an incomplete builder.
     /// Contains an inner [`reason`](Error::Builder::reason) explaining the specifics of the error.
     #[error("failed to build structure")]
     Builder { reason: String },
 
-    /// Returned by [`snapr`] when a fetched tile does not match the expected [`tile_size`](snapr::tile_size).
+    /// Returned by [`Snapr`] when a fetched tile does not match the expected [`tile_size`](Snapr::tile_size).
     #[error("incorrect tile size")]
     IncorrectTileSize { expected: u32, received: u32 },
 
