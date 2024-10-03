@@ -1,3 +1,5 @@
+#![doc = include_str!("../../README.md")]
+
 use std::f64::consts::PI;
 
 use geo::{Centroid, MapCoords};
