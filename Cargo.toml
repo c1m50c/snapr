@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "examples/label",
     "examples/open-street-maps",
     "examples/styling",
     "examples/svg",

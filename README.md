@@ -43,6 +43,16 @@ Each [`Geometry`](https://docs.rs/geo/latest/geo/geometry/enum.Geometry.html) pr
 
 ## Examples
 
+### [Label](./examples/label/)
+
+Demonstrates how to use `LabelOptions` to draw a label on a geometry.
+
+#### Running
+
+```shell
+cargo run -p "label"
+```
+
 ### [Open Street Maps](./examples/open-street-maps/)
 
 Demonstrates how to use the <https://a.tile.osm.org> tile provider with this library.
