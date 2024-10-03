@@ -4,7 +4,7 @@ use image::{DynamicImage, ImageFormat, ImageReader};
 use reqwest::blocking::ClientBuilder;
 use snapper::{
     drawing::style::{
-        geo::{Shape, StyledPoint, StyledPointOptions},
+        geo::{Representation, Shape, StyledPoint, StyledPointOptions},
         ColorOptions, Style,
     },
     SnapperBuilder,
@@ -25,7 +25,7 @@ fn main() -> Result<(), anyhow::Error> {
                     foreground: Color::from_rgba8(248, 128, 16, 255),
                     ..Default::default()
                 },
-                shape: Shape::Circle { radius: 8.0 },
+                representation: Representation::Shape(Shape::Circle { radius: 8.0 }),
                 ..Default::default()
             };
         }

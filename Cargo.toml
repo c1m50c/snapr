@@ -17,5 +17,6 @@ anyhow = "1.0.89"
 geo = "0.28.0"
 image = { version = "0.25.2", default-features = false, features = ["jpeg", "png"] }
 rayon = "1.10.0"
+resvg = "0.44.0"
 thiserror = "1.0.64"
 tiny-skia = { version = "0.11.4", default-features = false, features = ["simd", "std"] }

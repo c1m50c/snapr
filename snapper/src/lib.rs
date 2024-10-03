@@ -34,6 +34,9 @@ pub enum Error {
     #[error("failed to construct path")]
     PathConstruction,
 
+    #[error(transparent)]
+    Usvg(#[from] resvg::usvg::Error),
+
     /// Returned when the source of the error cannot be determined.
     #[error(transparent)]
     Unknown(#[from] anyhow::Error),

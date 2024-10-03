@@ -8,14 +8,16 @@ authors = { workspace = true }
 license = { workspace = true }
 
 [features]
-default = [ "drawing", "rayon" ]
+default = [ "drawing", "rayon", "svg" ]
 drawing = [ "dep:tiny-skia" ]
 rayon = [ "dep:rayon" ]
+svg = [ "dep:resvg", "drawing" ]
 
 [dependencies]
 anyhow = { workspace = true }
 geo = { workspace = true }
 image = { workspace = true }
 rayon = { workspace = true, optional = true }
+resvg = { workspace = true, optional = true }
 thiserror = { workspace = true }
 tiny-skia = { workspace = true, optional = true }

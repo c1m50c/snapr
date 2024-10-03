@@ -6,6 +6,7 @@ use crate::{
     drawing::{
         epsg_4326_point_to_pixel_point,
         style::{ColorOptions, Style},
+        svg::SvgOptions,
         Drawable,
     },
     Snapper,
@@ -13,11 +14,26 @@ use crate::{
 
 use super::{macros::impl_styled, Shape};
 
+/// Options for how a [`StyledPoint`] should be _visually_ represented.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Representation {
+    #[cfg(feature = "svg")]
+    Svg(SvgOptions),
+
+    Shape(Shape),
+}
+
+impl Default for Representation {
+    fn default() -> Self {
+        Self::Shape(Shape::default())
+    }
+}
+
 /// Style options for [`StyledPoint`].
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct StyledPointOptions {
     pub color_options: ColorOptions,
-    pub shape: Shape,
+    pub representation: Representation,
 }
 
 impl_styled!(Point, StyledPoint, StyledPointOptions);
@@ -36,7 +52,20 @@ where
         let options = style.options(self);
 
         let point = epsg_4326_point_to_pixel_point(snapper, center, geometry)?;
-        let shape = options.shape.to_path(point.x() as f32, point.y() as f32)?;
+
+        let shape = match &options.representation {
+            Representation::Shape(shape) => shape,
+
+            #[cfg(feature = "svg")]
+            Representation::Svg(svg) => {
+                let svg = svg.try_as_svg((point.x(), point.y()))?;
+                svg.draw(snapper, pixmap, center)?;
+
+                return Ok(());
+            }
+        };
+
+        let shape = shape.to_path(point.x() as f32, point.y() as f32)?;
 
         pixmap.fill_path(
             &shape,
