@@ -54,7 +54,7 @@ impl ColorOptions {
             u8_color.alpha(),
         ];
 
-        format!("#{hex}", hex = hex::encode(&array))
+        format!("#{hex}", hex = hex::encode(array))
     }
 
     /// Converts the [`background`](Self::background) to a color hex code.
@@ -68,7 +68,7 @@ impl ColorOptions {
             u8_color.alpha(),
         ];
 
-        format!("#{hex}", hex = hex::encode(&array))
+        format!("#{hex}", hex = hex::encode(array))
     }
 }
 
