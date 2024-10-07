@@ -13,5 +13,7 @@ name = "snapr"
 crate-type = ["cdylib"]
 
 [dependencies]
+anyhow = { workspace = true }
+image = { workspace = true }
 pyo3 = "0.22.0"
 snapr = { path = "../snapr" }
