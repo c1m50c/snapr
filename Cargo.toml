@@ -5,6 +5,7 @@ members = [
     "examples/styling",
     "examples/svg",
     "snapr",
+    "snapr-py",
 ]
 resolver = "2"
 
