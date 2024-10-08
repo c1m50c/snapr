@@ -1,35 +1,41 @@
-//! Contains utilities and implementations for stylable [`Drawables`](super::Drawable).
-
-use std::borrow::Cow;
-
 use tiny_skia::Color;
 
-pub mod geo;
+use super::geometry::point::PointStyle;
 
-/// Contains a [`Static`](Style::Static) or [`Dynamic`](Style::Dynamic) style option to be used when _drawing_ [`Drawables`](super::Drawable).
 #[derive(Clone, Debug, PartialEq)]
-pub enum Style<O, P> {
-    /// Represents style options that are static and don't typically change.
-    Static(O),
-
-    /// Represents style options that are dynamic and are fetched via a function.
-    Dynamic(fn(&P) -> O),
+pub enum Style {
+    Point(PointStyle),
+    Line(LineStyle),
+    LineString(LineStringStyle),
+    Polygon(PolygonStyle),
+    Rect(RectStyle),
+    Triangle(TriangleStyle),
 }
 
-impl<O: Default, P> Default for Style<O, P> {
-    fn default() -> Self {
-        Self::Static(O::default())
-    }
-}
+impl Style {
+    /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`PointStyle`].
+    pub fn for_point<'a, I>(styles: I) -> Option<PointStyle>
+    where
+        I: IntoIterator<Item = &'a Self>
+    {
+        let styles = styles.into_iter()
+            .flat_map(|style| match style {
+                Self::Point(style) => Some(style),
+                _ => None,
+            });
 
-impl<O: Clone, P> Style<O, P> {
-    /// Returns the inner option of the [`Style`].
-    #[inline(always)]
-    pub fn options<'a>(&'a self, parent: &P) -> Cow<'a, O> {
-        match self {
-            Self::Static(options) => Cow::Borrowed(options),
-            Self::Dynamic(getter) => Cow::Owned(getter(parent)),
-        }
+        styles.cloned().reduce(|merged, current| {
+            PointStyle {
+                color_options: ColorOptions {
+                    foreground: current.color_options.foreground,
+                    background: current.color_options.background,
+                    anti_alias: current.color_options.anti_alias,
+                    border: current.color_options.border.or(merged.color_options.border)
+                },
+                representation: current.representation,
+                label: current.label.or(merged.label),
+            }
+        })
     }
 }
 

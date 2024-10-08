@@ -33,10 +33,12 @@
 //! }
 //! ```
 
+use style::Style;
 use tiny_skia::Pixmap;
 
 use crate::Snapr;
 
+pub mod geometry;
 pub mod style;
 
 #[cfg(feature = "svg")]
@@ -44,7 +46,7 @@ pub mod svg;
 
 /// Represents a _drawable_ object.
 ///
-/// A [`Drawable`] object will _draw_ to the given `pixmap` based on the `snapr` and `center` arguments.
+/// A [`Drawable`] object will _draw_ to the given `pixmap` based on the given arguments.
 /// See [`drawing`](self) for more details.
 pub trait Drawable {
     /// Function that's called when its time for an object to be drawn.
@@ -52,10 +54,27 @@ pub trait Drawable {
     fn draw(
         &self,
         snapr: &Snapr,
+        styles: &[Style],
         pixmap: &mut Pixmap,
         center: geo::Point,
         zoom: u8,
     ) -> Result<(), crate::Error>;
+}
+
+impl<T> Drawable for geo::Geometry<T>
+where
+    T: geo::CoordNum,
+{
+    fn draw(
+        &self,
+        snapr: &Snapr,
+        styles: &[Style],
+        pixmap: &mut Pixmap,
+        center: geo::Point,
+        zoom: u8,
+    ) -> Result<(), crate::Error> {
+        todo!("Match `self` and call `draw` on each variant")
+    }
 }
 
 /// Converts an [`EPSG:4326`](https://epsg.io/4326) point to one that represents a pixel in a snapshot.
