@@ -1,5 +1,6 @@
 use open_street_maps::tile_fetcher;
 use snapr::SnaprBuilder;
+
 fn main() -> Result<(), anyhow::Error> {
     let snapr = SnaprBuilder::new()
         .with_tile_fetcher(&tile_fetcher)

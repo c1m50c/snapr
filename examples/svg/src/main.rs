@@ -5,10 +5,7 @@ use reqwest::blocking::ClientBuilder;
 use snapr::{
     drawing::{
         geometry::point::{PointStyle, Representation},
-        style::{
-            geo::{Representation, StyledPoint, StyledPointOptions},
-            Style,
-        },
+        style::Style,
         svg::Svg,
     },
     SnaprBuilder,
@@ -44,18 +41,18 @@ fn main() -> Result<(), anyhow::Error> {
         .with_zoom(15)
         .build()?;
 
-    let styles = vec![Style::Point(PointStyle {
+    let style = Style::Point(PointStyle {
         representation: Representation::Svg(Svg {
             offset: (0, 0),
             svg: SVG.to_string(),
         }),
         ..Default::default()
-    })];
+    });
 
     let geometry = geo::point!(x: 41.14974, y: -100.83754);
 
     snapr
-        .generate_snapshot_from_geometry(geometry, &styles)?
+        .generate_snapshot_from_geometry(geometry, &[style])?
         .save("example.png")?;
 
     Ok(())
