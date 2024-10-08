@@ -46,19 +46,13 @@ impl Snapr {
     }
 
     fn generate_snapshot_from_geometry(&self, geometry: Py<PyDict>) -> PyResult<Py<PyByteArray>> {
-        todo!("Call `self.get_snapper` and generate snapshot using the given `geometry`")
+        todo!("Convert `geometry` to a `Py<PyList>` and pass it to `self.generate_snapshot_from_geometries`")
     }
 
     fn generate_snapshot_from_geometries(
         &self,
         geometries: Py<PyList>,
     ) -> PyResult<Py<PyByteArray>> {
-        todo!("Call `self.get_snapper` and generate snapshot using the given `geometries`")
-    }
-}
-
-impl Snapr {
-    fn get_snapper(&self) -> PyResult<::snapr::Snapr> {
         let tile_fetcher = |x, y, zoom| -> Result<DynamicImage, ::snapr::Error> {
             let image_bytes = Python::with_gil(|py| -> PyResult<Vec<u8>> {
                 let bytes: Py<PyByteArray> = self
@@ -87,7 +81,7 @@ impl Snapr {
         };
 
         let builder = SnaprBuilder::new()
-            .with_tile_fetcher(tile_fetcher)
+            .with_tile_fetcher(&tile_fetcher)
             .with_tile_size(self.tile_size)
             .with_height(self.height)
             .with_width(self.width);
@@ -95,13 +89,13 @@ impl Snapr {
         let snapr = match self.zoom {
             Some(zoom) => {
                 let builder = builder.with_zoom(zoom);
-                builder.build()
+                builder.build().map_err(to_py_error)
             }
 
-            None => builder.build(),
-        };
+            None => builder.build().map_err(to_py_error),
+        }?;
 
-        snapr.map_err(to_py_error)
+        todo!("Iterate over over `geometries` and convert them to a `Vec<StyledGeometry>`")
     }
 }
 
