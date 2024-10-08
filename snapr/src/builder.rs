@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{Error, Snapr, TileFetcher};
 
 /// Builder structure for [`snapr`].
@@ -13,28 +15,28 @@ use crate::{Error, Snapr, TileFetcher};
 /// }
 ///
 /// let snapr = SnaprBuilder::new()
-///     .with_tile_fetcher(tile_fetcher)
+///     .with_tile_fetcher(&tile_fetcher)
 ///     .build();
 ///
 /// assert!(snapr.is_ok());
 /// ```
-#[derive(Debug, Default)]
-pub struct SnaprBuilder {
-    tile_fetcher: Option<TileFetcher>,
+#[derive(Default)]
+pub struct SnaprBuilder<'a> {
+    tile_fetcher: Option<TileFetcher<'a>>,
     tile_size: Option<u32>,
     height: Option<u32>,
     width: Option<u32>,
     zoom: Option<u8>,
 }
 
-impl SnaprBuilder {
+impl<'a> SnaprBuilder<'a> {
     /// Constructs a new [`SnaprBuilder`] to be used in constructing a [`Snapr`].
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Configures a [`TileFetcher`] to be used in the [`Snapr::tile_fetcher`] field.
-    pub fn with_tile_fetcher(self, tile_fetcher: TileFetcher) -> Self {
+    pub fn with_tile_fetcher(self, tile_fetcher: TileFetcher<'a>) -> Self {
         Self {
             tile_fetcher: Some(tile_fetcher),
             ..self
@@ -86,12 +88,12 @@ impl SnaprBuilder {
     /// }
     ///
     /// let snapr = SnaprBuilder::new()
-    ///     .with_tile_fetcher(tile_fetcher)
+    ///     .with_tile_fetcher(&tile_fetcher)
     ///     .build();
     ///
     /// assert!(snapr.is_ok());
     /// ```
-    pub fn build(self) -> Result<Snapr, Error> {
+    pub fn build(self) -> Result<Snapr<'a>, Error> {
         let Some(tile_fetcher) = self.tile_fetcher else {
             return Err(Error::Builder {
                 reason: "field `tile_fetcher` needs to be set prior to a `snapr` being built"
@@ -113,5 +115,16 @@ impl SnaprBuilder {
         };
 
         Ok(snapr)
+    }
+}
+
+impl<'a> fmt::Debug for SnaprBuilder<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SnaprBuilder")
+            .field("tile_size", &self.tile_size)
+            .field("height", &self.height)
+            .field("width", &self.width)
+            .field("zoom", &self.zoom)
+            .finish()
     }
 }
