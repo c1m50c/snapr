@@ -24,7 +24,7 @@ fn main() -> Result<(), anyhow::Error> {
     ];
 
     snapr
-        .generate_snapshot_from_geometry(polygon)?
+        .generate_snapshot_from_geometry(polygon, &[])?
         .save("example.png")?;
 
     Ok(())

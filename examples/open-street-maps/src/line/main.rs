@@ -1,5 +1,6 @@
 use open_street_maps::tile_fetcher;
 use snapr::SnaprBuilder;
+
 fn main() -> Result<(), anyhow::Error> {
     let snapr = SnaprBuilder::new()
         .with_tile_fetcher(&tile_fetcher)
@@ -17,7 +18,7 @@ fn main() -> Result<(), anyhow::Error> {
     );
 
     snapr
-        .generate_snapshot_from_geometry(line)?
+        .generate_snapshot_from_geometry(line, &[])?
         .save("example.png")?;
 
     Ok(())

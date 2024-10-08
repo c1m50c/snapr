@@ -4,11 +4,9 @@ use image::{DynamicImage, ImageFormat, ImageReader};
 use reqwest::blocking::ClientBuilder;
 use snapr::{
     drawing::{
-        style::{
-            geo::{Representation, StyledPoint, StyledPointOptions},
-            Style,
-        },
-        svg::SvgOptions,
+        geometry::point::{PointStyle, Representation},
+        style::Style,
+        svg::Svg,
     },
     SnaprBuilder,
 };
@@ -43,21 +41,18 @@ fn main() -> Result<(), anyhow::Error> {
         .with_zoom(15)
         .build()?;
 
-    let style = StyledPointOptions {
-        representation: Representation::Svg(SvgOptions {
+    let style = Style::Point(PointStyle {
+        representation: Representation::Svg(Svg {
+            offset: (0, 0),
             svg: SVG.to_string(),
-            ..Default::default()
         }),
         ..Default::default()
-    };
+    });
 
-    let geometry = StyledPoint(
-        geo::point!(x: 41.14974, y: -100.83754),
-        Style::Static(style),
-    );
+    let geometry = geo::point!(x: 41.14974, y: -100.83754);
 
     snapr
-        .generate_snapshot_from_geometry(geometry)?
+        .generate_snapshot_from_geometry(geometry, &[style])?
         .save("example.png")?;
 
     Ok(())

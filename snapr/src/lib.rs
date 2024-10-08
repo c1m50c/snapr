@@ -8,7 +8,7 @@ use thiserror::Error;
 use tiny_skia::Pixmap;
 
 #[cfg(feature = "drawing")]
-use drawing::style::geo::StyledGeometry;
+use drawing::style::Style;
 
 pub use builder::SnaprBuilder;
 pub use {geo, image, tiny_skia};
@@ -82,19 +82,24 @@ pub struct Snapr<'a> {
 impl<'a> Snapr<'a> {
     /// Returns a snapshot centered around the provided `geometry`.
     #[cfg(feature = "drawing")]
-    pub fn generate_snapshot_from_geometry<G>(&self, geometry: G) -> Result<image::RgbaImage, Error>
+    pub fn generate_snapshot_from_geometry<G>(
+        &self,
+        geometry: G,
+        styles: &[Style],
+    ) -> Result<image::RgbaImage, Error>
     where
-        G: Into<StyledGeometry>,
+        G: Into<geo::Geometry>,
     {
         let geometries = vec![geometry.into()];
-        self.generate_snapshot_from_geometries(geometries)
+        self.generate_snapshot_from_geometries(geometries, styles)
     }
 
     /// Returns a snapshot centered around the provided `geometries`.
     #[cfg(feature = "drawing")]
     pub fn generate_snapshot_from_geometries(
         &self,
-        geometries: Vec<StyledGeometry>,
+        geometries: Vec<geo::Geometry>,
+        styles: &[Style],
     ) -> Result<image::RgbaImage, Error> {
         use drawing::Drawable;
 
@@ -103,7 +108,7 @@ impl<'a> Snapr<'a> {
             |geometries, snapr, pixmap, center, zoom| -> Result<(), Error> {
                 geometries
                     .into_iter()
-                    .try_for_each(|geometry| geometry.draw(snapr, pixmap, center, zoom))?;
+                    .try_for_each(|geometry| geometry.draw(snapr, styles, pixmap, center, zoom))?;
 
                 Ok(())
             },

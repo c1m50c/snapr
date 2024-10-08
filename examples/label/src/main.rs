@@ -3,13 +3,7 @@ use std::io::Cursor;
 use image::{DynamicImage, ImageFormat, ImageReader};
 use reqwest::blocking::ClientBuilder;
 use snapr::{
-    drawing::{
-        style::{
-            geo::{StyledPoint, StyledPointOptions},
-            ColorOptions, Style,
-        },
-        svg::LabelOptions,
-    },
+    drawing::{geometry::point::PointStyle, style::ColorOptions, svg::Label},
     SnaprBuilder,
 };
 
@@ -20,8 +14,8 @@ fn main() -> Result<(), anyhow::Error> {
         .with_zoom(13)
         .build()?;
 
-    let style = StyledPointOptions {
-        label_options: Some(LabelOptions {
+    let style = PointStyle {
+        label: Some(Label {
             color_options: ColorOptions {
                 border: Some(1.5),
                 ..Default::default()
@@ -32,10 +26,10 @@ fn main() -> Result<(), anyhow::Error> {
         ..Default::default()
     };
 
-    let geometry = StyledPoint(geo::point!(x: 41.2551, y: -101.8354), Style::Static(style));
+    let geometry = geo::point!(x: 41.2551, y: -101.8354);
 
     snapr
-        .generate_snapshot_from_geometry(geometry)?
+        .generate_snapshot_from_geometry(geometry, &[style.into()])?
         .save("example.png")?;
 
     Ok(())
