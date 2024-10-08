@@ -3,7 +3,7 @@ use snapr::SnaprBuilder;
 
 fn main() -> Result<(), anyhow::Error> {
     let snapr = SnaprBuilder::new()
-        .with_tile_fetcher(tile_fetcher)
+        .with_tile_fetcher(&tile_fetcher)
         .with_tile_size(256)
         .with_zoom(15)
         .build()?;
