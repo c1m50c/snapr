@@ -95,7 +95,7 @@ impl Drawable for SpatialSvg {
     fn draw(
         &self,
         _: &Snapr,
-        styles: &[Style],
+        _: &[Style],
         pixmap: &mut Pixmap,
         _: geo::Point,
         _: u8,

@@ -4,14 +4,14 @@
 //!
 //! ```rust
 //! use geo::Point;
-//! use snapr::{drawing::{epsg_4326_point_to_pixel_point, Drawable}, Error, Snapr};
+//! use snapr::{drawing::{epsg_4326_point_to_pixel_point, Drawable, style::Style}, Error, Snapr};
 //! use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Shader, Transform};
 //!
 //! #[derive(Debug)]
 //! struct PointWrapper(Point<f64>);
 //!
 //! impl Drawable for PointWrapper {
-//!     fn draw(&self, snapr: &Snapr, pixmap: &mut Pixmap, center: Point, zoom: u8) -> Result<(), Error> {
+//!     fn draw(&self, snapr: &Snapr, _: &[Style], pixmap: &mut Pixmap, center: Point, zoom: u8) -> Result<(), Error> {
 //!         let pixel_point = epsg_4326_point_to_pixel_point(snapr, zoom, center, &self.0)?;
 //!
 //!         let mut path_builder = PathBuilder::new();
@@ -73,7 +73,22 @@ where
         center: geo::Point,
         zoom: u8,
     ) -> Result<(), crate::Error> {
-        todo!("Match `self` and call `draw` on each variant")
+        match self {
+            Self::Point(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
+            Self::Line(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
+            Self::LineString(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
+            Self::Polygon(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
+            Self::MultiPoint(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
+            Self::MultiLineString(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
+            Self::MultiPolygon(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
+
+            Self::GeometryCollection(geometry) => geometry
+                .into_iter()
+                .try_for_each(|geometry| geometry.draw(snapr, styles, pixmap, center, zoom)),
+
+            Self::Rect(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
+            Self::Triangle(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
+        }
     }
 }
 
