@@ -8,22 +8,22 @@ use tiny_skia::{Pixmap, Transform};
 
 use crate::Snapr;
 
-use super::{style::ColorOptions, Drawable};
+use super::{style::{ColorOptions, Style}, Drawable};
 
-/// Options used when constructing a [`Drawable`] SVG.
+/// Configuration structure used to generate a [`Drawable`] SVG.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct SvgOptions {
+pub struct Svg {
     pub offset: (i32, i32),
     pub svg: String,
 }
 
-impl SvgOptions {
+impl Svg {
     /// Attempts to convert the [`SvgOptions`] into a valid [`Svg`].
-    pub(crate) fn try_as_svg(&self, pixel: (i32, i32)) -> Result<Svg, crate::Error> {
+    pub(crate) fn try_as_svg(&self, pixel: (i32, i32)) -> Result<SpatialSvg, crate::Error> {
         let mut options = Options::default();
         options.fontdb_mut().load_system_fonts();
 
-        let svg = Svg {
+        let svg = SpatialSvg {
             pixel: (pixel.0 - self.offset.0, pixel.1 - self.offset.1),
             tree: Tree::from_str(&self.svg, &options)?,
         };
@@ -32,42 +32,9 @@ impl SvgOptions {
     }
 }
 
-/// Represents an SVG that's drawn centered on a certain [`pixel`](Self::pixel).
-#[derive(Clone, Debug)]
-pub(crate) struct Svg {
-    pub(crate) pixel: (i32, i32),
-    pub(crate) tree: Tree,
-}
-
-impl Drawable for Svg {
-    fn draw(
-        &self,
-        _: &Snapr,
-        pixmap: &mut Pixmap,
-        _: geo::Point,
-        _: u8,
-    ) -> Result<(), crate::Error> {
-        let Svg { pixel, tree } = self;
-
-        let svg_size = tree.size();
-        let (x, y) = *pixel;
-
-        render(
-            tree,
-            Transform::from_translate(
-                x as f32 - (svg_size.width() / 2.0),
-                y as f32 - (svg_size.height() / 2.0),
-            ),
-            &mut pixmap.as_mut(),
-        );
-
-        Ok(())
-    }
-}
-
-/// Options used when drawing a label.
+/// Configuration structure used to generate a [`Drawable`] label.
 #[derive(Clone, Debug, PartialEq)]
-pub struct LabelOptions {
+pub struct Label {
     pub color_options: ColorOptions,
     pub font_family: String,
     pub font_size: f32,
@@ -75,7 +42,7 @@ pub struct LabelOptions {
     pub text: String,
 }
 
-impl Default for LabelOptions {
+impl Default for Label {
     fn default() -> Self {
         Self {
             color_options: ColorOptions::default(),
@@ -87,9 +54,9 @@ impl Default for LabelOptions {
     }
 }
 
-impl LabelOptions {
-    /// Attempts to convert the [`LabelOptions`] into a valid [`Svg`].
-    pub(crate) fn try_as_svg(&self, pixel: (i32, i32)) -> Result<Svg, crate::Error> {
+impl Label {
+    /// Attempts to convert the [`LabelStyle`] into a valid [`Svg`].
+    pub(crate) fn try_as_svg(&self, pixel: (i32, i32)) -> Result<SpatialSvg, crate::Error> {
         let raw_svg = format!(
             r##"
             <svg xmlns="http://www.w3.org/2000/svg">
@@ -107,11 +74,46 @@ impl LabelOptions {
         let mut options = Options::default();
         options.fontdb_mut().load_system_fonts();
 
-        let svg = Svg {
+        let svg = SpatialSvg {
             pixel: (pixel.0 - self.offset.0, pixel.1 - self.offset.1),
             tree: Tree::from_str(&raw_svg, &options)?,
         };
 
         Ok(svg)
+    }
+}
+
+
+/// Represents an SVG that's drawn centered on a certain [`pixel`](Self::pixel).
+#[derive(Clone, Debug)]
+pub(crate) struct SpatialSvg {
+    pub(crate) pixel: (i32, i32),
+    pub(crate) tree: Tree,
+}
+
+impl Drawable for SpatialSvg {
+    fn draw(
+        &self,
+        _: &Snapr,
+        styles: &[Style],
+        pixmap: &mut Pixmap,
+        _: geo::Point,
+        _: u8,
+    ) -> Result<(), crate::Error> {
+        let SpatialSvg { pixel, tree } = self;
+
+        let svg_size = tree.size();
+        let (x, y) = *pixel;
+
+        render(
+            tree,
+            Transform::from_translate(
+                x as f32 - (svg_size.width() / 2.0),
+                y as f32 - (svg_size.height() / 2.0),
+            ),
+            &mut pixmap.as_mut(),
+        );
+
+        Ok(())
     }
 }
