@@ -45,13 +45,18 @@ impl Snapr {
         }
     }
 
-    fn generate_snapshot_from_geometry(&self, geometry: Py<PyDict>) -> PyResult<Py<PyByteArray>> {
-        todo!("Convert `geometry` to a `Py<PyList>` and pass it to `self.generate_snapshot_from_geometries`")
+    fn generate_snapshot_from_geometry(
+        &self,
+        py: Python,
+        geometry: &Bound<'_, PyDict>,
+    ) -> PyResult<Py<PyByteArray>> {
+        let geometries = PyList::new_bound(py, [geometry]);
+        self.generate_snapshot_from_geometries(&geometries)
     }
 
     fn generate_snapshot_from_geometries(
         &self,
-        geometries: Py<PyList>,
+        geometries: &Bound<'_, PyList>,
     ) -> PyResult<Py<PyByteArray>> {
         let tile_fetcher = |x, y, zoom| -> Result<DynamicImage, ::snapr::Error> {
             let image_bytes = Python::with_gil(|py| -> PyResult<Vec<u8>> {
