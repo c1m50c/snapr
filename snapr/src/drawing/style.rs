@@ -74,6 +74,24 @@ impl Style {
     }
 }
 
+impl From<PointStyle> for Style {
+    fn from(value: PointStyle) -> Self {
+        Self::Point(value)
+    }
+}
+
+impl From<LineStyle> for Style {
+    fn from(value: LineStyle) -> Self {
+        Self::Line(value)
+    }
+}
+
+impl From<PolygonStyle> for Style {
+    fn from(value: PolygonStyle) -> Self {
+        Self::Polygon(value)
+    }
+}
+
 /// Standard options for coloring [`Drawables`](super::Drawable) found throughout most style options.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ColorOptions {
