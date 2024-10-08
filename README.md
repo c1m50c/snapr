@@ -64,16 +64,6 @@ Demonstrates how to use the <https://a.tile.osm.org> tile provider with this lib
 cargo run -p "open-street-maps" --bin <line|line_string|point|polygon>
 ```
 
-### [Styling](./examples/styling/)
-
-Demonstrates how to use the styling system with geometries.
-
-#### Running
-
-```shell
-cargo run -p "styling"
-```
-
 ### [SVG](./examples/svg/)
 
 Demonstrates how to use `SvgOptions` to draw an SVG on a `StyledPoint`.
