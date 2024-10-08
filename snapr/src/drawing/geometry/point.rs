@@ -1,6 +1,13 @@
 use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
-use crate::{drawing::{epsg_4326_point_to_pixel_point, style::{ColorOptions, Style}, Drawable}, Snapr};
+use crate::{
+    drawing::{
+        epsg_4326_point_to_pixel_point,
+        style::{ColorOptions, Style},
+        Drawable,
+    },
+    Snapr,
+};
 
 /// Represents a _shape_ that can be transformed into a [`Path`] via the [`Shape::to_path`] method.
 #[derive(Clone, Debug, PartialEq)]
@@ -132,8 +139,7 @@ where
         center: geo::Point,
         zoom: u8,
     ) -> Result<(), crate::Error> {
-        self.into_iter().try_for_each(|point| {
-            point.draw(snapr, styles, pixmap, center, zoom)
-        })
+        self.into_iter()
+            .try_for_each(|point| point.draw(snapr, styles, pixmap, center, zoom))
     }
 }

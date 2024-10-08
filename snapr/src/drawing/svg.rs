@@ -8,7 +8,10 @@ use tiny_skia::{Pixmap, Transform};
 
 use crate::Snapr;
 
-use super::{style::{ColorOptions, Style}, Drawable};
+use super::{
+    style::{ColorOptions, Style},
+    Drawable,
+};
 
 /// Configuration structure used to generate a [`Drawable`] SVG.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -82,7 +85,6 @@ impl Label {
         Ok(svg)
     }
 }
-
 
 /// Represents an SVG that's drawn centered on a certain [`pixel`](Self::pixel).
 #[derive(Clone, Debug)]

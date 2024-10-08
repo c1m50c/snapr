@@ -82,7 +82,11 @@ pub struct Snapr<'a> {
 impl<'a> Snapr<'a> {
     /// Returns a snapshot centered around the provided `geometry`.
     #[cfg(feature = "drawing")]
-    pub fn generate_snapshot_from_geometry<G>(&self, geometry: G, styles: &[Style]) -> Result<image::RgbaImage, Error>
+    pub fn generate_snapshot_from_geometry<G>(
+        &self,
+        geometry: G,
+        styles: &[Style],
+    ) -> Result<image::RgbaImage, Error>
     where
         G: Into<geo::Geometry>,
     {

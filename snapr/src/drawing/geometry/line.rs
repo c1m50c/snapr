@@ -3,7 +3,8 @@ use tiny_skia::{Color, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 use crate::{
     drawing::{
         epsg_4326_point_to_pixel_point,
-        style::{ColorOptions, Style}, Drawable,
+        style::{ColorOptions, Style},
+        Drawable,
     },
     Snapr,
 };
@@ -83,7 +84,8 @@ where
             None,
         );
 
-        self.start_point().draw(snapr, styles, pixmap, center, zoom)?;
+        self.start_point()
+            .draw(snapr, styles, pixmap, center, zoom)?;
         self.end_point().draw(snapr, styles, pixmap, center, zoom)?;
 
         Ok(())
@@ -153,9 +155,8 @@ where
             );
         }
 
-        self.points().try_for_each(|point| {
-            point.draw(snapr, styles, pixmap, center, zoom)
-        })?;
+        self.points()
+            .try_for_each(|point| point.draw(snapr, styles, pixmap, center, zoom))?;
 
         Ok(())
     }
@@ -173,8 +174,7 @@ where
         center: geo::Point,
         zoom: u8,
     ) -> Result<(), crate::Error> {
-        self.into_iter().try_for_each(|line_string| {
-            line_string.draw(snapr, styles, pixmap, center, zoom)
-        })
+        self.into_iter()
+            .try_for_each(|line_string| line_string.draw(snapr, styles, pixmap, center, zoom))
     }
 }

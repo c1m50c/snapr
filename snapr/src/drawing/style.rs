@@ -13,72 +13,63 @@ impl Style {
     /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`PointStyle`].
     pub fn for_point<'a, I>(styles: I) -> Option<PointStyle>
     where
-        I: IntoIterator<Item = &'a Self>
+        I: IntoIterator<Item = &'a Self>,
     {
-        let styles = styles.into_iter()
-            .flat_map(|style| match style {
-                Self::Point(style) => Some(style),
-                _ => None,
-            });
+        let styles = styles.into_iter().flat_map(|style| match style {
+            Self::Point(style) => Some(style),
+            _ => None,
+        });
 
-        styles.cloned().reduce(|merged, current| {
-            PointStyle {
-                color_options: ColorOptions {
-                    foreground: current.color_options.foreground,
-                    background: current.color_options.background,
-                    anti_alias: current.color_options.anti_alias,
-                    border: current.color_options.border.or(merged.color_options.border)
-                },
-                representation: current.representation,
-                label: current.label.or(merged.label),
-            }
+        styles.cloned().reduce(|merged, current| PointStyle {
+            color_options: ColorOptions {
+                foreground: current.color_options.foreground,
+                background: current.color_options.background,
+                anti_alias: current.color_options.anti_alias,
+                border: current.color_options.border.or(merged.color_options.border),
+            },
+            representation: current.representation,
+            label: current.label.or(merged.label),
         })
     }
 
     /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`LineStyle`].
     pub fn for_line<'a, I>(styles: I) -> Option<LineStyle>
     where
-        I: IntoIterator<Item = &'a Self>
+        I: IntoIterator<Item = &'a Self>,
     {
-        let styles = styles.into_iter()
-            .flat_map(|style| match style {
-                Self::Line(style) => Some(style),
-                _ => None,
-            });
+        let styles = styles.into_iter().flat_map(|style| match style {
+            Self::Line(style) => Some(style),
+            _ => None,
+        });
 
-        styles.cloned().reduce(|merged, current| {
-            LineStyle {
-                color_options: ColorOptions {
-                    foreground: current.color_options.foreground,
-                    background: current.color_options.background,
-                    anti_alias: current.color_options.anti_alias,
-                    border: current.color_options.border.or(merged.color_options.border)
-                },
-                width: current.width
-            }
+        styles.cloned().reduce(|merged, current| LineStyle {
+            color_options: ColorOptions {
+                foreground: current.color_options.foreground,
+                background: current.color_options.background,
+                anti_alias: current.color_options.anti_alias,
+                border: current.color_options.border.or(merged.color_options.border),
+            },
+            width: current.width,
         })
     }
 
     /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`PolygonStyle`].
     pub fn for_polygon<'a, I>(styles: I) -> Option<PolygonStyle>
     where
-        I: IntoIterator<Item = &'a Self>
+        I: IntoIterator<Item = &'a Self>,
     {
-        let styles = styles.into_iter()
-            .flat_map(|style| match style {
-                Self::Polygon(style) => Some(style),
-                _ => None,
-            });
+        let styles = styles.into_iter().flat_map(|style| match style {
+            Self::Polygon(style) => Some(style),
+            _ => None,
+        });
 
-        styles.cloned().reduce(|merged, current| {
-            PolygonStyle {
-                color_options: ColorOptions {
-                    foreground: current.color_options.foreground,
-                    background: current.color_options.background,
-                    anti_alias: current.color_options.anti_alias,
-                    border: current.color_options.border.or(merged.color_options.border)
-                },
-            }
+        styles.cloned().reduce(|merged, current| PolygonStyle {
+            color_options: ColorOptions {
+                foreground: current.color_options.foreground,
+                background: current.color_options.background,
+                anti_alias: current.color_options.anti_alias,
+                border: current.color_options.border.or(merged.color_options.border),
+            },
         })
     }
 }
