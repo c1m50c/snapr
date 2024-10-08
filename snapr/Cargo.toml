@@ -1,6 +1,6 @@
 [package]
 name = "snapr"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "Flexible and frictionless way to render snapshots of maps with stylized geometries."
 categories = ["science::geo"]
