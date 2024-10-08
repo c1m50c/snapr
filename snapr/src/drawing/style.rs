@@ -1,7 +1,10 @@
+//! Contains utilities for styling [`Drawables`](super::Drawable).
+
 use tiny_skia::Color;
 
 use super::geometry::{line::LineStyle, point::PointStyle, polygon::PolygonStyle};
 
+/// Represents _styles_ that can be applied to [`Drawable`](super::Drawable) objects.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Style {
     Point(PointStyle),

@@ -1,3 +1,5 @@
+//! Contains [`Drawable`] implementations and [`Styles`](Style) for [`geo::Point`]` primitives.
+
 use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::{
@@ -36,6 +38,7 @@ impl Default for Shape {
     }
 }
 
+/// Controls how a [`geo::Point`] will be visualized when drawn.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Representation {
     Shape(Shape),
@@ -50,6 +53,7 @@ impl Default for Representation {
     }
 }
 
+/// A [`Style`] that can be applied to [`geo::Point`] primitives.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct PointStyle {
     pub color_options: ColorOptions,

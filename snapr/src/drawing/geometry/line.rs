@@ -1,3 +1,5 @@
+//! Contains [`Drawable`] implementations and [`Styles`](Style) for [`geo::Line`], and [`geo::LineString`] primitives.
+
 use tiny_skia::{Color, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::{
@@ -9,6 +11,7 @@ use crate::{
     Snapr,
 };
 
+/// A [`Style`] that can be applied to [`geo::Line`] and [`geo::LineString`] primitives.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineStyle {
     pub color_options: ColorOptions,

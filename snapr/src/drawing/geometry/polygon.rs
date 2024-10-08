@@ -1,3 +1,5 @@
+//! Contains [`Drawable`] implementations and [`Styles`](Style) for [`geo::Polygon`], [`geo::Rect`], and [`geo::Triangle`] primitives.
+
 use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::{
@@ -9,6 +11,7 @@ use crate::{
     Snapr,
 };
 
+/// A [`Style`] that can be applied to [`geo::Polygon`], [`geo::Rect`], and [`geo::Triangle`] primitives.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolygonStyle {
     pub color_options: ColorOptions,
