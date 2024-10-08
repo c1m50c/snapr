@@ -1,6 +1,6 @@
 [package]
 name = "snapr"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Flexible and frictionless way to render snapshots of maps with stylized geometries."
 categories = ["science::geo"]
@@ -12,10 +12,10 @@ authors = { workspace = true }
 license = { workspace = true }
 
 [features]
-default = [ "drawing", "rayon", "svg" ]
-drawing = [ "dep:hex", "dep:tiny-skia" ]
-rayon = [ "dep:rayon" ]
-svg = [ "dep:resvg", "drawing" ]
+default = ["drawing", "rayon", "svg"]
+drawing = ["dep:hex", "dep:tiny-skia"]
+rayon = ["dep:rayon"]
+svg = ["dep:resvg", "drawing"]
 
 [dependencies]
 anyhow = { workspace = true }
