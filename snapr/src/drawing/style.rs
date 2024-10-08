@@ -1,15 +1,12 @@
 use tiny_skia::Color;
 
-use super::geometry::point::PointStyle;
+use super::geometry::{line::LineStyle, point::PointStyle};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Style {
     Point(PointStyle),
     Line(LineStyle),
-    LineString(LineStringStyle),
     Polygon(PolygonStyle),
-    Rect(RectStyle),
-    Triangle(TriangleStyle),
 }
 
 impl Style {
@@ -34,6 +31,30 @@ impl Style {
                 },
                 representation: current.representation,
                 label: current.label.or(merged.label),
+            }
+        })
+    }
+
+    /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`LineStyle`].
+    pub fn for_line<'a, I>(styles: I) -> Option<LineStyle>
+    where
+        I: IntoIterator<Item = &'a Self>
+    {
+        let styles = styles.into_iter()
+            .flat_map(|style| match style {
+                Self::Line(style) => Some(style),
+                _ => None,
+            });
+
+        styles.cloned().reduce(|merged, current| {
+            LineStyle {
+                color_options: ColorOptions {
+                    foreground: current.color_options.foreground,
+                    background: current.color_options.background,
+                    anti_alias: current.color_options.anti_alias,
+                    border: current.color_options.border.or(merged.color_options.border)
+                },
+                width: current.width
             }
         })
     }
