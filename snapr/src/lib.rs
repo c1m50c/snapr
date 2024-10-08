@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::f64::consts::PI;
+use std::{f64::consts::PI, fmt};
 
 use geo::{BoundingRect, Centroid, Coord, MapCoords};
 use image::imageops::overlay;
@@ -57,14 +57,14 @@ pub enum Error {
 ///     todo!()
 /// }
 /// ```
-pub type TileFetcher = fn(i32, i32, u8) -> Result<image::DynamicImage, Error>;
+pub type TileFetcher<'a> =
+    &'a (dyn Fn(i32, i32, u8) -> Result<image::DynamicImage, Error> + Send + Sync);
 
 /// Utility structure to generate snapshots.
 /// Should be normally constructed through building with [`SnaprBuilder`].
-#[derive(Debug)]
-pub struct Snapr {
+pub struct Snapr<'a> {
     /// Function that returns an image of a map tile at specified coordinates.
-    tile_fetcher: TileFetcher,
+    tile_fetcher: TileFetcher<'a>,
 
     /// Size of the image returned by the [`tile_fetcher`](Self::tile_fetcher).
     tile_size: u32,
@@ -79,7 +79,7 @@ pub struct Snapr {
     zoom: Option<u8>,
 }
 
-impl Snapr {
+impl<'a> Snapr<'a> {
     /// Returns a snapshot centered around the provided `geometry`.
     #[cfg(feature = "drawing")]
     pub fn generate_snapshot_from_geometry<G>(&self, geometry: G) -> Result<image::RgbaImage, Error>
@@ -191,7 +191,7 @@ impl Snapr {
     }
 }
 
-impl Snapr {
+impl<'a> Snapr<'a> {
     /// Calculates the [`zoom`](Self::zoom) level to use when [`zoom`](Self::zoom) itself is [`None`].
     fn zoom_from_geometries(&self, bounding_box: geo::Rect) -> u8 {
         let mut zoom = 1;
@@ -303,5 +303,16 @@ impl Snapr {
         }
 
         Ok(())
+    }
+}
+
+impl<'a> fmt::Debug for Snapr<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Snapr")
+            .field("tile_size", &self.tile_size)
+            .field("height", &self.height)
+            .field("width", &self.width)
+            .field("zoom", &self.zoom)
+            .finish()
     }
 }
