@@ -18,7 +18,7 @@ class Snapr:
         self, geometries: list[Geometry]
     ) -> bytearray: ...
 
-# region types.rs
+# region geo.rs
 
 class Point:
     def __init__(self, latitude: float, longitude: float) -> None: ...

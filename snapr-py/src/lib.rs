@@ -10,7 +10,7 @@ use pyo3::{
 };
 use utilities::{to_py_error, to_snapr_error};
 
-mod types;
+mod geo;
 mod utilities;
 
 #[derive(Debug)]
@@ -46,7 +46,7 @@ impl Snapr {
     fn generate_snapshot_from_geometry<'py>(
         &self,
         py: Python<'py>,
-        geometry: &Bound<'_, types::PyGeometry>,
+        geometry: &Bound<'_, geo::PyGeometry>,
     ) -> PyResult<Bound<'py, PyByteArray>> {
         let geometries = PyList::new_bound(py, [geometry]);
         self.generate_snapshot_from_geometries(py, &geometries)
@@ -67,13 +67,7 @@ impl Snapr {
                 bytes.extract(py)
             });
 
-            let cursor = match image_bytes {
-                Ok(bytes) => Cursor::new(bytes),
-
-                Err(err) => {
-                    return Err(to_snapr_error(err));
-                }
-            };
+            let cursor = image_bytes.map(Cursor::new).map_err(to_snapr_error)?;
 
             let image = ImageReader::new(cursor)
                 .with_guessed_format()
@@ -101,8 +95,8 @@ impl Snapr {
 
         let geometries = geometries
             .iter()
-            .flat_map(|any| any.extract::<types::PyGeometry>())
-            .map(|geometry| <types::PyGeometry as Into<geo::Geometry>>::into(geometry))
+            .flat_map(|any| any.extract::<geo::PyGeometry>())
+            .map(|geometry| <geo::PyGeometry as Into<::geo::Geometry>>::into(geometry))
             .collect();
 
         let snapshot = snapr
@@ -126,17 +120,17 @@ create_exception!(snapr, SnaprError, PyException);
 fn snapr(py: Python, module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add("SnaprError", py.get_type_bound::<SnaprError>())?;
 
-    module.add_class::<types::PyGeometry>()?;
-    module.add_class::<types::PyGeometryCollection>()?;
-    module.add_class::<types::PyLine>()?;
-    module.add_class::<types::PyLineString>()?;
-    module.add_class::<types::PyMultiLineString>()?;
-    module.add_class::<types::PyMultiPoint>()?;
-    module.add_class::<types::PyMultiPolygon>()?;
-    module.add_class::<types::PyPoint>()?;
-    module.add_class::<types::PyPolygon>()?;
-    module.add_class::<types::PyRect>()?;
-    module.add_class::<types::PyTriangle>()?;
+    module.add_class::<geo::PyGeometry>()?;
+    module.add_class::<geo::PyGeometryCollection>()?;
+    module.add_class::<geo::PyLine>()?;
+    module.add_class::<geo::PyLineString>()?;
+    module.add_class::<geo::PyMultiLineString>()?;
+    module.add_class::<geo::PyMultiPoint>()?;
+    module.add_class::<geo::PyMultiPolygon>()?;
+    module.add_class::<geo::PyPoint>()?;
+    module.add_class::<geo::PyPolygon>()?;
+    module.add_class::<geo::PyRect>()?;
+    module.add_class::<geo::PyTriangle>()?;
     module.add_class::<Snapr>()?;
 
     Ok(())
