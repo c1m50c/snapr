@@ -1,7 +1,7 @@
 use std::io::Cursor;
 
 use ::snapr::SnaprBuilder;
-use image::{DynamicImage, ImageReader};
+use image::{DynamicImage, ImageFormat, ImageReader};
 use pyo3::{
     create_exception,
     exceptions::PyException,
@@ -43,19 +43,20 @@ impl Snapr {
         }
     }
 
-    fn generate_snapshot_from_geometry(
+    fn generate_snapshot_from_geometry<'py>(
         &self,
-        py: Python,
+        py: Python<'py>,
         geometry: &Bound<'_, PyDict>,
-    ) -> PyResult<Py<PyByteArray>> {
+    ) -> PyResult<Bound<'py, PyByteArray>> {
         let geometries = PyList::new_bound(py, [geometry]);
-        self.generate_snapshot_from_geometries(&geometries)
+        self.generate_snapshot_from_geometries(py, &geometries)
     }
 
-    fn generate_snapshot_from_geometries(
+    fn generate_snapshot_from_geometries<'py>(
         &self,
+        py: Python<'py>,
         geometries: &Bound<'_, PyList>,
-    ) -> PyResult<Py<PyByteArray>> {
+    ) -> PyResult<Bound<'py, PyByteArray>> {
         let tile_fetcher = |x, y, zoom| -> Result<DynamicImage, ::snapr::Error> {
             let image_bytes = Python::with_gil(|py| -> PyResult<Vec<u8>> {
                 let bytes: Py<PyByteArray> = self
@@ -98,7 +99,24 @@ impl Snapr {
             None => builder.build().map_err(to_py_error),
         }?;
 
-        todo!("Iterate over over `geometries` and convert them to a `Vec<StyledGeometry>`")
+        let geometries = geometries
+            .iter()
+            .flat_map(|any| any.extract::<types::PyGeometry>())
+            .map(|geometry| <types::PyGeometry as Into<geo::Geometry>>::into(geometry))
+            .collect();
+
+        let snapshot = snapr
+            .generate_snapshot_from_geometries(geometries, &[])
+            .map_err(to_py_error)?;
+
+        // Estimated size of an 800x600 PNG snapshot is `1.44MB`
+        let mut bytes = Vec::with_capacity(1_440_000);
+
+        snapshot
+            .write_to(&mut Cursor::new(&mut bytes), ImageFormat::Png)
+            .map_err(to_py_error)?;
+
+        Ok(PyByteArray::new_bound(py, &bytes))
     }
 }
 
