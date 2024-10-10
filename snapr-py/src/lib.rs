@@ -6,7 +6,7 @@ use pyo3::{
     create_exception,
     exceptions::PyException,
     prelude::*,
-    types::{PyByteArray, PyDict, PyFunction, PyList},
+    types::{PyByteArray, PyFunction, PyList},
 };
 use utilities::{to_py_error, to_snapr_error};
 
@@ -46,7 +46,7 @@ impl Snapr {
     fn generate_snapshot_from_geometry<'py>(
         &self,
         py: Python<'py>,
-        geometry: &Bound<'_, PyDict>,
+        geometry: &Bound<'_, types::PyGeometry>,
     ) -> PyResult<Bound<'py, PyByteArray>> {
         let geometries = PyList::new_bound(py, [geometry]);
         self.generate_snapshot_from_geometries(py, &geometries)
