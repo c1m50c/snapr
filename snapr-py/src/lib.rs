@@ -10,10 +10,8 @@ use pyo3::{
 };
 use utilities::{to_py_error, to_snapr_error};
 
+mod types;
 mod utilities;
-
-/// Python-variant of the [`snapr::TileFetcher`](::snapr::TileFetcher) type.
-type PyTileFetcher = fn(i32, i32, u8) -> PyResult<Py<PyByteArray>>;
 
 #[derive(Debug)]
 #[pyclass]
@@ -109,6 +107,18 @@ create_exception!(snapr, SnaprError, PyException);
 #[pymodule]
 fn snapr(py: Python, module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add("SnaprError", py.get_type_bound::<SnaprError>())?;
+
+    module.add_class::<types::PyGeometry>()?;
+    module.add_class::<types::PyGeometryCollection>()?;
+    module.add_class::<types::PyLine>()?;
+    module.add_class::<types::PyLineString>()?;
+    module.add_class::<types::PyMultiLineString>()?;
+    module.add_class::<types::PyMultiPoint>()?;
+    module.add_class::<types::PyMultiPolygon>()?;
+    module.add_class::<types::PyPoint>()?;
+    module.add_class::<types::PyPolygon>()?;
+    module.add_class::<types::PyRect>()?;
+    module.add_class::<types::PyTriangle>()?;
     module.add_class::<Snapr>()?;
 
     Ok(())
