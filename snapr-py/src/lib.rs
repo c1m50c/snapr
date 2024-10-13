@@ -11,6 +11,7 @@ use pyo3::{
 use utilities::{to_py_error, to_snapr_error};
 
 mod geo;
+mod style;
 mod utilities;
 
 #[derive(Debug)]
@@ -43,19 +44,22 @@ impl Snapr {
         }
     }
 
+    #[pyo3(signature = (geometry, styles = Vec::new()))]
     fn generate_snapshot_from_geometry<'py>(
         &self,
         py: Python<'py>,
-        geometry: &Bound<'_, geo::PyGeometry>,
+        geometry: geo::PyGeometry,
+        styles: Vec<style::PyStyle>,
     ) -> PyResult<Bound<'py, PyByteArray>> {
-        let geometries = PyList::new_bound(py, [geometry]);
-        self.generate_snapshot_from_geometries(py, &geometries)
+        self.generate_snapshot_from_geometries(py, vec![geometry], styles)
     }
 
+    #[pyo3(signature = (geometries, styles = Vec::new()))]
     fn generate_snapshot_from_geometries<'py>(
         &self,
         py: Python<'py>,
-        geometries: &Bound<'_, PyList>,
+        geometries: Vec<geo::PyGeometry>,
+        styles: Vec<style::PyStyle>,
     ) -> PyResult<Bound<'py, PyByteArray>> {
         let tile_fetcher = |x, y, zoom| -> Result<DynamicImage, ::snapr::Error> {
             let image_bytes = Python::with_gil(|py| -> PyResult<Vec<u8>> {
@@ -94,13 +98,17 @@ impl Snapr {
         }?;
 
         let geometries = geometries
-            .iter()
-            .flat_map(|any| any.extract::<geo::PyGeometry>())
-            .map(|geometry| <geo::PyGeometry as Into<::geo::Geometry>>::into(geometry))
+            .into_iter()
+            .map(<geo::PyGeometry as Into<::geo::Geometry>>::into)
             .collect();
 
+        let styles = styles
+            .into_iter()
+            .map(<style::PyStyle as Into<::snapr::drawing::style::Style>>::into)
+            .collect::<Vec<_>>();
+
         let snapshot = snapr
-            .generate_snapshot_from_geometries(geometries, &[])
+            .generate_snapshot_from_geometries(geometries, &styles)
             .map_err(to_py_error)?;
 
         // Estimated size of an 800x600 PNG snapshot is `1.44MB`
@@ -119,6 +127,7 @@ create_exception!(snapr, SnaprError, PyException);
 #[pymodule]
 fn snapr(py: Python, module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add("SnaprError", py.get_type_bound::<SnaprError>())?;
+    module.add_class::<Snapr>()?;
 
     module.add_class::<geo::PyGeometry>()?;
     module.add_class::<geo::PyGeometryCollection>()?;
@@ -131,7 +140,17 @@ fn snapr(py: Python, module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<geo::PyPolygon>()?;
     module.add_class::<geo::PyRect>()?;
     module.add_class::<geo::PyTriangle>()?;
-    module.add_class::<Snapr>()?;
+
+    module.add_class::<style::PyColor>()?;
+    module.add_class::<style::PyColorOptions>()?;
+    module.add_class::<style::PyLabel>()?;
+    module.add_class::<style::PyLineStyle>()?;
+    module.add_class::<style::PyPointStyle>()?;
+    module.add_class::<style::PyPolygonStyle>()?;
+    module.add_class::<style::PyRepresentation>()?;
+    module.add_class::<style::PyShape>()?;
+    module.add_class::<style::PyStyle>()?;
+    module.add_class::<style::PySvg>()?;
 
     Ok(())
 }

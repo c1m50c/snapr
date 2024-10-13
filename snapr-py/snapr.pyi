@@ -13,9 +13,11 @@ class Snapr:
         width: int = 800,
         zoom: int | None = None,
     ) -> None: ...
-    def generate_snapshot_from_geometry(self, geometry: Geometry) -> bytearray: ...
+    def generate_snapshot_from_geometry(
+        self, geometry: Geometry, styles: list[Style] = []
+    ) -> bytearray: ...
     def generate_snapshot_from_geometries(
-        self, geometries: list[Geometry]
+        self, geometries: list[Geometry], styles: list[Style] = []
     ) -> bytearray: ...
 
 # region geo.rs
@@ -77,3 +79,62 @@ class Geometry:
     def Rect(geometry: Rect) -> None: ...
     @staticmethod
     def Triangle(geometry: Triangle) -> None: ...
+
+# region style.rs
+
+class Color:
+    def __init__(self, r: int, g: int, b: int, a: int) -> None: ...
+
+class ColorOptions:
+    def __init__(
+        self,
+        foreground: Color,
+        background: Color,
+        anti_alias: bool = True,
+        border: float = 1.0,
+    ) -> None: ...
+
+class Shape:
+    @staticmethod
+    def Circle(radius: float) -> None: ...
+
+class Svg:
+    def __init__(self, svg: str, offset: tuple[int, int] = (0, 0)) -> None: ...
+
+class Representation:
+    @staticmethod
+    def Shape(shape: Shape) -> None: ...
+    @staticmethod
+    def Svg(svg: Svg) -> None: ...
+
+class Label:
+    def __init__(
+        self,
+        text: str,
+        color_options: ColorOptions,
+        font_family: str = "Arial",
+        font_size: float = 16.0,
+        offset: tuple[int, int] = (0, 0),
+    ) -> None: ...
+
+class PointStyle:
+    def __init__(
+        self,
+        color_options: ColorOptions,
+        representation: Representation,
+        label: Label | None = None,
+    ) -> None: ...
+
+class LineStyle:
+    def __init__(self, color_options: ColorOptions, width: float) -> None: ...
+
+class PolygonStyle:
+    def __init__(self, color_options: ColorOptions) -> None: ...
+
+class Style:
+    @staticmethod
+    def PointStyle(style: PointStyle) -> None: ...
+    @staticmethod
+    def LineStyle(style: LineStyle) -> None: ...
+    @staticmethod
+    def PolygonStyle(style: PolygonStyle) -> None: ...
