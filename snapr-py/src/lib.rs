@@ -6,7 +6,7 @@ use pyo3::{
     create_exception,
     exceptions::PyException,
     prelude::*,
-    types::{PyByteArray, PyFunction, PyList},
+    types::{PyByteArray, PyFunction},
 };
 use utilities::{to_py_error, to_snapr_error};
 

@@ -13,7 +13,7 @@ use snapr::{
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-#[pyclass]
+#[pyclass(name = "Color")]
 pub struct PyColor {
     r: u8,
     g: u8,
@@ -36,7 +36,7 @@ impl Into<Color> for PyColor {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[pyclass]
+#[pyclass(name = "ColorOptions")]
 pub struct PyColorOptions(ColorOptions);
 
 #[pymethods]
@@ -59,7 +59,7 @@ impl PyColorOptions {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[pyclass]
+#[pyclass(name = "Style")]
 pub enum PyStyle {
     Point(PyPointStyle),
     Line(PyLineStyle),
@@ -77,7 +77,7 @@ impl Into<Style> for PyStyle {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[pyclass]
+#[pyclass(name = "Shape")]
 pub enum PyShape {
     Circle { radius: f32 },
 }
@@ -91,7 +91,7 @@ impl Into<Shape> for PyShape {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[pyclass]
+#[pyclass(name = "Svg")]
 pub struct PySvg(Svg);
 
 #[pymethods]
@@ -104,7 +104,7 @@ impl PySvg {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[pyclass]
+#[pyclass(name = "Representation")]
 pub enum PyRepresentation {
     Shape(PyShape),
     Svg(PySvg),
@@ -120,7 +120,7 @@ impl Into<Representation> for PyRepresentation {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[pyclass]
+#[pyclass(name = "Label")]
 pub struct PyLabel(Label);
 
 #[pymethods]
@@ -145,7 +145,7 @@ impl PyLabel {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[pyclass]
+#[pyclass(name = "PointStyle")]
 pub struct PyPointStyle(PointStyle);
 
 #[pymethods]
@@ -166,7 +166,7 @@ impl PyPointStyle {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[pyclass]
+#[pyclass(name = "LineStyle")]
 pub struct PyLineStyle(LineStyle);
 
 #[pymethods]
@@ -181,7 +181,7 @@ impl PyLineStyle {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-#[pyclass]
+#[pyclass(name = "PolygonStyle")]
 pub struct PyPolygonStyle(PolygonStyle);
 
 #[pymethods]
