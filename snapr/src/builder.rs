@@ -15,7 +15,7 @@ use crate::{Error, Snapr, TileFetcher};
 /// }
 ///
 /// let snapr = SnaprBuilder::new()
-///     .with_tile_fetcher(&tile_fetcher)
+///     .with_tile_fetcher(TileFetcher::Individual(&tile_fetcher))
 ///     .build();
 ///
 /// assert!(snapr.is_ok());
