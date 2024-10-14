@@ -40,6 +40,7 @@ jobs:
           manylinux: auto
           sccache: "true"
           target: ${{ matrix.target }}
+          working-directory: snapr-py
 
       - name: Upload Wheels - `${{matrix.identifier}}`
         uses: actions/upload-artifact@v4
@@ -78,6 +79,7 @@ jobs:
           manylinux: musllinux_1_2
           sccache: "true"
           target: ${{ matrix.target }}
+          working-directory: snapr-py
 
       - name: Upload Wheels - `${{matrix.identifier}}`
         uses: actions/upload-artifact@v4
@@ -113,6 +115,7 @@ jobs:
           args: --release --out dist --find-interpreter
           sccache: "true"
           target: ${{ matrix.target }}
+          working-directory: snapr-py
 
       - name: Upload Wheels - `${{matrix.identifier}}`
         uses: actions/upload-artifact@v4
@@ -149,6 +152,7 @@ jobs:
           args: --release --out dist --find-interpreter
           sccache: "true"
           target: ${{ matrix.target }}
+          working-directory: snapr-py
 
       - name: Upload Wheels - `${{matrix.identifier}}`
         uses: actions/upload-artifact@v4
@@ -168,6 +172,7 @@ jobs:
         with:
           args: --out dist
           command: sdist
+          working-directory: snapr-py
 
       - name: Upload Source Distribution
         uses: actions/upload-artifact@v4
@@ -198,3 +203,4 @@ jobs:
         with:
           args: --non-interactive --skip-existing wheels-*/*
           command: upload
+          working-directory: snapr-py
