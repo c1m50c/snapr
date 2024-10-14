@@ -27,4 +27,5 @@ features = ["pyo3/extension-module"]
 [tool.uv]
 dev-dependencies = [
     "pip>=24.2",
+    "requests>=2.32.3",
 ]

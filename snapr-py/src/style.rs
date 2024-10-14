@@ -42,16 +42,16 @@ pub struct PyColorOptions(ColorOptions);
 #[pymethods]
 impl PyColorOptions {
     #[new]
-    #[pyo3(signature = (foreground, background, anti_alias=true, border=1.0))]
+    #[pyo3(signature = (foreground = PyColor::new(248, 248, 248, 255), background = PyColor::new(26, 26, 26, 255), anti_alias=true, border=1.0))]
     fn new(
-        foreground: PyRef<PyColor>,
-        background: PyRef<PyColor>,
+        foreground: PyColor,
+        background: PyColor,
         anti_alias: bool,
         border: Option<f32>,
     ) -> Self {
         Self(ColorOptions {
-            foreground: foreground.clone().into(),
-            background: background.clone().into(),
+            foreground: foreground.into(),
+            background: background.into(),
             anti_alias,
             border,
         })
@@ -61,8 +61,13 @@ impl PyColorOptions {
 #[derive(Clone, Debug, PartialEq)]
 #[pyclass(name = "Style")]
 pub enum PyStyle {
+    #[pyo3(constructor = (_0 = PyPointStyle(PointStyle::default())))]
     Point(PyPointStyle),
+
+    #[pyo3(constructor = (_0 = PyLineStyle(LineStyle::default())))]
     Line(PyLineStyle),
+
+    #[pyo3(constructor = (_0 = PyPolygonStyle(PolygonStyle::default())))]
     Polygon(PyPolygonStyle),
 }
 
@@ -79,6 +84,7 @@ impl Into<Style> for PyStyle {
 #[derive(Clone, Debug, PartialEq)]
 #[pyclass(name = "Shape")]
 pub enum PyShape {
+    #[pyo3(constructor = (radius = 4.0))]
     Circle { radius: f32 },
 }
 
@@ -126,16 +132,16 @@ pub struct PyLabel(Label);
 #[pymethods]
 impl PyLabel {
     #[new]
-    #[pyo3(signature = (text, color_options, font_family = "Arial".to_string(), font_size = 16.0, offset = (0, 0)))]
+    #[pyo3(signature = (text, color_options = PyColorOptions(ColorOptions::default()), font_family = "Arial".to_string(), font_size = 16.0, offset = (0, 0)))]
     fn new(
         text: String,
-        color_options: PyRef<PyColorOptions>,
+        color_options: PyColorOptions,
         font_family: String,
         font_size: f32,
         offset: (i32, i32),
     ) -> Self {
         Self(Label {
-            color_options: color_options.clone().0,
+            color_options: color_options.0,
             font_family,
             font_size,
             offset,
@@ -151,16 +157,16 @@ pub struct PyPointStyle(PointStyle);
 #[pymethods]
 impl PyPointStyle {
     #[new]
-    #[pyo3(signature = (color_options, representation, label = None))]
+    #[pyo3(signature = (color_options = PyColorOptions(ColorOptions::default()), representation = PyRepresentation::Shape(PyShape::Circle { radius: 4.0 }), label = None))]
     fn new(
-        color_options: PyRef<PyColorOptions>,
-        representation: PyRef<PyRepresentation>,
-        label: Option<PyRef<PyLabel>>,
+        color_options: PyColorOptions,
+        representation: PyRepresentation,
+        label: Option<PyLabel>,
     ) -> Self {
         Self(PointStyle {
-            color_options: color_options.clone().0,
-            representation: representation.clone().into(),
-            label: label.map(|x| x.clone().0),
+            color_options: color_options.0,
+            representation: representation.into(),
+            label: label.map(|x| x.0),
         })
     }
 }
@@ -172,9 +178,10 @@ pub struct PyLineStyle(LineStyle);
 #[pymethods]
 impl PyLineStyle {
     #[new]
-    fn new(color_options: PyRef<PyColorOptions>, width: f32) -> Self {
+    #[pyo3(signature = (color_options = PyColorOptions(ColorOptions { foreground: Color::from_rgba8(196, 196, 196, 255), border: Some(4.0), ..Default::default() }), width = 3.0))]
+    fn new(color_options: PyColorOptions, width: f32) -> Self {
         Self(LineStyle {
-            color_options: color_options.clone().0,
+            color_options: color_options.0,
             width,
         })
     }
@@ -187,9 +194,10 @@ pub struct PyPolygonStyle(PolygonStyle);
 #[pymethods]
 impl PyPolygonStyle {
     #[new]
-    fn new(color_options: PyRef<PyColorOptions>) -> Self {
+    #[pyo3(signature = (color_options = PyColorOptions(ColorOptions { foreground: Color::from_rgba8(248, 248, 248, 64), border: None, ..Default::default() })))]
+    fn new(color_options: PyColorOptions) -> Self {
         Self(PolygonStyle {
-            color_options: color_options.clone().0,
+            color_options: color_options.0,
         })
     }
 }
