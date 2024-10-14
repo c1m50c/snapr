@@ -290,6 +290,10 @@ impl<'a> Snapr<'a> {
 
         match self.tile_fetcher {
             TileFetcher::Individual(tile_fetcher) => {
+                // Capture various fields in `self` to enable `x_y_to_tile` to automatically implement `Sync`
+                let (tile_fetcher, tile_size, height, width, zoom) =
+                    (tile_fetcher, self.tile_size, self.height, self.width, zoom);
+
                 let x_y_to_tile =
                     |(x, y): (i32, i32)| -> Result<(image::RgbaImage, i64, i64), Error> {
                         let tile = (tile_fetcher)((x + n) % n, (y + n) % n, zoom)?.to_rgba8();
@@ -297,8 +301,8 @@ impl<'a> Snapr<'a> {
                         let tile_coords = (geo::Point::from((x as f64, y as f64))
                             - epsg_3857_center)
                             .map_coords(|coord| geo::Coord {
-                                x: coord.x * self.tile_size as f64 + self.width as f64 / 2.0,
-                                y: coord.y * self.tile_size as f64 + self.height as f64 / 2.0,
+                                x: coord.x * tile_size as f64 + width as f64 / 2.0,
+                                y: coord.y * tile_size as f64 + height as f64 / 2.0,
                             });
 
                         Ok((tile, tile_coords.x() as i64, tile_coords.y() as i64))
