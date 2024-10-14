@@ -43,6 +43,16 @@ Each [`Geometry`](https://docs.rs/geo/latest/geo/geometry/enum.Geometry.html) pr
 
 ## Examples
 
+### [Batch](./examples/batch/)
+
+Demonstrates how to use a `BatchTileFetcher`.
+
+#### Running
+
+```shell
+cargo run -p "batch"
+```
+
 ### [Label](./examples/label/)
 
 Demonstrates how to use `LabelOptions` to draw a label on a geometry.
