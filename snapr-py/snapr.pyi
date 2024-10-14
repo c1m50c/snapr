@@ -7,7 +7,9 @@ class SnaprError(Exception): ...
 class Snapr:
     def __init__(
         self,
-        tile_fetcher: Callable[[int, int, int], bytearray],
+        tile_fetcher: Callable[
+            [list[tuple[int, int]], int], list[tuple[int, int, bytearray]]
+        ],
         tile_size: int = 256,
         height: int = 600,
         width: int = 800,

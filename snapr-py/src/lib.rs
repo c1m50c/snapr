@@ -1,6 +1,6 @@
 use std::io::Cursor;
 
-use ::snapr::SnaprBuilder;
+use ::snapr::{SnaprBuilder, TileFetcher};
 use image::{DynamicImage, ImageFormat, ImageReader};
 use pyo3::{
     create_exception,
@@ -61,29 +61,37 @@ impl Snapr {
         geometries: Vec<geo::PyGeometry>,
         styles: Vec<style::PyStyle>,
     ) -> PyResult<Bound<'py, PyByteArray>> {
-        let tile_fetcher = |x, y, zoom| -> Result<DynamicImage, ::snapr::Error> {
-            let image_bytes = Python::with_gil(|py| -> PyResult<Vec<u8>> {
-                let bytes: Py<PyByteArray> = self
-                    .tile_fetcher
-                    .call1(py, (x, y, zoom))
-                    .and_then(|any| any.extract(py))?;
+        let tile_fetcher = |coords: &'_ [(i32, i32)],
+                            zoom: u8|
+         -> Result<Vec<(i32, i32, DynamicImage)>, ::snapr::Error> {
+            let mut tiles = Vec::new();
 
-                bytes.extract(py)
-            });
-
-            let cursor = image_bytes.map(Cursor::new).map_err(to_snapr_error)?;
-
-            let image = ImageReader::new(cursor)
-                .with_guessed_format()
-                .map_err(to_snapr_error)?
-                .decode()
+            let coords_and_tiles: Vec<(i32, i32, Py<PyByteArray>)> = self
+                .tile_fetcher
+                .call1(py, (coords.to_vec(), zoom))
+                .and_then(|any| any.extract(py))
                 .map_err(to_snapr_error)?;
 
-            Ok(image)
+            for (x, y, tile) in coords_and_tiles {
+                let cursor = tile
+                    .extract::<Vec<u8>>(py)
+                    .map(Cursor::new)
+                    .map_err(to_snapr_error)?;
+
+                let image = ImageReader::new(cursor)
+                    .with_guessed_format()
+                    .map_err(to_snapr_error)?
+                    .decode()
+                    .map_err(to_snapr_error)?;
+
+                tiles.push((x, y, image));
+            }
+
+            Ok(tiles)
         };
 
         let builder = SnaprBuilder::new()
-            .with_tile_fetcher(&tile_fetcher)
+            .with_tile_fetcher(TileFetcher::Batch(&tile_fetcher))
             .with_tile_size(self.tile_size)
             .with_height(self.height)
             .with_width(self.width);
