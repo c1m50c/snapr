@@ -1,0 +1,200 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: read
+
+jobs:
+  upload-linux-wheels:
+    strategy:
+      matrix:
+        include:
+          - identifier: x86_64
+            target: x86_64
+
+          - identifier: x86
+            target: x86
+
+          - identifier: ARM64
+            target: aarch64
+
+    name: Upload Wheels - Linux - ${{ matrix.identifier }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Build Wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          args: --release --out dist --find-interpreter
+          manylinux: auto
+          sccache: "true"
+          target: ${{ matrix.target }}
+
+      - name: Upload Wheels - `${{matrix.identifier}}`
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.target }}
+          path: dist
+
+  upload-musl-wheels:
+    strategy:
+      matrix:
+        include:
+          - identifier: x86_64
+            target: x86_64
+
+          - identifier: x86
+            target: x86
+
+          - identifier: ARM64
+            target: aarch64
+
+    name: Upload Wheels - Musl - ${{ matrix.identifier }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Build Wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          args: --release --out dist --find-interpreter
+          manylinux: musllinux_1_2
+          sccache: "true"
+          target: ${{ matrix.target }}
+
+      - name: Upload Wheels - `${{matrix.identifier}}`
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-musl-${{ matrix.target }}
+          path: dist
+
+  upload-windows-wheels:
+    strategy:
+      matrix:
+        include:
+          - identifier: x64
+            target: x64
+
+          - identifier: x86
+            target: x86
+
+    name: Upload Wheels - Windows - ${{ matrix.identifier }}
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          architecture: ${{ matrix.target }}
+          python-version: 3.x
+
+      - name: Build Wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          args: --release --out dist --find-interpreter
+          sccache: "true"
+          target: ${{ matrix.target }}
+
+      - name: Upload Wheels - `${{matrix.identifier}}`
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows-${{ matrix.target }}
+          path: dist
+
+  upload-macos-wheels:
+    strategy:
+      matrix:
+        include:
+          - identifier: x86_64
+            os: macos-12
+            target: x86_64
+
+          - identifier: ARM64
+            os: macos-14
+            target: aarch64
+
+    name: Upload Wheels - MacOS - ${{ matrix.identifier }}
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Build Wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          args: --release --out dist --find-interpreter
+          sccache: "true"
+          target: ${{ matrix.target }}
+
+      - name: Upload Wheels - `${{matrix.identifier}}`
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos-${{ matrix.target }}
+          path: dist
+
+  upload-source-distribution:
+    name: Upload Source Distribution
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Build Source Distribution
+        uses: PyO3/maturin-action@v1
+        with:
+          args: --out dist
+          command: sdist
+
+      - name: Upload Source Distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-sdist
+          path: dist
+
+  publish-snapr-py:
+    name: Publish - `pypi.org`
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      attestations: write
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate Artifact Attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: "wheels-*/*"
+
+      - name: Publish - `pypi.org`
+        uses: PyO3/maturin-action@v1
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        with:
+          args: --non-interactive --skip-existing wheels-*/*
+          command: upload
