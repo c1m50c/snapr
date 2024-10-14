@@ -62,7 +62,7 @@ pub enum Error {
 /// ```
 #[cfg(feature = "rayon")]
 pub type IndividualTileFetcher<'a> =
-    &'a (dyn Fn(i32, i32, u8) -> Result<image::DynamicImage, Error> + Send + Sync);
+    &'a (dyn Fn(i32, i32, u8) -> Result<image::DynamicImage, Error> + Sync);
 
 /// Function that takes coordinates and a zoom level as arguments and returns an [`Image`](image::DynamicImage) of the map tile at the given position.
 ///
