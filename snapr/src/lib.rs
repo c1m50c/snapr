@@ -57,8 +57,23 @@ pub enum Error {
 ///     todo!()
 /// }
 /// ```
+#[cfg(feature = "rayon")]
 pub type TileFetcher<'a> =
     &'a (dyn Fn(i32, i32, u8) -> Result<image::DynamicImage, Error> + Send + Sync);
+
+/// Function that takes coordinates and a zoom level as arguments and returns an [`Image`](image::DynamicImage) of the map tile at the given position.
+///
+/// ## Example
+///
+/// ```rust
+/// use image::DynamicImage;
+///
+/// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> {
+///     todo!()
+/// }
+/// ```
+#[cfg(not(feature = "rayon"))]
+pub type TileFetcher<'a> = &'a dyn Fn(i32, i32, u8) -> Result<image::DynamicImage, Error>;
 
 /// Utility structure to generate snapshots.
 /// Should be normally constructed through building with [`SnaprBuilder`].
