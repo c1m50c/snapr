@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "examples/batch",
     "examples/label",
     "examples/open-street-maps",
     "examples/svg",
@@ -9,17 +10,22 @@ members = [
 resolver = "2"
 
 [workspace.package]
-authors = [
-    "c1m50c <58411864+c1m50c@users.noreply.github.com>"
-]
+authors = ["c1m50c <58411864+c1m50c@users.noreply.github.com>"]
 license = "MIT"
+version = "0.4.0"
 
 [workspace.dependencies]
 anyhow = "1.0.89"
 geo = "0.28.0"
 hex = "0.4.3"
-image = { version = "0.25.2", default-features = false, features = ["jpeg", "png"] }
+image = { version = "0.25.2", default-features = false, features = [
+    "jpeg",
+    "png",
+] }
 rayon = "1.10.0"
 resvg = "0.44.0"
 thiserror = "1.0.64"
-tiny-skia = { version = "0.11.4", default-features = false, features = ["simd", "std"] }
+tiny-skia = { version = "0.11.4", default-features = false, features = [
+    "simd",
+    "std",
+] }

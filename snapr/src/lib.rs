@@ -7,6 +7,9 @@ use image::imageops::overlay;
 use thiserror::Error;
 use tiny_skia::Pixmap;
 
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
+
 #[cfg(feature = "drawing")]
 use drawing::style::Style;
 
@@ -57,13 +60,72 @@ pub enum Error {
 ///     todo!()
 /// }
 /// ```
-pub type TileFetcher<'a> =
+#[cfg(feature = "rayon")]
+pub type IndividualTileFetcher<'a> =
     &'a (dyn Fn(i32, i32, u8) -> Result<image::DynamicImage, Error> + Send + Sync);
+
+/// Function that takes coordinates and a zoom level as arguments and returns an [`Image`](image::DynamicImage) of the map tile at the given position.
+///
+/// ## Example
+///
+/// ```rust
+/// use image::DynamicImage;
+///
+/// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> {
+///     todo!()
+/// }
+/// ```
+#[cfg(not(feature = "rayon"))]
+pub type IndividualTileFetcher<'a> = &'a dyn Fn(i32, i32, u8) -> Result<image::DynamicImage, Error>;
+
+/// Function that takes in a slice of coordinates and a zoom level as arguments and returns the [`Images`](image::DynamicImage) of the map tiles at the given positions.
+///
+/// ## Example
+///
+/// ```rust
+/// use image::DynamicImage;
+///
+/// fn tile_fetcher(matrix: &[(i32, i32)], zoom: u8) -> Result<Vec<(i32, i32, DynamicImage)>, snapr::Error> {
+///     todo!()
+/// }
+/// ```
+// FIXME: `BatchTileFetcher` does not truly require `Send` or `Sync` when the `rayon` feature flag is enabled.
+// It's only here currently to get the `Snapr::overlay_backing_tiles::x_y_to_tile` closure to compile correctly.
+#[cfg(feature = "rayon")]
+pub type BatchTileFetcher<'a> = &'a (dyn Fn(&[(i32, i32)], u8) -> Result<Vec<(i32, i32, image::DynamicImage)>, Error>
+         + Send
+         + Sync);
+
+/// Function that takes in a slice of coordinates and a zoom level as arguments and returns the [`Images`](image::DynamicImage) of the map tiles at the given positions.
+///
+/// ## Example
+///
+/// ```rust
+/// use image::DynamicImage;
+///
+/// fn tile_fetcher(matrix: &[(i32, i32)], zoom: u8) -> Result<Vec<(i32, i32, DynamicImage)>, snapr::Error> {
+///     todo!()
+/// }
+/// ```
+#[cfg(not(feature = "rayon"))]
+pub type BatchTileFetcher<'a> =
+    &'a dyn Fn(&[(i32, i32)], u8) -> Result<Vec<(i32, i32, image::DynamicImage)>, Error>;
+
+/// Functions that return image(s) of map tiles at given coordinates.
+/// See each variant's documentation for more details.
+pub enum TileFetcher<'a> {
+    /// See [`IndividualTileFetcher`].
+    Individual(IndividualTileFetcher<'a>),
+
+    /// See [`BatchTileFetcher`].
+    Batch(BatchTileFetcher<'a>),
+}
 
 /// Utility structure to generate snapshots.
 /// Should be normally constructed through building with [`SnaprBuilder`].
 pub struct Snapr<'a> {
     /// Function that returns an image of a map tile at specified coordinates.
+    /// See [`TileFetcher`] for more details.
     tile_fetcher: TileFetcher<'a>,
 
     /// Size of the image returned by the [`tile_fetcher`](Self::tile_fetcher).
@@ -227,28 +289,6 @@ impl<'a> Snapr<'a> {
         dbg!(zoom)
     }
 
-    /// Calls the [`tile_fetcher`](Self::tile_fetcher) function with the given coordinates and converts the returned [`image::DynamicImage`] into an [`image::RgbaImage`].
-    #[inline(always)]
-    fn get_tile(&self, x: i32, y: i32, zoom: u8) -> Result<image::RgbaImage, Error> {
-        let tile = (self.tile_fetcher)(x, y, zoom)?.to_rgba8();
-
-        if tile.height() != self.tile_size {
-            return Err(Error::IncorrectTileSize {
-                expected: self.tile_size,
-                received: tile.height(),
-            });
-        }
-
-        if tile.width() != self.tile_size {
-            return Err(Error::IncorrectTileSize {
-                expected: self.tile_size,
-                received: tile.height(),
-            });
-        }
-
-        Ok(tile)
-    }
-
     /// Fills the given `image` with tiles centered around the given `epsg_3857_center` point.
     fn overlay_backing_tiles(
         &self,
@@ -267,42 +307,65 @@ impl<'a> Snapr<'a> {
         let max_x = (epsg_3857_center.x() + required_columns).ceil() as i32;
         let max_y = (epsg_3857_center.y() + required_rows).ceil() as i32;
 
-        let x_y_to_tile = |(x, y): (i32, i32)| -> Result<(image::RgbaImage, i64, i64), Error> {
-            let tile = self.get_tile((x + n) % n, (y + n) % n, zoom)?;
+        match self.tile_fetcher {
+            TileFetcher::Individual(tile_fetcher) => {
+                let x_y_to_tile =
+                    |(x, y): (i32, i32)| -> Result<(image::RgbaImage, i64, i64), Error> {
+                        let tile = (tile_fetcher)((x + n) % n, (y + n) % n, zoom)?.to_rgba8();
 
-            let tile_coords = (geo::Point::from((x as f64, y as f64)) - epsg_3857_center)
-                .map_coords(|coord| geo::Coord {
-                    x: coord.x * self.tile_size as f64 + self.width as f64 / 2.0,
-                    y: coord.y * self.tile_size as f64 + self.height as f64 / 2.0,
-                });
+                        let tile_coords = (geo::Point::from((x as f64, y as f64))
+                            - epsg_3857_center)
+                            .map_coords(|coord| geo::Coord {
+                                x: coord.x * self.tile_size as f64 + self.width as f64 / 2.0,
+                                y: coord.y * self.tile_size as f64 + self.height as f64 / 2.0,
+                            });
 
-            Ok((tile, tile_coords.x() as i64, tile_coords.y() as i64))
-        };
+                        Ok((tile, tile_coords.x() as i64, tile_coords.y() as i64))
+                    };
 
-        #[cfg(feature = "rayon")]
-        {
-            use rayon::prelude::*;
+                #[cfg(feature = "rayon")]
+                {
+                    let matrix_iter = (min_x..max_x)
+                        .map(|x| (x, min_y..max_y))
+                        .flat_map(|(x, y)| y.map(move |y| (x, y)));
 
-            let matrix_iter = (min_x..max_x)
-                .map(|x| (x, min_y..max_y))
-                .flat_map(|(x, y)| y.map(move |y| (x, y)));
+                    let tiles = matrix_iter
+                        .par_bridge()
+                        .flat_map(x_y_to_tile)
+                        .collect::<Vec<_>>();
 
-            let tiles = matrix_iter
-                .par_bridge()
-                .flat_map(x_y_to_tile)
-                .collect::<Vec<_>>();
+                    tiles
+                        .into_iter()
+                        .for_each(|(tile, x, y)| overlay(image, &tile, x, y));
+                }
 
-            tiles
-                .into_iter()
-                .for_each(|(tile, x, y)| overlay(image, &tile, x, y));
-        }
+                #[cfg(not(feature = "rayon"))]
+                {
+                    for x in min_x..max_x {
+                        for y in min_y..max_y {
+                            let (tile, x, y) = x_y_to_tile((x, y))?;
+                            overlay(image, &tile, x, y);
+                        }
+                    }
+                }
+            }
 
-        #[cfg(not(feature = "rayon"))]
-        {
-            for x in min_x..max_x {
-                for y in min_y..max_y {
-                    let (tile, x, y) = x_y_to_tile((x, y))?;
-                    overlay(image, &tile, x, y);
+            TileFetcher::Batch(tile_fetcher) => {
+                let matrix = (min_x..max_x)
+                    .map(|x| (x, min_y..max_y))
+                    .flat_map(|(x, y)| y.map(move |y| (x, y)))
+                    .collect::<Vec<_>>();
+
+                let batches = tile_fetcher(&matrix, zoom)?;
+
+                for (x, y, tile) in batches {
+                    let tile_coords = (geo::Point::from((x as f64, y as f64)) - epsg_3857_center)
+                        .map_coords(|coord| geo::Coord {
+                            x: coord.x * self.tile_size as f64 + self.width as f64 / 2.0,
+                            y: coord.y * self.tile_size as f64 + self.height as f64 / 2.0,
+                        });
+
+                    overlay(image, &tile, tile_coords.x() as i64, tile_coords.y() as i64);
                 }
             }
         }

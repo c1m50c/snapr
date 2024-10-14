@@ -8,14 +8,14 @@ use crate::{Error, Snapr, TileFetcher};
 ///
 /// ```rust
 /// use image::DynamicImage;
-/// use snapr::SnaprBuilder;
+/// use snapr::{SnaprBuilder, TileFetcher};
 ///
 /// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> {
 ///     todo!()
 /// }
 ///
 /// let snapr = SnaprBuilder::new()
-///     .with_tile_fetcher(&tile_fetcher)
+///     .with_tile_fetcher(TileFetcher::Individual(&tile_fetcher))
 ///     .build();
 ///
 /// assert!(snapr.is_ok());
@@ -81,14 +81,14 @@ impl<'a> SnaprBuilder<'a> {
     ///
     /// ```rust
     /// use image::DynamicImage;
-    /// use snapr::SnaprBuilder;
+    /// use snapr::{SnaprBuilder, TileFetcher};
     ///
     /// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> {
     ///     todo!()
     /// }
     ///
     /// let snapr = SnaprBuilder::new()
-    ///     .with_tile_fetcher(&tile_fetcher)
+    ///     .with_tile_fetcher(TileFetcher::Individual(&tile_fetcher))
     ///     .build();
     ///
     /// assert!(snapr.is_ok());
