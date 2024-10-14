@@ -62,7 +62,7 @@ pub enum Error {
 /// ```
 #[cfg(feature = "rayon")]
 pub type IndividualTileFetcher<'a> =
-    &'a (dyn Fn(i32, i32, u8) -> Result<image::DynamicImage, Error> + Send + Sync);
+    &'a (dyn Fn(i32, i32, u8) -> Result<image::DynamicImage, Error> + Sync);
 
 /// Function that takes coordinates and a zoom level as arguments and returns an [`Image`](image::DynamicImage) of the map tile at the given position.
 ///
@@ -89,25 +89,6 @@ pub type IndividualTileFetcher<'a> = &'a dyn Fn(i32, i32, u8) -> Result<image::D
 ///     todo!()
 /// }
 /// ```
-// FIXME: `BatchTileFetcher` does not truly require `Send` or `Sync` when the `rayon` feature flag is enabled.
-// It's only here currently to get the `Snapr::overlay_backing_tiles::x_y_to_tile` closure to compile correctly.
-#[cfg(feature = "rayon")]
-pub type BatchTileFetcher<'a> = &'a (dyn Fn(&[(i32, i32)], u8) -> Result<Vec<(i32, i32, image::DynamicImage)>, Error>
-         + Send
-         + Sync);
-
-/// Function that takes in a slice of coordinates and a zoom level as arguments and returns the [`Images`](image::DynamicImage) of the map tiles at the given positions.
-///
-/// ## Example
-///
-/// ```rust
-/// use image::DynamicImage;
-///
-/// fn tile_fetcher(matrix: &[(i32, i32)], zoom: u8) -> Result<Vec<(i32, i32, DynamicImage)>, snapr::Error> {
-///     todo!()
-/// }
-/// ```
-#[cfg(not(feature = "rayon"))]
 pub type BatchTileFetcher<'a> =
     &'a dyn Fn(&[(i32, i32)], u8) -> Result<Vec<(i32, i32, image::DynamicImage)>, Error>;
 
@@ -309,6 +290,10 @@ impl<'a> Snapr<'a> {
 
         match self.tile_fetcher {
             TileFetcher::Individual(tile_fetcher) => {
+                // Capture various fields in `self` to enable `x_y_to_tile` to automatically implement `Sync`
+                let (tile_fetcher, tile_size, height, width, zoom) =
+                    (tile_fetcher, self.tile_size, self.height, self.width, zoom);
+
                 let x_y_to_tile =
                     |(x, y): (i32, i32)| -> Result<(image::RgbaImage, i64, i64), Error> {
                         let tile = (tile_fetcher)((x + n) % n, (y + n) % n, zoom)?.to_rgba8();
@@ -316,8 +301,8 @@ impl<'a> Snapr<'a> {
                         let tile_coords = (geo::Point::from((x as f64, y as f64))
                             - epsg_3857_center)
                             .map_coords(|coord| geo::Coord {
-                                x: coord.x * self.tile_size as f64 + self.width as f64 / 2.0,
-                                y: coord.y * self.tile_size as f64 + self.height as f64 / 2.0,
+                                x: coord.x * tile_size as f64 + width as f64 / 2.0,
+                                y: coord.y * tile_size as f64 + height as f64 / 2.0,
                             });
 
                         Ok((tile, tile_coords.x() as i64, tile_coords.y() as i64))
