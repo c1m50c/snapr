@@ -89,25 +89,6 @@ pub type IndividualTileFetcher<'a> = &'a dyn Fn(i32, i32, u8) -> Result<image::D
 ///     todo!()
 /// }
 /// ```
-// FIXME: `BatchTileFetcher` does not truly require `Send` or `Sync` when the `rayon` feature flag is enabled.
-// It's only here currently to get the `Snapr::overlay_backing_tiles::x_y_to_tile` closure to compile correctly.
-#[cfg(feature = "rayon")]
-pub type BatchTileFetcher<'a> = &'a (dyn Fn(&[(i32, i32)], u8) -> Result<Vec<(i32, i32, image::DynamicImage)>, Error>
-         + Send
-         + Sync);
-
-/// Function that takes in a slice of coordinates and a zoom level as arguments and returns the [`Images`](image::DynamicImage) of the map tiles at the given positions.
-///
-/// ## Example
-///
-/// ```rust
-/// use image::DynamicImage;
-///
-/// fn tile_fetcher(matrix: &[(i32, i32)], zoom: u8) -> Result<Vec<(i32, i32, DynamicImage)>, snapr::Error> {
-///     todo!()
-/// }
-/// ```
-#[cfg(not(feature = "rayon"))]
 pub type BatchTileFetcher<'a> =
     &'a dyn Fn(&[(i32, i32)], u8) -> Result<Vec<(i32, i32, image::DynamicImage)>, Error>;
 
