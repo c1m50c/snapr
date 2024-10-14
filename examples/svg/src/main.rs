@@ -8,7 +8,7 @@ use snapr::{
         style::Style,
         svg::Svg,
     },
-    SnaprBuilder,
+    SnaprBuilder, TileFetcher,
 };
 
 // https://openmoji.org/library/emoji-1F686/
@@ -36,7 +36,7 @@ const SVG: &str = r##"
 
 fn main() -> Result<(), anyhow::Error> {
     let snapr = SnaprBuilder::new()
-        .with_tile_fetcher(&tile_fetcher)
+        .with_tile_fetcher(TileFetcher::Individual(&tile_fetcher))
         .with_tile_size(256)
         .with_zoom(15)
         .build()?;

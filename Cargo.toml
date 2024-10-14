@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "examples/batch",
     "examples/label",
     "examples/open-street-maps",
     "examples/svg",
@@ -10,7 +11,7 @@ resolver = "2"
 [workspace.package]
 authors = ["c1m50c <58411864+c1m50c@users.noreply.github.com>"]
 license = "MIT"
-version = "0.3.1"
+version = "0.4.0"
 
 [workspace.dependencies]
 anyhow = "1.0.89"

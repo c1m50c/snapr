@@ -4,12 +4,12 @@ use image::{DynamicImage, ImageFormat, ImageReader};
 use reqwest::blocking::ClientBuilder;
 use snapr::{
     drawing::{geometry::point::PointStyle, style::ColorOptions, svg::Label},
-    SnaprBuilder,
+    SnaprBuilder, TileFetcher,
 };
 
 fn main() -> Result<(), anyhow::Error> {
     let snapr = SnaprBuilder::new()
-        .with_tile_fetcher(&tile_fetcher)
+        .with_tile_fetcher(TileFetcher::Individual(&tile_fetcher))
         .with_tile_size(256)
         .with_zoom(13)
         .build()?;
