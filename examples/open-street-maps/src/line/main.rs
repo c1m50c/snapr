@@ -1,9 +1,9 @@
 use open_street_maps::tile_fetcher;
-use snapr::SnaprBuilder;
+use snapr::{SnaprBuilder, TileFetcher};
 
 fn main() -> Result<(), anyhow::Error> {
     let snapr = SnaprBuilder::new()
-        .with_tile_fetcher(&tile_fetcher)
+        .with_tile_fetcher(TileFetcher::Individual(&tile_fetcher))
         .with_tile_size(256)
         .with_zoom(15)
         .build()?;

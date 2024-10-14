@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{Error, IndividualTileFetcher, Snapr};
+use crate::{Error, Snapr, TileFetcher};
 
 /// Builder structure for [`snapr`].
 ///
@@ -22,7 +22,7 @@ use crate::{Error, IndividualTileFetcher, Snapr};
 /// ```
 #[derive(Default)]
 pub struct SnaprBuilder<'a> {
-    tile_fetcher: Option<IndividualTileFetcher<'a>>,
+    tile_fetcher: Option<TileFetcher<'a>>,
     tile_size: Option<u32>,
     height: Option<u32>,
     width: Option<u32>,
@@ -36,7 +36,7 @@ impl<'a> SnaprBuilder<'a> {
     }
 
     /// Configures a [`TileFetcher`] to be used in the [`Snapr::tile_fetcher`] field.
-    pub fn with_tile_fetcher(self, tile_fetcher: IndividualTileFetcher<'a>) -> Self {
+    pub fn with_tile_fetcher(self, tile_fetcher: TileFetcher<'a>) -> Self {
         Self {
             tile_fetcher: Some(tile_fetcher),
             ..self
@@ -81,14 +81,14 @@ impl<'a> SnaprBuilder<'a> {
     ///
     /// ```rust
     /// use image::DynamicImage;
-    /// use snapr::SnaprBuilder;
+    /// use snapr::{SnaprBuilder, TileFetcher};
     ///
     /// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> {
     ///     todo!()
     /// }
     ///
     /// let snapr = SnaprBuilder::new()
-    ///     .with_tile_fetcher(&tile_fetcher)
+    ///     .with_tile_fetcher(TileFetcher::Individual(&tile_fetcher))
     ///     .build();
     ///
     /// assert!(snapr.is_ok());
