@@ -1,6 +1,5 @@
 [package]
 name = "snapr"
-version = "0.3.0"
 edition = "2021"
 description = "Flexible and frictionless way to render snapshots of maps with stylized geometries."
 categories = ["science::geo"]
@@ -8,8 +7,9 @@ keywords = ["geo", "geography", "geospatial", "maps"]
 repository = "https://github.com/c1m50c/snapr"
 
 # Shared Package Configuration
-authors = { workspace = true }
-license = { workspace = true }
+authors.workspace = true
+license.workspace = true
+version.workspace = true
 
 [features]
 default = ["drawing", "rayon", "svg"]
@@ -18,11 +18,11 @@ rayon = ["dep:rayon"]
 svg = ["dep:resvg", "drawing"]
 
 [dependencies]
-anyhow = { workspace = true }
-geo = { workspace = true }
+anyhow.workspace = true
+geo.workspace = true
 hex = { workspace = true, optional = true }
-image = { workspace = true }
+image.workspace = true
 rayon = { workspace = true, optional = true }
 resvg = { workspace = true, optional = true }
-thiserror = { workspace = true }
+thiserror.workspace = true
 tiny-skia = { workspace = true, optional = true }
