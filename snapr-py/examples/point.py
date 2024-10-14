@@ -2,12 +2,20 @@ import requests
 from snapr import Geometry, Point, Snapr, Style
 
 
-def tile_fetcher(x: int, y: int, zoom: int) -> bytearray:
-    response = requests.get(
-        f"https://a.tile.osm.org/{zoom}/{x}/{y}.png", headers={"User-Agent": "snapr.py"}
-    )
+def tile_fetcher(
+    coords: list[tuple[int, int]], zoom: int
+) -> list[tuple[int, int, bytearray]]:
+    tiles = list()
 
-    return bytearray(response.content)
+    for x, y in coords:
+        response = requests.get(
+            f"https://a.tile.osm.org/{zoom}/{x}/{y}.png",
+            headers={"User-Agent": "snapr.py"},
+        )
+
+        tiles.append((x, y, bytearray(response.content)))
+
+    return tiles
 
 
 snapr = Snapr(tile_fetcher=tile_fetcher, zoom=15)
@@ -27,5 +35,5 @@ geometries = [
 
 snapshot = snapr.generate_snapshot_from_geometries(geometries=geometries, styles=styles)
 
-with open("exaple.png", "wb") as image:
+with open("example.png", "wb") as image:
     image.write(snapshot)
