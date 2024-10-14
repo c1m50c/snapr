@@ -8,7 +8,7 @@ use crate::{Error, Snapr, TileFetcher};
 ///
 /// ```rust
 /// use image::DynamicImage;
-/// use snapr::SnaprBuilder;
+/// use snapr::{SnaprBuilder, TileFetcher};
 ///
 /// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> {
 ///     todo!()
