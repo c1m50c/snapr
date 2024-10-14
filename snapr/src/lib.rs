@@ -58,7 +58,7 @@ pub enum Error {
 /// }
 /// ```
 #[cfg(feature = "rayon")]
-pub type TileFetcher<'a> =
+pub type IndividualTileFetcher<'a> =
     &'a (dyn Fn(i32, i32, u8) -> Result<image::DynamicImage, Error> + Send + Sync);
 
 /// Function that takes coordinates and a zoom level as arguments and returns an [`Image`](image::DynamicImage) of the map tile at the given position.
@@ -73,13 +73,13 @@ pub type TileFetcher<'a> =
 /// }
 /// ```
 #[cfg(not(feature = "rayon"))]
-pub type TileFetcher<'a> = &'a dyn Fn(i32, i32, u8) -> Result<image::DynamicImage, Error>;
+pub type IndividualTileFetcher<'a> = &'a dyn Fn(i32, i32, u8) -> Result<image::DynamicImage, Error>;
 
 /// Utility structure to generate snapshots.
 /// Should be normally constructed through building with [`SnaprBuilder`].
 pub struct Snapr<'a> {
     /// Function that returns an image of a map tile at specified coordinates.
-    tile_fetcher: TileFetcher<'a>,
+    tile_fetcher: IndividualTileFetcher<'a>,
 
     /// Size of the image returned by the [`tile_fetcher`](Self::tile_fetcher).
     tile_size: u32,

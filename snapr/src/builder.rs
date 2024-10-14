@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{Error, Snapr, TileFetcher};
+use crate::{Error, IndividualTileFetcher, Snapr};
 
 /// Builder structure for [`snapr`].
 ///
@@ -22,7 +22,7 @@ use crate::{Error, Snapr, TileFetcher};
 /// ```
 #[derive(Default)]
 pub struct SnaprBuilder<'a> {
-    tile_fetcher: Option<TileFetcher<'a>>,
+    tile_fetcher: Option<IndividualTileFetcher<'a>>,
     tile_size: Option<u32>,
     height: Option<u32>,
     width: Option<u32>,
@@ -36,7 +36,7 @@ impl<'a> SnaprBuilder<'a> {
     }
 
     /// Configures a [`TileFetcher`] to be used in the [`Snapr::tile_fetcher`] field.
-    pub fn with_tile_fetcher(self, tile_fetcher: TileFetcher<'a>) -> Self {
+    pub fn with_tile_fetcher(self, tile_fetcher: IndividualTileFetcher<'a>) -> Self {
         Self {
             tile_fetcher: Some(tile_fetcher),
             ..self
