@@ -29,6 +29,7 @@ impl PyColor {
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<Color> for PyColor {
     fn into(self) -> Color {
         Color::from_rgba8(self.r, self.g, self.b, self.a)
@@ -71,6 +72,7 @@ pub enum PyStyle {
     Polygon(PyPolygonStyle),
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<Style> for PyStyle {
     fn into(self) -> Style {
         match self {
@@ -88,6 +90,7 @@ pub enum PyShape {
     Circle { radius: f32 },
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<Shape> for PyShape {
     fn into(self) -> Shape {
         match self {
@@ -116,6 +119,7 @@ pub enum PyRepresentation {
     Svg(PySvg),
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<Representation> for PyRepresentation {
     fn into(self) -> Representation {
         match self {

@@ -1,6 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use pyo3::{prelude::*, types::PyList};
+use pyo3::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]
 #[pyclass(name = "Geometry")]
@@ -17,6 +17,7 @@ pub enum PyGeometry {
     Triangle(PyTriangle),
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<geo::Geometry> for PyGeometry {
     fn into(self) -> geo::Geometry {
         match self {
@@ -60,6 +61,14 @@ macro_rules! impl_geo_wrapper {
             }
         }
 
+        #[allow(clippy::from_over_into)]
+        impl Into<geo::$base<f64>> for $variant {
+            fn into(self) -> geo::$base<f64> {
+                self.0
+            }
+        }
+
+        #[allow(clippy::from_over_into)]
         impl Into<PyGeometry> for $variant {
             fn into(self) -> PyGeometry {
                 PyGeometry::$base(self)
@@ -97,14 +106,9 @@ impl_geo_wrapper!(LineString, PyLineString, "LineString");
 #[pymethods]
 impl PyLineString {
     #[new]
-    fn new(points: Bound<'_, PyList>) -> Self {
-        let points = points
-            .iter()
-            .flat_map(|any| any.extract::<(f64, f64)>())
-            .map(|(x, y)| geo::coord!(x: x, y: y))
-            .collect();
-
-        Self(geo::LineString::new(points))
+    fn new(points: Vec<PyPoint>) -> Self {
+        let coords = points.into_iter().map(|x| x.0.into()).collect();
+        Self(geo::LineString::new(coords))
     }
 }
 
@@ -113,14 +117,9 @@ impl_geo_wrapper!(Polygon, PyPolygon, "Polygon");
 #[pymethods]
 impl PyPolygon {
     #[new]
-    fn new(exterior: PyRef<PyLineString>, interiors: Bound<'_, PyList>) -> Self {
-        let interiors = interiors
-            .iter()
-            .flat_map(|any| any.extract::<PyLineString>())
-            .map(|line_string| line_string.0)
-            .collect();
-
-        Self(geo::Polygon::new(exterior.clone().0, interiors))
+    fn new(exterior: PyLineString, interiors: Vec<PyLineString>) -> Self {
+        let interiors = interiors.into_iter().map(PyLineString::into).collect();
+        Self(geo::Polygon::new(exterior.0, interiors))
     }
 }
 
@@ -129,13 +128,8 @@ impl_geo_wrapper!(MultiPoint, PyMultiPoint, "MultiPoint");
 #[pymethods]
 impl PyMultiPoint {
     #[new]
-    fn new(points: Bound<'_, PyList>) -> Self {
-        let points = points
-            .iter()
-            .flat_map(|any| any.extract::<(f64, f64)>())
-            .map(|(x, y)| geo::point!(x: x, y: y))
-            .collect();
-
+    fn new(points: Vec<PyPoint>) -> Self {
+        let points = points.into_iter().map(PyPoint::into).collect();
         Self(geo::MultiPoint::new(points))
     }
 }
@@ -145,13 +139,8 @@ impl_geo_wrapper!(MultiLineString, PyMultiLineString, "MultiLineString");
 #[pymethods]
 impl PyMultiLineString {
     #[new]
-    fn new(line_strings: Bound<'_, PyList>) -> Self {
-        let line_strings = line_strings
-            .iter()
-            .flat_map(|any| any.extract::<PyLineString>())
-            .map(|line_string| line_string.0)
-            .collect();
-
+    fn new(line_strings: Vec<PyLineString>) -> Self {
+        let line_strings = line_strings.into_iter().map(PyLineString::into).collect();
         Self(geo::MultiLineString::new(line_strings))
     }
 }
@@ -161,13 +150,8 @@ impl_geo_wrapper!(MultiPolygon, PyMultiPolygon, "MultiPolygon");
 #[pymethods]
 impl PyMultiPolygon {
     #[new]
-    fn new(polygons: Bound<'_, PyList>) -> Self {
-        let polygons = polygons
-            .iter()
-            .flat_map(|any| any.extract::<PyPolygon>())
-            .map(|polygon| polygon.0)
-            .collect();
-
+    fn new(polygons: Vec<PyPolygon>) -> Self {
+        let polygons = polygons.into_iter().map(PyPolygon::into).collect();
         Self(geo::MultiPolygon::new(polygons))
     }
 }
@@ -181,13 +165,7 @@ impl_geo_wrapper!(
 #[pymethods]
 impl PyGeometryCollection {
     #[new]
-    fn new(geometries: Bound<'_, PyList>) -> Self {
-        let geometries = geometries
-            .iter()
-            .flat_map(|any| any.extract::<PyGeometry>())
-            .map(|geometry| <PyGeometry as Into<geo::Geometry>>::into(geometry))
-            .collect::<Vec<_>>();
-
+    fn new(geometries: Vec<PyGeometry>) -> Self {
         Self(geo::GeometryCollection::from(geometries))
     }
 }
