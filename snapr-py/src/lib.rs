@@ -2,12 +2,7 @@ use std::io::Cursor;
 
 use ::snapr::{SnaprBuilder, TileFetcher};
 use image::{DynamicImage, ImageFormat, ImageReader};
-use pyo3::{
-    create_exception,
-    exceptions::PyException,
-    prelude::*,
-    types::{PyByteArray, PyFunction},
-};
+use pyo3::{create_exception, exceptions::PyException, prelude::*, types::PyByteArray};
 use utilities::{to_py_error, to_snapr_error};
 
 mod geo;
@@ -17,7 +12,7 @@ mod utilities;
 #[derive(Debug)]
 #[pyclass]
 struct Snapr {
-    tile_fetcher: Py<PyFunction>,
+    tile_fetcher: Py<PyAny>,
     tile_size: u32,
     height: u32,
     width: u32,
@@ -29,7 +24,7 @@ impl Snapr {
     #[new]
     #[pyo3(signature = (tile_fetcher, tile_size=256, height=600, width=800, zoom=None))]
     fn new(
-        tile_fetcher: Py<PyFunction>,
+        tile_fetcher: Py<PyAny>,
         tile_size: u32,
         height: u32,
         width: u32,
