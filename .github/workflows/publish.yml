@@ -209,6 +209,12 @@ jobs:
   publish-snapr-py:
     name: Publish - `pypi.org`
     runs-on: ubuntu-latest
+    needs:
+      - upload-linux-wheels
+      - upload-macos-wheels
+      - upload-musl-wheels
+      - upload-source-distribution
+      - upload-windows-wheels
     permissions:
       id-token: write
       contents: write
