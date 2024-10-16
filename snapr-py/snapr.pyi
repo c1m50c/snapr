@@ -29,17 +29,17 @@ class Point:
 
 class Line:
     def __init__(
-        self, start: Point, end: Point
+        self, start: Point | tuple[float, float], end: Point | tuple[float, float]
     ) -> None: ...
 
 class LineString:
-    def __init__(self, points: list[Point]) -> None: ...
+    def __init__(self, points: list[Point | tuple[float, float]]) -> None: ...
 
 class Polygon:
     def __init__(self, exterior: LineString, interiors: list[LineString]) -> None: ...
 
 class MultiPoint:
-    def __init__(self, points: list[Point]) -> None: ...
+    def __init__(self, points: list[Point | tuple[float, float]]) -> None: ...
 
 class MultiLineString:
     def __init__(self, line_strings: list[LineString]) -> None: ...
@@ -49,12 +49,12 @@ class MultiPolygon:
 
 class Rect:
     def __init__(
-        self, corner_1: Point, corner_2: Point
+        self, corner_1: Point | tuple[float, float], corner_2: Point | tuple[float, float]
     ) -> None: ...
 
 class Triangle:
     def __init__(
-        self, a: Point, b: Point, c: Point
+        self, a: Point | tuple[float, float], b: Point | tuple[float, float], c: Point | tuple[float, float]
     ) -> None: ...
 
 class GeometryCollection:
