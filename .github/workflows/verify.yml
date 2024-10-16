@@ -4,6 +4,7 @@ on:
   pull_request:
 
 jobs:
+  # region Builds
   verify-builds:
     strategy:
       fail-fast: false
@@ -35,6 +36,7 @@ jobs:
           cargo build --all-features --release --verbose --workspace
           cargo build --all-features --verbose --workspace
 
+  # region Lints
   verify-lints:
     strategy:
       fail-fast: false
@@ -70,6 +72,125 @@ jobs:
         run: |
           cargo clippy --no-deps --all-features -- -Dwarnings
 
+  # region Linux Wheels
+  verify-linux-wheels:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - identifier: x86_64
+            target: x86_64
+
+          - identifier: x86
+            target: x86
+
+          - identifier: ARM64
+            target: aarch64
+
+    name: Verify - Wheels - Linux - ${{ matrix.identifier }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Build Wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          args: --release --out dist --find-interpreter
+          manylinux: auto
+          sccache: "true"
+          target: ${{ matrix.target }}
+          working-directory: snapr-py
+
+  # region MacOS Wheels
+  verify-macos-wheels:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - identifier: x86_64
+            os: macos-12
+            target: x86_64
+
+          - identifier: ARM64
+            os: macos-14
+            target: aarch64
+
+    name: Verify - Wheels - MacOS - ${{ matrix.identifier }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Build Wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          args: --release --out dist --find-interpreter
+          sccache: "true"
+          target: ${{ matrix.target }}
+          working-directory: snapr-py
+
+  # region Musl Wheels
+  verify-musl-wheels:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - identifier: x86_64
+            target: x86_64
+
+          - identifier: x86
+            target: x86
+
+          - identifier: ARM64
+            target: aarch64
+
+    name: Verify - Wheels - Musl - ${{ matrix.identifier }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Build Wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          args: --release --out dist --find-interpreter
+          manylinux: musllinux_1_2
+          sccache: "true"
+          target: ${{ matrix.target }}
+          working-directory: snapr-py
+
+  # region Source Distribution
+  verify-source-distribution:
+    name: Verify - Source Distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Build Source Distribution
+        uses: PyO3/maturin-action@v1
+        with:
+          args: --out dist
+          command: sdist
+          working-directory: snapr-py
+
+  # region Tests
   verify-tests:
     strategy:
       fail-fast: false
@@ -99,3 +220,35 @@ jobs:
       - name: Verify - `cargo test`
         run: |
           cargo test --all-features --no-fail-fast --verbose --workspace
+
+  # region Windows Wheels
+  verify-windows-wheels:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - identifier: x64
+            target: x64
+
+          - identifier: x86
+            target: x86
+
+    name: Verify - Wheels - Windows - ${{ matrix.identifier }}
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          architecture: ${{ matrix.target }}
+          python-version: 3.x
+
+      - name: Build Wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          args: --release --out dist --find-interpreter
+          sccache: "true"
+          target: ${{ matrix.target }}
+          working-directory: snapr-py

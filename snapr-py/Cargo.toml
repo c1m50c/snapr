@@ -1,0 +1,20 @@
+[package]
+name = "snapr-py"
+edition = "2021"
+publish = false
+
+# Shared Package Configuration
+authors.workspace = true
+license.workspace = true
+version.workspace = true
+
+[lib]
+name = "snapr"
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = { workspace = true }
+geo = { workspace = true }
+image = { workspace = true }
+pyo3 = "0.22.0"
+snapr = { path = "../snapr" }

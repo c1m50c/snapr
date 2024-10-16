@@ -1,0 +1,31 @@
+[project]
+name = "snapr"
+authors = [
+    { name = "c1m50c", email = "58411864+c1m50c@users.noreply.github.com" }
+]
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dynamic = ["version"]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.8"
+
+[project.urls]
+Issues = "https://github.com/c1m50c/snapr/issues"
+Repository = "https://github.com/c1m50c/snapr"
+
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+
+[tool.uv]
+dev-dependencies = [
+    "pip>=24.2",
+    "requests>=2.32.3",
+]
