@@ -75,6 +75,7 @@ jobs:
   # region Linux Wheels
   verify-linux-wheels:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - identifier: x86_64
@@ -109,6 +110,7 @@ jobs:
   # region MacOS Wheels
   verify-macos-wheels:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - identifier: x86_64
@@ -141,6 +143,7 @@ jobs:
   # region Musl Wheels
   verify-musl-wheels:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - identifier: x86_64
@@ -172,7 +175,7 @@ jobs:
           target: ${{ matrix.target }}
           working-directory: snapr-py
 
-  # Source Distribution
+  # region Source Distribution
   verify-source-distribution:
     name: Verify - Source Distribution
     runs-on: ubuntu-latest
@@ -221,6 +224,7 @@ jobs:
   # region Windows Wheels
   verify-windows-wheels:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - identifier: x64
