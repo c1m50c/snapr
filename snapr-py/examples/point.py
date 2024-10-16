@@ -1,5 +1,5 @@
 import requests
-from snapr import Geometry, Point, Snapr, Style
+from snapr import Geometry, Point, Snapr
 
 
 def tile_fetcher(
@@ -19,7 +19,6 @@ def tile_fetcher(
 
 
 snapr = Snapr(tile_fetcher=tile_fetcher, zoom=15)
-styles = [Style.Point()]
 
 geometries = [
     # Chimney Rock, Nebraska
@@ -33,7 +32,7 @@ geometries = [
     Geometry.Point(Point(latitude=41.702909695820175, longitude=-103.33250120288363)),
 ]
 
-snapshot = snapr.generate_snapshot_from_geometries(geometries=geometries, styles=styles)
+snapshot = snapr.generate_snapshot_from_geometries(geometries=geometries)
 
 with open("example.png", "wb") as image:
     image.write(snapshot)
