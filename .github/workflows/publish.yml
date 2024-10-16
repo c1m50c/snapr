@@ -235,4 +235,3 @@ jobs:
         with:
           args: --non-interactive --skip-existing wheels-*/*
           command: upload
-          working-directory: snapr-py
