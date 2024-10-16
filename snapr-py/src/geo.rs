@@ -93,11 +93,8 @@ impl_geo_wrapper!(Line, PyLine, "Line");
 #[pymethods]
 impl PyLine {
     #[new]
-    fn new(start: (f64, f64), end: (f64, f64)) -> Self {
-        let start = geo::coord! { x: start.0, y: start.1 };
-        let end = geo::coord! { x: end.0, y: end.1 };
-
-        Self(geo::Line::new(start, end))
+    fn new(start: PyPoint, end: PyPoint) -> Self {
+        Self(geo::Line::new(start.0, end.0))
     }
 }
 
@@ -175,8 +172,8 @@ impl_geo_wrapper!(Rect, PyRect, "Rect");
 #[pymethods]
 impl PyRect {
     #[new]
-    fn new(corner_1: (f64, f64), corner_2: (f64, f64)) -> Self {
-        Self(geo::Rect::new(corner_1, corner_2))
+    fn new(corner_1: PyPoint, corner_2: PyPoint) -> Self {
+        Self(geo::Rect::new(corner_1.0, corner_2.0))
     }
 }
 
@@ -185,11 +182,11 @@ impl_geo_wrapper!(Triangle, PyTriangle, "Triangle");
 #[pymethods]
 impl PyTriangle {
     #[new]
-    fn new(a: (f64, f64), b: (f64, f64), c: (f64, f64)) -> Self {
+    fn new(a: PyPoint, b: PyPoint, c: PyPoint) -> Self {
         Self(geo::Triangle::new(
-            geo::coord! {x: a.0, y: a.1},
-            geo::coord! {x: b.0, y: b.1},
-            geo::coord! {x: c.0, y: c.1},
+            geo::coord! {x: a.x(), y: a.y()},
+            geo::coord! {x: b.x(), y: b.y()},
+            geo::coord! {x: c.x(), y: c.y()},
         ))
     }
 }
