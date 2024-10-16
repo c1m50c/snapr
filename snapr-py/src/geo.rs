@@ -41,6 +41,7 @@ pub enum PyPointOrTuple {
     Tuple((f64, f64)),
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<PyPoint> for PyPointOrTuple {
     fn into(self) -> PyPoint {
         match self {
@@ -50,6 +51,7 @@ impl Into<PyPoint> for PyPointOrTuple {
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<geo::Point<f64>> for PyPointOrTuple {
     fn into(self) -> geo::Point<f64> {
         let py_point = <Self as Into<PyPoint>>::into(self);
