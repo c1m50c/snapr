@@ -1,6 +1,9 @@
 use std::ops::{Deref, DerefMut};
 
 use pyo3::prelude::*;
+use wkt::TryFromWkt;
+
+use crate::SnaprError;
 
 #[derive(Clone, Debug, PartialEq)]
 #[pyclass(name = "Geometry")]
@@ -222,4 +225,33 @@ impl PyTriangle {
             geo::coord! {x: c.x(), y: c.y()},
         ))
     }
+}
+
+#[pyfunction]
+pub fn well_known_text_to_geometry(well_known_text: String) -> PyResult<PyGeometry> {
+    let geometry = geo::Geometry::<f64>::try_from_wkt_str(&well_known_text)
+        .map_err(|err| SnaprError::new_err(err.to_string()))?;
+
+    match geometry {
+        geo::Geometry::Point(geometry) => Ok(PyPoint(geometry).into()),
+        geo::Geometry::Line(geometry) => Ok(PyLine(geometry).into()),
+        geo::Geometry::LineString(geometry) => Ok(PyLineString(geometry).into()),
+        geo::Geometry::Polygon(geometry) => Ok(PyPolygon(geometry).into()),
+        geo::Geometry::MultiPoint(geometry) => Ok(PyMultiPoint(geometry).into()),
+        geo::Geometry::MultiLineString(geometry) => Ok(PyMultiLineString(geometry).into()),
+        geo::Geometry::MultiPolygon(geometry) => Ok(PyMultiPolygon(geometry).into()),
+        geo::Geometry::GeometryCollection(geometry) => Ok(PyGeometryCollection(geometry).into()),
+        geo::Geometry::Rect(geometry) => Ok(PyRect(geometry).into()),
+        geo::Geometry::Triangle(geometry) => Ok(PyTriangle(geometry).into()),
+    }
+}
+
+#[pyfunction]
+pub fn well_known_texts_to_geometries(well_known_texts: Vec<String>) -> PyResult<Vec<PyGeometry>> {
+    let well_known_texts = well_known_texts
+        .into_iter()
+        .map(well_known_text_to_geometry)
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(well_known_texts)
 }

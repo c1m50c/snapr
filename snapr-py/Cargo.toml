@@ -18,3 +18,4 @@ geo = { workspace = true }
 image = { workspace = true }
 pyo3 = "0.22.0"
 snapr = { path = "../snapr" }
+wkt = "0.11.1"

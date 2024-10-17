@@ -144,6 +144,13 @@ fn snapr(py: Python, module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<geo::PyRect>()?;
     module.add_class::<geo::PyTriangle>()?;
 
+    module.add_function(wrap_pyfunction!(geo::well_known_text_to_geometry, module)?)?;
+
+    module.add_function(wrap_pyfunction!(
+        geo::well_known_texts_to_geometries,
+        module
+    )?)?;
+
     module.add_class::<style::PyColor>()?;
     module.add_class::<style::PyColorOptions>()?;
     module.add_class::<style::PyLabel>()?;

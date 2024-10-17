@@ -49,12 +49,17 @@ class MultiPolygon:
 
 class Rect:
     def __init__(
-        self, corner_1: Point | tuple[float, float], corner_2: Point | tuple[float, float]
+        self,
+        corner_1: Point | tuple[float, float],
+        corner_2: Point | tuple[float, float],
     ) -> None: ...
 
 class Triangle:
     def __init__(
-        self, a: Point | tuple[float, float], b: Point | tuple[float, float], c: Point | tuple[float, float]
+        self,
+        a: Point | tuple[float, float],
+        b: Point | tuple[float, float],
+        c: Point | tuple[float, float],
     ) -> None: ...
 
 class GeometryCollection:
@@ -81,6 +86,9 @@ class Geometry:
     def Rect(geometry: Rect) -> Geometry: ...
     @staticmethod
     def Triangle(geometry: Triangle) -> Geometry: ...
+
+def well_known_text_to_geometry(well_known_text: str) -> Geometry: ...
+def well_known_texts_to_geometries(well_known_texts: list[str]) -> list[Geometry]: ...
 
 # region style.rs
 
