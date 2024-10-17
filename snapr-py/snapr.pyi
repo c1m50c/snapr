@@ -82,6 +82,9 @@ class Geometry:
     @staticmethod
     def Triangle(geometry: Triangle) -> Geometry: ...
 
+def well_known_text_to_geometry(well_known_text: str) -> Geometry: ...
+def well_known_texts_to_geometries(well_known_texts: list[str]) -> list[Geometry]: ...
+
 # region style.rs
 
 class Color:
