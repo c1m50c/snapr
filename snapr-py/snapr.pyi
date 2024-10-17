@@ -49,12 +49,17 @@ class MultiPolygon:
 
 class Rect:
     def __init__(
-        self, corner_1: Point | tuple[float, float], corner_2: Point | tuple[float, float]
+        self,
+        corner_1: Point | tuple[float, float],
+        corner_2: Point | tuple[float, float],
     ) -> None: ...
 
 class Triangle:
     def __init__(
-        self, a: Point | tuple[float, float], b: Point | tuple[float, float], c: Point | tuple[float, float]
+        self,
+        a: Point | tuple[float, float],
+        b: Point | tuple[float, float],
+        c: Point | tuple[float, float],
     ) -> None: ...
 
 class GeometryCollection:
