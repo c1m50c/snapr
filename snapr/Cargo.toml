@@ -1,7 +1,7 @@
 [package]
 name = "snapr"
 edition = "2021"
-description = "Flexible and frictionless way to render snapshots of maps with stylized geometries."
+description = "Library enabling a flexible and frictionless way to render snapshots of maps with overlayed geometries. "
 categories = ["science::geo"]
 keywords = ["geo", "geography", "geospatial", "maps"]
 repository = "https://github.com/c1m50c/snapr"

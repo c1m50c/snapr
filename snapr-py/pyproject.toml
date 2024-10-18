@@ -1,13 +1,14 @@
 [project]
 name = "snapr"
 authors = [
-    { name = "c1m50c", email = "58411864+c1m50c@users.noreply.github.com" }
+    { name = "c1m50c", email = "58411864+c1m50c@users.noreply.github.com" },
 ]
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
+description = "Library enabling a flexible and frictionless way to render snapshots of maps with overlayed geometries."
 dynamic = ["version"]
 license = "MIT"
 readme = "README.md"
@@ -25,7 +26,4 @@ build-backend = "maturin"
 features = ["pyo3/extension-module"]
 
 [tool.uv]
-dev-dependencies = [
-    "pip>=24.2",
-    "requests>=2.32.3",
-]
+dev-dependencies = ["pip>=24.2", "requests>=2.32.3"]
