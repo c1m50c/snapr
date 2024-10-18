@@ -1,9 +1,9 @@
-# examples/label
+# Labels
 
-Demonstrates how to use `LabelOptions` to draw a label on a geometry.
+Example showing how to label a point geometry.
 
 ## Running
 
 ```shell
-cargo run -p "label"
+cargo run --package "label"
 ```

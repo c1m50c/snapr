@@ -1,9 +1,9 @@
-# examples/svg
+# SVGs
 
-Demonstrates how to use `SvgOptions` to draw an SVG on a `StyledPoint`.
+Example showing how to draw an SVG on top of a point geometry.
 
 ## Running
 
 ```shell
-cargo run -p "svg"
+cargo run --package "svg"
 ```

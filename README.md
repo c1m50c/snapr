@@ -17,7 +17,7 @@ Snapr ([/ˈsnæp ər/](http://ipa-reader.xyz/?text=%CB%88sn%C3%A6p:%C9%99r)) is 
   - [Line String](./examples/open-street-maps/src/line_string/) - Example showing how to draw a line string geometry.
   - [Polygon](./examples/open-street-maps/src/polygon/) - Example showing how to draw a polygon geometry.
 - [Labels](./examples/label/) - Example showing how to label a point geometry.
-- [SVG](./examples/svg/) - Example showing how to draw an SVG on top of a point geometry.
+- [SVGs](./examples/svg/) - Example showing how to draw an SVG on top of a point geometry.
 - [Batch](./examples/batch/) - Example showing how to use a [`TileFetcher::Batch`](https://docs.rs/snapr/latest/snapr/enum.TileFetcher.html#variant.Batch), as opposed to the usual [`TileFetcher::Individual`](https://docs.rs/snapr/latest/snapr/enum.TileFetcher.html#variant.Individual) variant.
 
 ### snapr.py

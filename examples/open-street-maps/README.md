@@ -1,10 +1,10 @@
-# examples/open-street-maps
+# Open Street Maps
 
-Demonstrates how to use the <https://a.tile.osm.org> tile provider with this library.
+Collection of binaries using an <https://a.tile.osm.org> tile provider.
 
 ## Running
 
 ```shell
 # Multiple binaries to show off drawing different geometries.
-cargo run -p "open-street-maps" --bin <line|line_string|point|polygon>
+cargo run --package "open-street-maps" --bin <point|line|line_string|polygon>
 ```
