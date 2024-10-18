@@ -20,6 +20,13 @@ pub enum PyGeometry {
     Triangle(PyTriangle),
 }
 
+#[pymethods]
+impl PyGeometry {
+    fn __repr__(&self) -> String {
+        format!("{self:?}")
+    }
+}
+
 #[allow(clippy::from_over_into)]
 impl Into<geo::Geometry> for PyGeometry {
     fn into(self) -> geo::Geometry {
@@ -63,10 +70,19 @@ impl Into<geo::Point<f64>> for PyPointOrTuple {
 }
 
 macro_rules! impl_geo_wrapper {
-    ($base: ident, $variant: ident, $class: literal) => {
+    ($base: ident, $variant: ident, $class: literal, $new: item) => {
         #[derive(Clone, Debug, PartialEq)]
         #[pyclass(name = $class)]
         pub struct $variant(geo::$base<f64>);
+
+        #[pymethods]
+        impl $variant {
+            #[new] $new
+
+            fn __repr__(&self) -> String {
+                format!("{self:?}")
+            }
+        }
 
         impl Deref for $variant {
             type Target = geo::$base<f64>;
@@ -104,32 +120,29 @@ macro_rules! impl_geo_wrapper {
     };
 }
 
-impl_geo_wrapper!(Point, PyPoint, "Point");
-
-#[pymethods]
-impl PyPoint {
-    #[new]
+impl_geo_wrapper!(
+    Point,
+    PyPoint,
+    "Point",
     fn new(latitude: f64, longitude: f64) -> Self {
         let point = geo::point!(x: latitude, y: longitude);
         Self(point)
     }
-}
+);
 
-impl_geo_wrapper!(Line, PyLine, "Line");
-
-#[pymethods]
-impl PyLine {
-    #[new]
+impl_geo_wrapper!(
+    Line,
+    PyLine,
+    "Line",
     fn new(start: PyPointOrTuple, end: PyPointOrTuple) -> Self {
         Self(geo::Line::new::<geo::Point>(start.into(), end.into()))
     }
-}
+);
 
-impl_geo_wrapper!(LineString, PyLineString, "LineString");
-
-#[pymethods]
-impl PyLineString {
-    #[new]
+impl_geo_wrapper!(
+    LineString,
+    PyLineString,
+    "LineString",
     fn new(points: Vec<PyPointOrTuple>) -> Self {
         let coords = points
             .into_iter()
@@ -138,84 +151,73 @@ impl PyLineString {
 
         Self(geo::LineString::new(coords))
     }
-}
+);
 
-impl_geo_wrapper!(Polygon, PyPolygon, "Polygon");
-
-#[pymethods]
-impl PyPolygon {
-    #[new]
+impl_geo_wrapper!(
+    Polygon,
+    PyPolygon,
+    "Polygon",
     fn new(exterior: PyLineString, interiors: Vec<PyLineString>) -> Self {
         let interiors = interiors.into_iter().map(PyLineString::into).collect();
         Self(geo::Polygon::new(exterior.0, interiors))
     }
-}
+);
 
-impl_geo_wrapper!(MultiPoint, PyMultiPoint, "MultiPoint");
-
-#[pymethods]
-impl PyMultiPoint {
-    #[new]
+impl_geo_wrapper!(
+    MultiPoint,
+    PyMultiPoint,
+    "MultiPoint",
     fn new(points: Vec<PyPointOrTuple>) -> Self {
         let points = points.into_iter().map(PyPointOrTuple::into).collect();
         Self(geo::MultiPoint::new(points))
     }
-}
+);
 
-impl_geo_wrapper!(MultiLineString, PyMultiLineString, "MultiLineString");
-
-#[pymethods]
-impl PyMultiLineString {
-    #[new]
+impl_geo_wrapper!(
+    MultiLineString,
+    PyMultiLineString,
+    "MultiLineString",
     fn new(line_strings: Vec<PyLineString>) -> Self {
         let line_strings = line_strings.into_iter().map(PyLineString::into).collect();
         Self(geo::MultiLineString::new(line_strings))
     }
-}
+);
 
-impl_geo_wrapper!(MultiPolygon, PyMultiPolygon, "MultiPolygon");
-
-#[pymethods]
-impl PyMultiPolygon {
-    #[new]
+impl_geo_wrapper!(
+    MultiPolygon,
+    PyMultiPolygon,
+    "MultiPolygon",
     fn new(polygons: Vec<PyPolygon>) -> Self {
         let polygons = polygons.into_iter().map(PyPolygon::into).collect();
         Self(geo::MultiPolygon::new(polygons))
     }
-}
+);
 
 impl_geo_wrapper!(
     GeometryCollection,
     PyGeometryCollection,
-    "GeometryCollection"
-);
-
-#[pymethods]
-impl PyGeometryCollection {
-    #[new]
+    "GeometryCollection",
     fn new(geometries: Vec<PyGeometry>) -> Self {
         Self(geo::GeometryCollection::from(geometries))
     }
-}
+);
 
-impl_geo_wrapper!(Rect, PyRect, "Rect");
-
-#[pymethods]
-impl PyRect {
-    #[new]
+impl_geo_wrapper!(
+    Rect,
+    PyRect,
+    "Rect",
     fn new(corner_1: PyPointOrTuple, corner_2: PyPointOrTuple) -> Self {
         Self(geo::Rect::new::<geo::Point>(
             corner_1.into(),
             corner_2.into(),
         ))
     }
-}
+);
 
-impl_geo_wrapper!(Triangle, PyTriangle, "Triangle");
-
-#[pymethods]
-impl PyTriangle {
-    #[new]
+impl_geo_wrapper!(
+    Triangle,
+    PyTriangle,
+    "Triangle",
     fn new(a: PyPointOrTuple, b: PyPointOrTuple, c: PyPointOrTuple) -> Self {
         let (a, b, c): (geo::Point, geo::Point, geo::Point) = (a.into(), b.into(), c.into());
 
@@ -225,7 +227,7 @@ impl PyTriangle {
             geo::coord! {x: c.x(), y: c.y()},
         ))
     }
-}
+);
 
 #[pyfunction]
 pub fn well_known_text_to_geometry(well_known_text: String) -> PyResult<PyGeometry> {
