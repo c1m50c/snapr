@@ -39,6 +39,8 @@ with open("example.png", "wb") as image:
     image.write(snapshot)
 ```
 
+![Example Output](https://github.com/user-attachments/assets/7abd9d2e-ea71-4cfb-81d6-0a03150ddd1e)
+
 ## License
 
 Licensed under the [MIT License](https://github.com/c1m50c/snapr/blob/main/LICENSE) found at the root of the repository.
