@@ -7,3 +7,7 @@ Example showing how to use a [`TileFetcher::Batch`](https://docs.rs/snapr/latest
 ```shell
 cargo run --package "batch"
 ```
+
+## Output
+
+![Example Output](https://github.com/user-attachments/assets/85eb6a2d-8eb9-498c-a7af-e9ef7fcb731d)
