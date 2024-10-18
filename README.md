@@ -1,85 +1,29 @@
-# snapr
+# Snapr
 
-Flexible and frictionless way to render snapshots of maps with stylized geometries.
+[![](https://img.shields.io/crates/v/snapr?style=flat-square)](https://crates.io/crates/snapr)
+[![](https://img.shields.io/pypi/v/snapr?style=flat-square&color=blue)](https://pypi.org/project/snapr/)
+[![](https://img.shields.io/github/license/c1m50c/snapr?style=flat-square)](https://github.com/c1m50c/snapr/blob/main/LICENSE)
+[![](https://img.shields.io/github/actions/workflow/status/c1m50c/snapr/publish.yml?style=flat-square)](https://github.com/c1m50c/snapr/actions/workflows/publish.yml)
 
-## Features
-
-### Flexibility
-
-The [`snapr`](.) crate is designed with extensibility in mind.
-
-#### Examples
-
-##### Drawing
-
-If you think our drawing solution sucks, don't use it! It can simply be disabled by removing the `drawing` feature flag. You can choose how you draw geometries via the `Snapr::generate_snapshot_from_geometries_with_drawer` method.
-
-##### Tiles
-
-We don't provide a default `TileFetcher` because we don't want to make the decision on how you choose to do so. We'll provide examples for common approaches to fetching tiles, but there are many crates and ways to do so, and we don't feel like restricting you to what we think is best. It's up to you how map tiles are fetched for the snapshots.
-
-### Rendering
-
-#### Geometry
-
-Supports rendering all [`Geometry`](https://docs.rs/geo/latest/geo/geometry/enum.Geometry.html) primitives from the [`geo`](https://crates.io/crates/geo) crate out of the box through the `drawing` feature flag.
-
-#### Map
-
-Supports rendering map tiles from just about any tile provider. All tile-fetching is done through the a `TileFetcher` function, which is just a type alias for the following:
-
-```rust
-fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<image::DynamicImage, snapr::Error> {
-    todo!()
-}
-```
-
-See [`examples/open-street-maps/lib.rs`](./examples/open-street-maps/src/lib.rs) for an example implementation of fetching tiles from <https://a.tile.osm.org> using [`reqwest`](https://crates.io/crates/reqwest).
-
-### Styling
-
-Easy to use styling system to control how geometry is drawn.
-Each [`Geometry`](https://docs.rs/geo/latest/geo/geometry/enum.Geometry.html) primitive has a `Styled` counterpart that can be configured for additional aesthetics.
+Snapr ([/ˈsnæp ər/](http://ipa-reader.xyz/?text=%CB%88sn%C3%A6p:%C9%99r)) is a library that enables a flexible and frictionless way to render snapshots of maps with overlayed geometries.
 
 ## Examples
 
-### [Batch](./examples/batch/)
+### snapr
 
-Demonstrates how to use a `BatchTileFetcher`.
+- [Open Street Maps](./examples/open-street-maps/) - Collection of binaries using an OSM tile fetcher.
+  - [Point](./examples/open-street-maps/src/point/) - Example showing how to draw a point geometry.
+  - [Line](./examples/open-street-maps/src/line/) - Example showing how to draw a line geometry.
+  - [Line String](./examples/open-street-maps/src/line_string/) - Example showing how to draw a line string geometry.
+  - [Polygon](./examples/open-street-maps/src/polygon/) - Example showing how to draw a polygon geometry.
+- [Labels](./examples/label/) - Example showing how to label a point geometry.
+- [SVG](./examples/svg/) - Example showing how to draw an SVG on top of a point geometry.
+- [Batch](./examples/batch/) - Example showing how to use a [`TileFetcher::Batch`](https://docs.rs/snapr/latest/snapr/enum.TileFetcher.html#variant.Batch), as opposed to the usual [`TileFetcher::Individual`](https://docs.rs/snapr/latest/snapr/enum.TileFetcher.html#variant.Individual) variant.
 
-#### Running
+### snapr.py
 
-```shell
-cargo run -p "batch"
-```
+- [Point](./snapr-py/examples/point.py) - Python translation of the "Open Street Maps - Point" example for `snapr`.
 
-### [Label](./examples/label/)
+## License
 
-Demonstrates how to use `LabelOptions` to draw a label on a geometry.
-
-#### Running
-
-```shell
-cargo run -p "label"
-```
-
-### [Open Street Maps](./examples/open-street-maps/)
-
-Demonstrates how to use the <https://a.tile.osm.org> tile provider with this library.
-
-#### Running
-
-```shell
-# Multiple binaries to show off drawing different geometries.
-cargo run -p "open-street-maps" --bin <line|line_string|point|polygon>
-```
-
-### [SVG](./examples/svg/)
-
-Demonstrates how to use `SvgOptions` to draw an SVG on a `StyledPoint`.
-
-#### Running
-
-```shell
-cargo run -p "styling"
-```
+Licensed under the [MIT License](./LICENSE) found at the root of the repository.
