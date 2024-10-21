@@ -14,9 +14,11 @@ use rayon::prelude::*;
 use drawing::style::Style;
 
 pub use builder::SnaprBuilder;
+pub use fetchers::TileFetcher;
 pub use {geo, image, tiny_skia};
 
 mod builder;
+pub mod fetchers;
 
 #[cfg(feature = "drawing")]
 pub mod drawing;
@@ -47,59 +49,6 @@ pub enum Error {
     /// Returned when the source of the error cannot be determined.
     #[error(transparent)]
     Unknown(#[from] anyhow::Error),
-}
-
-/// Function that takes coordinates and a zoom level as arguments and returns an [`Image`](image::DynamicImage) of the map tile at the given position.
-///
-/// ## Example
-///
-/// ```rust
-/// use image::DynamicImage;
-///
-/// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> {
-///     todo!()
-/// }
-/// ```
-#[cfg(feature = "rayon")]
-pub type IndividualTileFetcher<'a> =
-    &'a (dyn Fn(i32, i32, u8) -> Result<image::DynamicImage, Error> + Sync);
-
-/// Function that takes coordinates and a zoom level as arguments and returns an [`Image`](image::DynamicImage) of the map tile at the given position.
-///
-/// ## Example
-///
-/// ```rust
-/// use image::DynamicImage;
-///
-/// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> {
-///     todo!()
-/// }
-/// ```
-#[cfg(not(feature = "rayon"))]
-pub type IndividualTileFetcher<'a> = &'a dyn Fn(i32, i32, u8) -> Result<image::DynamicImage, Error>;
-
-/// Function that takes in a slice of coordinates and a zoom level as arguments and returns the [`Images`](image::DynamicImage) of the map tiles at the given positions.
-///
-/// ## Example
-///
-/// ```rust
-/// use image::DynamicImage;
-///
-/// fn tile_fetcher(matrix: &[(i32, i32)], zoom: u8) -> Result<Vec<(i32, i32, DynamicImage)>, snapr::Error> {
-///     todo!()
-/// }
-/// ```
-pub type BatchTileFetcher<'a> =
-    &'a dyn Fn(&[(i32, i32)], u8) -> Result<Vec<(i32, i32, image::DynamicImage)>, Error>;
-
-/// Functions that return image(s) of map tiles at given coordinates.
-/// See each variant's documentation for more details.
-pub enum TileFetcher<'a> {
-    /// See [`IndividualTileFetcher`].
-    Individual(IndividualTileFetcher<'a>),
-
-    /// See [`BatchTileFetcher`].
-    Batch(BatchTileFetcher<'a>),
 }
 
 /// Utility structure to generate snapshots.
@@ -296,7 +245,9 @@ impl<'a> Snapr<'a> {
 
                 let x_y_to_tile =
                     |(x, y): (i32, i32)| -> Result<(image::RgbaImage, i64, i64), Error> {
-                        let tile = (tile_fetcher)((x + n) % n, (y + n) % n, zoom)?.to_rgba8();
+                        let tile = tile_fetcher
+                            .fetch_tile((x + n) % n, (y + n) % n, zoom)?
+                            .to_rgba8();
 
                         let tile_coords = (geo::Point::from((x as f64, y as f64))
                             - epsg_3857_center)
@@ -341,7 +292,7 @@ impl<'a> Snapr<'a> {
                     .flat_map(|(x, y)| y.map(move |y| (x, y)))
                     .collect::<Vec<_>>();
 
-                let batches = tile_fetcher(&matrix, zoom)?;
+                let batches = tile_fetcher.fetch_tiles(&matrix, zoom)?;
 
                 for (x, y, tile) in batches {
                     let tile_coords = (geo::Point::from((x as f64, y as f64)) - epsg_3857_center)
