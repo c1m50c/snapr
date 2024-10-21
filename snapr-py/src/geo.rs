@@ -227,7 +227,7 @@ impl_geo_wrapper!(
             geo::coord! {x: b.x(), y: b.y()},
             geo::coord! {x: c.x(), y: c.y()},
         ))
-    },
+    }
 );
 
 #[pyfunction]
