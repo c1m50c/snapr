@@ -3,6 +3,7 @@ members = [
     "examples/batch",
     "examples/label",
     "examples/open-street-maps",
+    "examples/stateful",
     "examples/svg",
     "snapr",
     "snapr-py",
