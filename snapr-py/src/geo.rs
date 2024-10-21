@@ -1,5 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
+use geo::MapCoords;
 use pyo3::prelude::*;
 use wkt::TryFromWkt;
 
@@ -230,9 +231,17 @@ impl_geo_wrapper!(
 );
 
 #[pyfunction]
-pub fn well_known_text_to_geometry(well_known_text: String) -> PyResult<PyGeometry> {
-    let geometry = geo::Geometry::<f64>::try_from_wkt_str(&well_known_text)
+#[pyo3(signature = (well_known_text, swap_axes = false))]
+pub fn well_known_text_to_geometry(
+    well_known_text: String,
+    swap_axes: bool,
+) -> PyResult<PyGeometry> {
+    let mut geometry = geo::Geometry::<f64>::try_from_wkt_str(&well_known_text)
         .map_err(|err| SnaprError::new_err(err.to_string()))?;
+
+    if swap_axes {
+        geometry = geometry.map_coords(|coord| geo::coord! { x: coord.y, y: coord.x });
+    }
 
     match geometry {
         geo::Geometry::Point(geometry) => Ok(PyPoint(geometry).into()),
@@ -249,10 +258,14 @@ pub fn well_known_text_to_geometry(well_known_text: String) -> PyResult<PyGeomet
 }
 
 #[pyfunction]
-pub fn well_known_texts_to_geometries(well_known_texts: Vec<String>) -> PyResult<Vec<PyGeometry>> {
+#[pyo3(signature = (well_known_texts, swap_axes = false))]
+pub fn well_known_texts_to_geometries(
+    well_known_texts: Vec<String>,
+    swap_axes: bool,
+) -> PyResult<Vec<PyGeometry>> {
     let well_known_texts = well_known_texts
         .into_iter()
-        .map(well_known_text_to_geometry)
+        .map(|x| well_known_text_to_geometry(x, swap_axes))
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(well_known_texts)
