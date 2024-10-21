@@ -110,7 +110,7 @@ where
 ///
 /// ```rust
 /// use image::DynamicImage;
-/// use snapr::Error;
+/// use snapr::{Error, TileFetcher};
 ///
 /// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, Error> {
 ///     todo!()
