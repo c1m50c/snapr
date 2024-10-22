@@ -134,6 +134,24 @@ pub trait DynamicStyle {
     }
 }
 
+impl DynamicStyle for fn(&geo::Point<i32>) -> Option<PointStyle> {
+    fn for_point(&self, point: &geo::Point<i32>) -> Option<PointStyle> {
+        (self)(point)
+    }
+}
+
+impl DynamicStyle for fn(&geo::LineString<i32>) -> Option<LineStyle> {
+    fn for_line(&self, line_string: &geo::LineString<i32>) -> Option<LineStyle> {
+        (self)(line_string)
+    }
+}
+
+impl DynamicStyle for fn(&geo::Polygon<i32>) -> Option<PolygonStyle> {
+    fn for_polygon(&self, polygon: &geo::Polygon<i32>) -> Option<PolygonStyle> {
+        (self)(polygon)
+    }
+}
+
 /// Standard options for coloring [`Drawables`](super::Drawable) found throughout most style options.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ColorOptions {
