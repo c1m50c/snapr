@@ -73,8 +73,8 @@ pub enum PyStyle {
 }
 
 #[allow(clippy::from_over_into)]
-impl Into<Style> for PyStyle {
-    fn into(self) -> Style {
+impl<'a> Into<Style<'a>> for PyStyle {
+    fn into(self) -> Style<'a> {
         match self {
             Self::Point(style) => Style::Point(style.0),
             Self::Line(style) => Style::Line(style.0),

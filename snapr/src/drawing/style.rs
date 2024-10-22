@@ -5,16 +5,16 @@ use tiny_skia::Color;
 use super::geometry::{line::LineStyle, point::PointStyle, polygon::PolygonStyle};
 
 /// Represents _styles_ that can be applied to [`Drawable`](super::Drawable) objects.
-pub enum Style {
+pub enum Style<'a> {
     Point(PointStyle),
     Line(LineStyle),
     Polygon(PolygonStyle),
-    Dynamic(Box<dyn DynamicStyle>),
+    Dynamic(&'a dyn DynamicStyle),
 }
 
-impl Style {
+impl<'a> Style<'a> {
     /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`PointStyle`].
-    pub fn for_point<'a, I>(styles: I, point: &geo::Point<i32>) -> Option<PointStyle>
+    pub fn for_point<I>(styles: I, point: &geo::Point<i32>) -> Option<PointStyle>
     where
         I: IntoIterator<Item = &'a Self>,
     {
@@ -28,7 +28,7 @@ impl Style {
     }
 
     /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`LineStyle`].
-    pub fn for_line<'a, I>(styles: I, line_string: &geo::LineString<i32>) -> Option<LineStyle>
+    pub fn for_line<I>(styles: I, line_string: &geo::LineString<i32>) -> Option<LineStyle>
     where
         I: IntoIterator<Item = &'a Self>,
     {
@@ -42,7 +42,7 @@ impl Style {
     }
 
     /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`PolygonStyle`].
-    pub fn for_polygon<'a, I>(styles: I, polygon: &geo::Polygon<i32>) -> Option<PolygonStyle>
+    pub fn for_polygon<I>(styles: I, polygon: &geo::Polygon<i32>) -> Option<PolygonStyle>
     where
         I: IntoIterator<Item = &'a Self>,
     {
@@ -98,21 +98,30 @@ impl Style {
     }
 }
 
-impl From<PointStyle> for Style {
+impl<'a> From<PointStyle> for Style<'a> {
     fn from(value: PointStyle) -> Self {
         Self::Point(value)
     }
 }
 
-impl From<LineStyle> for Style {
+impl<'a> From<LineStyle> for Style<'a> {
     fn from(value: LineStyle) -> Self {
         Self::Line(value)
     }
 }
 
-impl From<PolygonStyle> for Style {
+impl<'a> From<PolygonStyle> for Style<'a> {
     fn from(value: PolygonStyle) -> Self {
         Self::Polygon(value)
+    }
+}
+
+impl<'a, T> From<&'a T> for Style<'a>
+where
+    T: DynamicStyle,
+{
+    fn from(value: &'a T) -> Self {
+        Self::Dynamic(value)
     }
 }
 

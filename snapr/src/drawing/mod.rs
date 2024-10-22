@@ -13,7 +13,7 @@ pub mod svg;
 
 pub struct DrawingState<'a> {
     pub snapr: &'a Snapr<'a>,
-    pub styles: &'a [Style],
+    pub styles: &'a [Style<'a>],
     pub center: geo::Point<f64>,
     pub zoom: u8,
 }
