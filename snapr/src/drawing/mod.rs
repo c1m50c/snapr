@@ -56,40 +56,9 @@ pub trait Drawable {
         snapr: &Snapr,
         styles: &[Style],
         pixmap: &mut Pixmap,
-        center: geo::Point,
+        center: geo::Point<f64>,
         zoom: u8,
     ) -> Result<(), crate::Error>;
-}
-
-impl<T> Drawable for geo::Geometry<T>
-where
-    T: geo::CoordNum,
-{
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
-        match self {
-            Self::Point(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::Line(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::LineString(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::Polygon(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::MultiPoint(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::MultiLineString(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::MultiPolygon(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-
-            Self::GeometryCollection(geometry) => geometry
-                .into_iter()
-                .try_for_each(|geometry| geometry.draw(snapr, styles, pixmap, center, zoom)),
-
-            Self::Rect(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::Triangle(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-        }
-    }
 }
 
 /// Converts an [`EPSG:4326`](https://epsg.io/4326) coordinate to one that represents a pixel in a snapshot.
