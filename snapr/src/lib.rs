@@ -79,16 +79,13 @@ impl<'a> Snapr<'a> {
     }
 
     /// Returns a snapshot centered around the provided `geometries`.
-    pub fn generate_snapshot_from_geometries<T>(
+    pub fn generate_snapshot_from_geometries(
         &self,
-        geometries: T,
+        geometries: Vec<geo::Geometry>,
         styles: &[Style],
-    ) -> Result<image::RgbaImage, Error>
-    where
-        T: Into<geo::GeometryCollection>,
-    {
+    ) -> Result<image::RgbaImage, Error> {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
-        let geometries = geometries.into();
+        let geometries = geo::GeometryCollection::from(geometries);
 
         let Some(mut pixmap) = Pixmap::new(self.width, self.height) else {
             todo!("Return an `Err` or find some way to safely go forward with the function")
