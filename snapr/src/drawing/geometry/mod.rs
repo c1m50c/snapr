@@ -35,4 +35,11 @@ impl Drawable for geo::Geometry<f64> {
                 .try_for_each(|geometry| geometry.draw(snapr, styles, pixmap, center, zoom)),
         }
     }
+
+    fn geometry(&self) -> Option<geo::Geometry<f64>>
+    where
+        Self: Sized,
+    {
+        Some(self.clone())
+    }
 }

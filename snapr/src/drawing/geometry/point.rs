@@ -127,6 +127,13 @@ impl Drawable for geo::Point<f64> {
 
         Ok(())
     }
+
+    fn geometry(&self) -> Option<geo::Geometry<f64>>
+    where
+        Self: Sized,
+    {
+        Some(geo::Geometry::Point(self.clone()))
+    }
 }
 
 impl Drawable for geo::MultiPoint<f64> {
@@ -140,5 +147,12 @@ impl Drawable for geo::MultiPoint<f64> {
     ) -> Result<(), crate::Error> {
         self.into_iter()
             .try_for_each(|point| point.draw(snapr, styles, pixmap, center, zoom))
+    }
+
+    fn geometry(&self) -> Option<geo::Geometry<f64>>
+    where
+        Self: Sized,
+    {
+        Some(geo::Geometry::MultiPoint(self.clone()))
     }
 }

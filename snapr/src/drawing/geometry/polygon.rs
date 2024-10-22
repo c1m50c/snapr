@@ -42,8 +42,7 @@ impl Drawable for geo::Polygon<f64> {
         let polygon_style = Style::for_polygon(styles).unwrap_or_default();
         let line_style = Style::for_line(styles).unwrap_or_default();
 
-        let polygon =
-            self.map_coords(|coord| epsg_4326_to_pixel(snapr, zoom, center, &coord));
+        let polygon = self.map_coords(|coord| epsg_4326_to_pixel(snapr, zoom, center, &coord));
 
         let mut path_builder = PathBuilder::new();
 
@@ -109,6 +108,13 @@ impl Drawable for geo::Polygon<f64> {
 
         Ok(())
     }
+
+    fn geometry(&self) -> Option<geo::Geometry<f64>>
+    where
+        Self: Sized,
+    {
+        Some(geo::Geometry::Polygon(self.clone()))
+    }
 }
 
 impl Drawable for geo::MultiPolygon<f64> {
@@ -123,6 +129,13 @@ impl Drawable for geo::MultiPolygon<f64> {
         self.into_iter()
             .try_for_each(|polygon| polygon.draw(snapr, styles, pixmap, center, zoom))
     }
+
+    fn geometry(&self) -> Option<geo::Geometry<f64>>
+    where
+        Self: Sized,
+    {
+        Some(geo::Geometry::MultiPolygon(self.clone()))
+    }
 }
 
 impl Drawable for geo::Rect<f64> {
@@ -136,6 +149,13 @@ impl Drawable for geo::Rect<f64> {
     ) -> Result<(), crate::Error> {
         self.to_polygon().draw(snapr, styles, pixmap, center, zoom)
     }
+
+    fn geometry(&self) -> Option<geo::Geometry<f64>>
+    where
+        Self: Sized,
+    {
+        Some(geo::Geometry::Rect(self.clone()))
+    }
 }
 
 impl Drawable for geo::Triangle<f64> {
@@ -148,5 +168,12 @@ impl Drawable for geo::Triangle<f64> {
         zoom: u8,
     ) -> Result<(), crate::Error> {
         self.to_polygon().draw(snapr, styles, pixmap, center, zoom)
+    }
+
+    fn geometry(&self) -> Option<geo::Geometry<f64>>
+    where
+        Self: Sized,
+    {
+        Some(geo::Geometry::Triangle(self.clone()))
     }
 }
