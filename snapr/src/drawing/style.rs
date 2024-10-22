@@ -147,7 +147,7 @@ pub trait DynamicStyle {
         None
     }
 
-    /// Creates a [`LineStyle`] from a given `line`.
+    /// Creates a [`LineStyle`] from a given `line_string`.
     fn for_line(
         &self,
         state: &DrawingState,
@@ -163,32 +163,6 @@ pub trait DynamicStyle {
         polygon: &geo::Polygon<i32>,
     ) -> Option<PolygonStyle> {
         None
-    }
-}
-
-impl DynamicStyle for fn(&DrawingState, &geo::Point<i32>) -> Option<PointStyle> {
-    fn for_point(&self, state: &DrawingState, point: &geo::Point<i32>) -> Option<PointStyle> {
-        (self)(state, point)
-    }
-}
-
-impl DynamicStyle for fn(&DrawingState, &geo::LineString<i32>) -> Option<LineStyle> {
-    fn for_line(
-        &self,
-        state: &DrawingState,
-        line_string: &geo::LineString<i32>,
-    ) -> Option<LineStyle> {
-        (self)(state, line_string)
-    }
-}
-
-impl DynamicStyle for fn(&DrawingState, &geo::Polygon<i32>) -> Option<PolygonStyle> {
-    fn for_polygon(
-        &self,
-        state: &DrawingState,
-        polygon: &geo::Polygon<i32>,
-    ) -> Option<PolygonStyle> {
-        (self)(state, polygon)
     }
 }
 
