@@ -137,22 +137,6 @@ impl<'a> Snapr<'a> {
             y: (n * (1.0 - (point_as_rad.x().tan() + (1.0 / point_as_rad.x().cos())).ln() / PI) / 2.0)
         )
     }
-
-    /// Converts a [`EPSG:4326`](https://epsg.io/4326) coordinate to the corresponding pixel coordinate in a snapshot.
-    pub fn epsg_4326_to_pixel(
-        &self,
-        zoom: u8,
-        center: geo::Point,
-        point: geo::Point,
-    ) -> geo::Point<i32> {
-        let epsg_3857_point =
-            Self::epsg_4326_to_epsg_3857(zoom, point) - Self::epsg_4326_to_epsg_3857(zoom, center);
-
-        geo::point!(
-            x: (epsg_3857_point.x().fract() * self.tile_size as f64 + self.width as f64 / 2.0).round() as i32,
-            y: (epsg_3857_point.y().fract() * self.tile_size as f64 + self.height as f64 / 2.0).round() as i32,
-        )
-    }
 }
 
 impl<'a> Snapr<'a> {

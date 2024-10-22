@@ -36,7 +36,11 @@ pub fn epsg_4326_to_pixel(
     center: geo::Point<f64>,
     coord: &geo::Coord<f64>,
 ) -> geo::Coord<i32> {
-    snapr
-        .epsg_4326_to_pixel(zoom, center, geo::point!(x: coord.x, y: coord.y))
-        .into()
+    let epsg_3857_point = Snapr::epsg_4326_to_epsg_3857(zoom, geo::Point::from(*coord))
+        - Snapr::epsg_4326_to_epsg_3857(zoom, center);
+
+    geo::coord!(
+        x: (epsg_3857_point.x().fract() * snapr.tile_size as f64 + snapr.width as f64 / 2.0).round() as i32,
+        y: (epsg_3857_point.y().fract() * snapr.tile_size as f64 + snapr.height as f64 / 2.0).round() as i32,
+    )
 }
