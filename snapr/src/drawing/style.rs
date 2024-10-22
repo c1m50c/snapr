@@ -23,16 +23,7 @@ impl Style {
             _ => None,
         });
 
-        styles.cloned().reduce(|merged, current| PointStyle {
-            color_options: ColorOptions {
-                foreground: current.color_options.foreground,
-                background: current.color_options.background,
-                anti_alias: current.color_options.anti_alias,
-                border: current.color_options.border.or(merged.color_options.border),
-            },
-            representation: current.representation,
-            label: current.label.or(merged.label),
-        })
+        styles.cloned().reduce(Self::merge_point_styles)
     }
 
     /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`LineStyle`].
@@ -45,15 +36,7 @@ impl Style {
             _ => None,
         });
 
-        styles.cloned().reduce(|merged, current| LineStyle {
-            color_options: ColorOptions {
-                foreground: current.color_options.foreground,
-                background: current.color_options.background,
-                anti_alias: current.color_options.anti_alias,
-                border: current.color_options.border.or(merged.color_options.border),
-            },
-            width: current.width,
-        })
+        styles.cloned().reduce(Self::merge_line_styles)
     }
 
     /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`PolygonStyle`].
@@ -66,14 +49,49 @@ impl Style {
             _ => None,
         });
 
-        styles.cloned().reduce(|merged, current| PolygonStyle {
+        styles.cloned().reduce(Self::merge_polygon_styles)
+    }
+
+    /// Merges two [`PointStyle`]s into one with the fields in `b` taking priority over the fields in `a`.
+    #[inline(always)]
+    pub fn merge_point_styles(a: PointStyle, b: PointStyle) -> PointStyle {
+        PointStyle {
             color_options: ColorOptions {
-                foreground: current.color_options.foreground,
-                background: current.color_options.background,
-                anti_alias: current.color_options.anti_alias,
-                border: current.color_options.border.or(merged.color_options.border),
+                foreground: b.color_options.foreground,
+                background: b.color_options.background,
+                anti_alias: b.color_options.anti_alias,
+                border: b.color_options.border.or(a.color_options.border),
             },
-        })
+            representation: b.representation,
+            label: b.label.or(a.label),
+        }
+    }
+
+    /// Merges two [`LineStyle`]s into one with the fields in `b` taking priority over the fields in `a`.
+    #[inline(always)]
+    pub fn merge_line_styles(a: LineStyle, b: LineStyle) -> LineStyle {
+        LineStyle {
+            color_options: ColorOptions {
+                foreground: b.color_options.foreground,
+                background: b.color_options.background,
+                anti_alias: b.color_options.anti_alias,
+                border: b.color_options.border.or(a.color_options.border),
+            },
+            width: b.width,
+        }
+    }
+
+    /// Merges two [`PolygonStyle`]s into one with the fields in `b` taking priority over the fields in `a`.
+    #[inline(always)]
+    pub fn merge_polygon_styles(a: PolygonStyle, b: PolygonStyle) -> PolygonStyle {
+        PolygonStyle {
+            color_options: ColorOptions {
+                foreground: b.color_options.foreground,
+                background: b.color_options.background,
+                anti_alias: b.color_options.anti_alias,
+                border: b.color_options.border.or(a.color_options.border),
+            },
+        }
     }
 }
 
