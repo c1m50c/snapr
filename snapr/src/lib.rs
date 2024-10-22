@@ -2,6 +2,7 @@
 
 use std::{f64::consts::PI, fmt};
 
+use drawing::DrawingState;
 use geo::{BoundingRect, Centroid, Coord, MapCoords};
 use image::imageops::overlay;
 use thiserror::Error;
@@ -95,9 +96,16 @@ impl<'a> Snapr<'a> {
         self.generate_snapshot_from_geometries_with_drawer(
             geometries,
             |geometries, snapr, pixmap, center, zoom| -> Result<(), Error> {
+                let state = &DrawingState {
+                    snapr,
+                    styles,
+                    center,
+                    zoom,
+                };
+
                 geometries
                     .into_iter()
-                    .try_for_each(|geometry| geometry.draw(snapr, styles, pixmap, center, zoom))?;
+                    .try_for_each(|geometry| geometry.draw(pixmap, state))?;
 
                 Ok(())
             },
@@ -113,7 +121,7 @@ impl<'a> Snapr<'a> {
     ) -> Result<image::RgbaImage, Error>
     where
         G: Clone + Into<geo::Geometry>,
-        D: Fn(Vec<G>, &Self, &mut Pixmap, geo::Point, u8) -> Result<(), Error>,
+        D: Fn(Vec<G>, &Self, &mut Pixmap, geo::Point<f64>, u8) -> Result<(), Error>,
     {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
 

@@ -1,37 +1,4 @@
 //! Contains utilities to draw objects on top of map tiles.
-//!
-//! ## Example
-//!
-//! ```rust
-//! use geo::Point;
-//! use snapr::{drawing::{epsg_4326_point_to_pixel_point, Drawable, style::Style}, Error, Snapr};
-//! use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Shader, Transform};
-//!
-//! #[derive(Debug)]
-//! struct PointWrapper(Point<f64>);
-//!
-//! impl Drawable for PointWrapper {
-//!     fn draw(&self, snapr: &Snapr, _: &[Style], pixmap: &mut Pixmap, center: Point, zoom: u8) -> Result<(), Error> {
-//!         let pixel_point = epsg_4326_point_to_pixel_point(snapr, zoom, center, &self.0)?;
-//!
-//!         let mut path_builder = PathBuilder::new();
-//!         path_builder.push_circle(0.0, 0.0, 3.0);
-//!
-//!          pixmap.fill_path(
-//!             &path_builder.finish().unwrap(),
-//!             &Paint {
-//!                 shader: Shader::SolidColor(Color::from_rgba8(255, 0, 0, 255)),
-//!                 ..Default::default()
-//!             },
-//!             FillRule::default(),
-//!             Transform::default(),
-//!             None,
-//!         );
-//!
-//!         Ok(())
-//!     }
-//! }
-//! ```
 
 use style::Style;
 use tiny_skia::Pixmap;
@@ -44,6 +11,23 @@ pub mod style;
 #[cfg(feature = "svg")]
 pub mod svg;
 
+pub struct DrawingState<'a> {
+    pub snapr: &'a Snapr<'a>,
+    pub styles: &'a [Style],
+    pub center: geo::Point<f64>,
+    pub zoom: u8,
+}
+
+impl<'a> DrawingState<'a> {
+    /// Converts an [`EPSG:4326`](https://epsg.io/4326) coordinate to one that represents a pixel in a snapshot.
+    /// Used as a shortcut in converting coordinates during drawing.
+    pub fn epsg_4326_to_pixel(&self, coord: geo::Coord<f64>) -> geo::Coord<i32> {
+        self.snapr
+            .epsg_4326_to_pixel(self.zoom, self.center, geo::point!(x: coord.x, y: coord.y))
+            .into()
+    }
+}
+
 /// Represents a _drawable_ object.
 ///
 /// A [`Drawable`] object will _draw_ to the given `pixmap` based on the given arguments.
@@ -51,35 +35,5 @@ pub mod svg;
 pub trait Drawable {
     /// Function that's called when its time for an object to be drawn.
     /// See [`Drawable`] for more details.
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point<f64>,
-        zoom: u8,
-    ) -> Result<(), crate::Error>;
-}
-
-/// Converts an [`EPSG:4326`](https://epsg.io/4326) coordinate to one that represents a pixel in a snapshot.
-/// Used as a shortcut in converting coordinates during drawing.
-pub fn epsg_4326_point_to_pixel<T: geo::CoordNum>(
-    snapr: &Snapr,
-    zoom: u8,
-    center: geo::Point<f64>,
-    coord: geo::Coord<T>,
-) -> geo::Coord<i32> {
-    let x = coord
-        .x
-        .to_f64()
-        .expect("a `geo::CoordNum` should be convertable to a `f64`");
-
-    let y = coord
-        .y
-        .to_f64()
-        .expect("a `geo::CoordNum` should be convertable to a `f64`");
-
-    snapr
-        .epsg_4326_to_pixel(zoom, center, geo::point!(x: x, y: y))
-        .into()
+    fn draw(&self, pixmap: &mut Pixmap, state: &DrawingState) -> Result<(), crate::Error>;
 }

@@ -3,13 +3,9 @@
 use geo::MapCoords;
 use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
-use crate::{
-    drawing::{
-        epsg_4326_point_to_pixel,
-        style::{ColorOptions, Style},
-        Drawable,
-    },
-    Snapr,
+use crate::drawing::{
+    style::{ColorOptions, Style},
+    Drawable, DrawingState,
 };
 
 /// Represents a _shape_ that can be transformed into a [`Path`] via the [`Shape::to_path`] method.
@@ -64,20 +60,10 @@ pub struct PointStyle {
     pub label: Option<crate::drawing::svg::Label>,
 }
 
-impl<T> Drawable for geo::Point<T>
-where
-    T: geo::CoordNum,
-{
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
-        let point = self.map_coords(|coord| epsg_4326_point_to_pixel(snapr, zoom, center, coord));
-        let style = Style::for_point(styles, &point).unwrap_or_default();
+impl Drawable for geo::Point<f64> {
+    fn draw(&self, pixmap: &mut Pixmap, state: &DrawingState) -> Result<(), crate::Error> {
+        let point = self.map_coords(|coord| state.epsg_4326_to_pixel(coord));
+        let style = Style::for_point(state.styles, &point).unwrap_or_default();
 
         let shape = match &style.representation {
             Representation::Shape(shape) => shape,
@@ -85,7 +71,7 @@ where
             #[cfg(feature = "svg")]
             Representation::Svg(svg) => {
                 let svg = svg.try_as_svg((point.x(), point.y()))?;
-                svg.draw(snapr, styles, pixmap, center, zoom)?;
+                svg.draw(pixmap, state)?;
 
                 return Ok(());
             }
@@ -125,26 +111,16 @@ where
         #[cfg(feature = "svg")]
         if let Some(label) = &style.label {
             let svg = label.try_as_svg((point.x(), point.y()))?;
-            svg.draw(snapr, styles, pixmap, center, zoom)?;
+            svg.draw(pixmap, state)?;
         }
 
         Ok(())
     }
 }
 
-impl<T> Drawable for geo::MultiPoint<T>
-where
-    T: geo::CoordNum,
-{
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
+impl Drawable for geo::MultiPoint<f64> {
+    fn draw(&self, pixmap: &mut Pixmap, state: &DrawingState) -> Result<(), crate::Error> {
         self.into_iter()
-            .try_for_each(|point| point.draw(snapr, styles, pixmap, center, zoom))
+            .try_for_each(|point| point.draw(pixmap, state))
     }
 }
