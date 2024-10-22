@@ -1,10 +1,11 @@
 //! Contains [`Drawable`] implementations and [`Styles`](Style) for [`geo::Point`]` primitives.
 
+use geo::MapCoords;
 use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::{
     drawing::{
-        epsg_4326_point_to_pixel_point,
+        epsg_4326_to_pixel,
         style::{ColorOptions, Style},
         Drawable,
     },
@@ -72,7 +73,7 @@ impl Drawable for geo::Point<f64> {
         center: geo::Point,
         zoom: u8,
     ) -> Result<(), crate::Error> {
-        let point = epsg_4326_point_to_pixel_point(snapr, zoom, center, self)?;
+        let point = self.map_coords(|coord| epsg_4326_to_pixel(snapr, zoom, center, &coord));
         let style = Style::for_point(styles).unwrap_or_default();
 
         let shape = match &style.representation {
