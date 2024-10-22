@@ -167,7 +167,7 @@ impl<'a> Snapr<'a> {
             break;
         }
 
-        dbg!(zoom)
+        zoom
     }
 
     /// Fills the given `image` with tiles centered around the given `epsg_3857_center` point.
