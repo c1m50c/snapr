@@ -63,7 +63,7 @@ pub struct PointStyle {
 impl Drawable for geo::Point<f64> {
     fn draw(&self, pixmap: &mut Pixmap, state: &DrawingState) -> Result<(), crate::Error> {
         let point = self.map_coords(|coord| state.epsg_4326_to_pixel(coord));
-        let style = Style::for_point(state.styles, &point).unwrap_or_default();
+        let style = Style::for_point(state.styles, state, &point).unwrap_or_default();
 
         let shape = match &style.representation {
             Representation::Shape(shape) => shape,

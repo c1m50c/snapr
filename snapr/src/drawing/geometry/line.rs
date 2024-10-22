@@ -31,7 +31,9 @@ impl Default for LineStyle {
 impl Drawable for geo::Line<f64> {
     fn draw(&self, pixmap: &mut Pixmap, state: &DrawingState) -> Result<(), crate::Error> {
         let line = self.map_coords(|coord| state.epsg_4326_to_pixel(coord));
-        let style = Style::for_line(state.styles, &LineString::from(line)).unwrap_or_default();
+
+        let style =
+            Style::for_line(state.styles, state, &LineString::from(line)).unwrap_or_default();
 
         let mut path_builder = PathBuilder::new();
         path_builder.move_to(line.start.x as f32, line.start.y as f32);
@@ -83,7 +85,7 @@ impl Drawable for geo::Line<f64> {
 impl Drawable for geo::LineString<f64> {
     fn draw(&self, pixmap: &mut Pixmap, state: &DrawingState) -> Result<(), crate::Error> {
         let line = self.map_coords(|coord| state.epsg_4326_to_pixel(coord));
-        let style = Style::for_line(state.styles, &line).unwrap_or_default();
+        let style = Style::for_line(state.styles, state, &line).unwrap_or_default();
 
         let converted_points = line.points().enumerate();
         let mut path_builder = PathBuilder::new();

@@ -2,7 +2,10 @@
 
 use tiny_skia::Color;
 
-use super::geometry::{line::LineStyle, point::PointStyle, polygon::PolygonStyle};
+use super::{
+    geometry::{line::LineStyle, point::PointStyle, polygon::PolygonStyle},
+    DrawingState,
+};
 
 /// Represents _styles_ that can be applied to [`Drawable`](super::Drawable) objects.
 pub enum Style<'a> {
@@ -14,12 +17,16 @@ pub enum Style<'a> {
 
 impl<'a> Style<'a> {
     /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`PointStyle`].
-    pub fn for_point<I>(styles: I, point: &geo::Point<i32>) -> Option<PointStyle>
+    pub fn for_point<I>(
+        styles: I,
+        state: &DrawingState,
+        point: &geo::Point<i32>,
+    ) -> Option<PointStyle>
     where
         I: IntoIterator<Item = &'a Self>,
     {
         let styles = styles.into_iter().flat_map(|style| match style {
-            Self::Dynamic(style) => style.for_point(point),
+            Self::Dynamic(style) => style.for_point(state, point),
             Self::Point(style) => Some(style).cloned(),
             _ => None,
         });
@@ -28,12 +35,16 @@ impl<'a> Style<'a> {
     }
 
     /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`LineStyle`].
-    pub fn for_line<I>(styles: I, line_string: &geo::LineString<i32>) -> Option<LineStyle>
+    pub fn for_line<I>(
+        styles: I,
+        state: &DrawingState,
+        line_string: &geo::LineString<i32>,
+    ) -> Option<LineStyle>
     where
         I: IntoIterator<Item = &'a Self>,
     {
         let styles = styles.into_iter().flat_map(|style| match style {
-            Self::Dynamic(style) => style.for_line(line_string),
+            Self::Dynamic(style) => style.for_line(state, line_string),
             Self::Line(style) => Some(style).cloned(),
             _ => None,
         });
@@ -42,12 +53,16 @@ impl<'a> Style<'a> {
     }
 
     /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`PolygonStyle`].
-    pub fn for_polygon<I>(styles: I, polygon: &geo::Polygon<i32>) -> Option<PolygonStyle>
+    pub fn for_polygon<I>(
+        styles: I,
+        state: &DrawingState,
+        polygon: &geo::Polygon<i32>,
+    ) -> Option<PolygonStyle>
     where
         I: IntoIterator<Item = &'a Self>,
     {
         let styles = styles.into_iter().flat_map(|style| match style {
-            Self::Dynamic(style) => style.for_polygon(polygon),
+            Self::Dynamic(style) => style.for_polygon(state, polygon),
             Self::Polygon(style) => Some(style).cloned(),
             _ => None,
         });
@@ -128,36 +143,52 @@ where
 #[allow(unused_variables)]
 pub trait DynamicStyle {
     /// Creates a [`PointStyle`] from a given `point`.
-    fn for_point(&self, point: &geo::Point<i32>) -> Option<PointStyle> {
+    fn for_point(&self, state: &DrawingState, point: &geo::Point<i32>) -> Option<PointStyle> {
         None
     }
 
     /// Creates a [`LineStyle`] from a given `line`.
-    fn for_line(&self, line_string: &geo::LineString<i32>) -> Option<LineStyle> {
+    fn for_line(
+        &self,
+        state: &DrawingState,
+        line_string: &geo::LineString<i32>,
+    ) -> Option<LineStyle> {
         None
     }
 
     /// Creates a [`PolygonStyle`] from a given `polygon`.
-    fn for_polygon(&self, polygon: &geo::Polygon<i32>) -> Option<PolygonStyle> {
+    fn for_polygon(
+        &self,
+        state: &DrawingState,
+        polygon: &geo::Polygon<i32>,
+    ) -> Option<PolygonStyle> {
         None
     }
 }
 
-impl DynamicStyle for fn(&geo::Point<i32>) -> Option<PointStyle> {
-    fn for_point(&self, point: &geo::Point<i32>) -> Option<PointStyle> {
-        (self)(point)
+impl DynamicStyle for fn(&DrawingState, &geo::Point<i32>) -> Option<PointStyle> {
+    fn for_point(&self, state: &DrawingState, point: &geo::Point<i32>) -> Option<PointStyle> {
+        (self)(state, point)
     }
 }
 
-impl DynamicStyle for fn(&geo::LineString<i32>) -> Option<LineStyle> {
-    fn for_line(&self, line_string: &geo::LineString<i32>) -> Option<LineStyle> {
-        (self)(line_string)
+impl DynamicStyle for fn(&DrawingState, &geo::LineString<i32>) -> Option<LineStyle> {
+    fn for_line(
+        &self,
+        state: &DrawingState,
+        line_string: &geo::LineString<i32>,
+    ) -> Option<LineStyle> {
+        (self)(state, line_string)
     }
 }
 
-impl DynamicStyle for fn(&geo::Polygon<i32>) -> Option<PolygonStyle> {
-    fn for_polygon(&self, polygon: &geo::Polygon<i32>) -> Option<PolygonStyle> {
-        (self)(polygon)
+impl DynamicStyle for fn(&DrawingState, &geo::Polygon<i32>) -> Option<PolygonStyle> {
+    fn for_polygon(
+        &self,
+        state: &DrawingState,
+        polygon: &geo::Polygon<i32>,
+    ) -> Option<PolygonStyle> {
+        (self)(state, polygon)
     }
 }
 
