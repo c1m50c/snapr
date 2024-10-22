@@ -2,6 +2,7 @@
 
 use std::{f64::consts::PI, fmt};
 
+use drawing::{style::Style, Drawable};
 use geo::{BoundingRect, Centroid, Coord, MapCoords};
 use image::imageops::overlay;
 use thiserror::Error;
@@ -10,18 +11,13 @@ use tiny_skia::Pixmap;
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
-#[cfg(feature = "drawing")]
-use drawing::style::Style;
-
 pub use builder::SnaprBuilder;
 pub use fetchers::TileFetcher;
 pub use {geo, image, tiny_skia};
 
 mod builder;
-pub mod fetchers;
-
-#[cfg(feature = "drawing")]
 pub mod drawing;
+pub mod fetchers;
 
 /// Error type used throughout the [`snapr`](crate) crate.
 #[derive(Debug, Error)]
@@ -73,7 +69,6 @@ pub struct Snapr<'a> {
 
 impl<'a> Snapr<'a> {
     /// Returns a snapshot centered around the provided `geometry`.
-    #[cfg(feature = "drawing")]
     pub fn generate_snapshot_from_geometry<G>(
         &self,
         geometry: G,
@@ -87,65 +82,38 @@ impl<'a> Snapr<'a> {
     }
 
     /// Returns a snapshot centered around the provided `geometries`.
-    #[cfg(feature = "drawing")]
-    pub fn generate_snapshot_from_geometries(
+    pub fn generate_snapshot_from_geometries<T>(
         &self,
-        geometries: Vec<geo::Geometry>,
+        geometries: T,
         styles: &[Style],
-    ) -> Result<image::RgbaImage, Error> {
-        use drawing::Drawable;
-
-        self.generate_snapshot_from_geometries_with_drawer(
-            geometries,
-            |geometries, snapr, pixmap, center, zoom| -> Result<(), Error> {
-                geometries
-                    .into_iter()
-                    .try_for_each(|geometry| geometry.draw(snapr, styles, pixmap, center, zoom))?;
-
-                Ok(())
-            },
-        )
-    }
-
-    /// Returns a snapshot centered around the provided `geometries`.
-    /// The drawing of each of the `geometries` is done with the given `drawer` function.
-    pub fn generate_snapshot_from_geometries_with_drawer<G, D>(
-        &self,
-        geometries: Vec<G>,
-        drawer: D,
     ) -> Result<image::RgbaImage, Error>
     where
-        G: Clone + Into<geo::Geometry>,
-        D: Fn(Vec<G>, &Self, &mut Pixmap, geo::Point, u8) -> Result<(), Error>,
+        T: Into<geo::GeometryCollection>,
     {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
-
-        let geometry_collection = geometries
-            .iter()
-            .cloned()
-            .map(|geometry| geometry.into())
-            .collect();
-
-        let geometry_collection = geo::GeometryCollection::new_from(geometry_collection);
+        let geometries = geometries.into();
 
         let Some(mut pixmap) = Pixmap::new(self.width, self.height) else {
             todo!("Return an `Err` or find some way to safely go forward with the function")
         };
 
-        let Some(geometry_center_point) = geometry_collection.centroid() else {
-            todo!("Return an `Err` or find a suitable default for `geometry_center_point`")
+        let Some(center) = geometries.centroid() else {
+            todo!("Return an `Err` or find a suitable default for `center`")
         };
 
         let zoom = match self.zoom {
             Some(zoom) => zoom,
-            None => match geometry_collection.bounding_rect() {
+            None => match geometries.bounding_rect() {
                 Some(bounding_box) => self.zoom_from_geometries(bounding_box),
                 None => todo!("Return an `Err` or find a suitable default for `bounding_box`"),
             },
         };
 
-        self.overlay_backing_tiles(&mut output_image, geometry_center_point, zoom)?;
-        drawer(geometries, self, &mut pixmap, geometry_center_point, zoom)?;
+        self.overlay_backing_tiles(&mut output_image, center, zoom)?;
+
+        for geometry in geometries {
+            geometry.draw(&self, styles, &mut pixmap, center, zoom)?;
+        }
 
         let pixmap_image = image::ImageBuffer::from_fn(self.width, self.height, |x, y| {
             let pixel = pixmap.pixel(x, y)
@@ -155,7 +123,6 @@ impl<'a> Snapr<'a> {
         });
 
         overlay(&mut output_image, &pixmap_image, 0, 0);
-
         Ok(output_image)
     }
 

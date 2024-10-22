@@ -12,17 +12,16 @@ license.workspace = true
 version.workspace = true
 
 [features]
-default = ["drawing", "rayon", "svg"]
-drawing = ["dep:hex", "dep:tiny-skia"]
+default = ["rayon", "svg"]
 rayon = ["dep:rayon"]
-svg = ["dep:resvg", "drawing"]
+svg = ["dep:resvg"]
 
 [dependencies]
 anyhow.workspace = true
 geo.workspace = true
-hex = { workspace = true, optional = true }
+hex = { workspace = true }
 image.workspace = true
 rayon = { workspace = true, optional = true }
 resvg = { workspace = true, optional = true }
 thiserror.workspace = true
-tiny-skia = { workspace = true, optional = true }
+tiny-skia = { workspace = true }

@@ -103,7 +103,7 @@ impl Snapr {
         let geometries = geometries
             .into_iter()
             .map(<geo::PyGeometry as Into<::geo::Geometry>>::into)
-            .collect();
+            .collect::<Vec<_>>();
 
         let styles = styles
             .into_iter()
