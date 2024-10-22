@@ -1,0 +1,16 @@
+[package]
+name = "dynamic"
+edition = "2021"
+publish = false
+
+# Shared Package Configuration
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+geo = { workspace = true }
+image = { workspace = true }
+rand = "0.8.5"
+reqwest = { version = "0.12.7", features = ["blocking"] }
+snapr = { path = "../../snapr" }

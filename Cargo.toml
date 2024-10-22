@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "examples/batch",
+    "examples/dynamic",
     "examples/label",
     "examples/open-street-maps",
     "examples/stateful",
