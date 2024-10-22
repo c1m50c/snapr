@@ -14,7 +14,6 @@ pub mod svg;
 /// Represents a _drawable_ object.
 ///
 /// A [`Drawable`] object will _draw_ to the given `pixmap` based on the given arguments.
-/// See [`drawing`](self) for more details.
 pub trait Drawable {
     /// Function that's called when its time for an object to be drawn.
     /// See [`Drawable`] for more details.
