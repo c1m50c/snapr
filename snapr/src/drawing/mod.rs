@@ -92,23 +92,25 @@ where
     }
 }
 
-/// Converts an [`EPSG:4326`](https://epsg.io/4326) point to one that represents a pixel in a snapshot.
+/// Converts an [`EPSG:4326`](https://epsg.io/4326) coordinate to one that represents a pixel in a snapshot.
 /// Used as a shortcut in converting coordinates during drawing.
-pub fn epsg_4326_point_to_pixel_point<T: geo::CoordNum>(
+pub fn epsg_4326_point_to_pixel<T: geo::CoordNum>(
     snapr: &Snapr,
     zoom: u8,
     center: geo::Point<f64>,
-    point: &geo::Point<T>,
-) -> Result<geo::Point<i32>, crate::Error> {
-    let x = point
-        .x()
+    coord: geo::Coord<T>,
+) -> geo::Coord<i32> {
+    let x = coord
+        .x
         .to_f64()
-        .ok_or(crate::Error::PrimitiveNumberConversion)?;
+        .expect("a `geo::CoordNum` should be convertable to a `f64`");
 
-    let y = point
-        .y()
+    let y = coord
+        .y
         .to_f64()
-        .ok_or(crate::Error::PrimitiveNumberConversion)?;
+        .expect("a `geo::CoordNum` should be convertable to a `f64`");
 
-    Ok(snapr.epsg_4326_to_pixel(zoom, center, geo::point!(x: x, y: y)))
+    snapr
+        .epsg_4326_to_pixel(zoom, center, geo::point!(x: x, y: y))
+        .into()
 }

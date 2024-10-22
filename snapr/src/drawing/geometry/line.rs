@@ -1,10 +1,11 @@
 //! Contains [`Drawable`] implementations and [`Styles`](Style) for [`geo::Line`], and [`geo::LineString`] primitives.
 
+use geo::{LineString, MapCoords};
 use tiny_skia::{Color, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::{
     drawing::{
-        epsg_4326_point_to_pixel_point,
+        epsg_4326_point_to_pixel,
         style::{ColorOptions, Style},
         Drawable,
     },
@@ -43,13 +44,12 @@ where
         center: geo::Point,
         zoom: u8,
     ) -> Result<(), crate::Error> {
-        let start_point = epsg_4326_point_to_pixel_point(snapr, zoom, center, &self.start_point())?;
-        let end_point = epsg_4326_point_to_pixel_point(snapr, zoom, center, &self.end_point())?;
-        let style = Style::for_line(styles).unwrap_or_default();
+        let line = self.map_coords(|coord| epsg_4326_point_to_pixel(snapr, zoom, center, coord));
+        let style = Style::for_line(styles, &LineString::from(line)).unwrap_or_default();
 
         let mut path_builder = PathBuilder::new();
-        path_builder.move_to(start_point.x() as f32, start_point.y() as f32);
-        path_builder.line_to(end_point.x() as f32, end_point.y() as f32);
+        path_builder.move_to(line.start.x as f32, line.start.y as f32);
+        path_builder.line_to(line.end.x as f32, line.end.y as f32);
 
         let line = path_builder
             .finish()
@@ -107,13 +107,10 @@ where
         center: geo::Point,
         zoom: u8,
     ) -> Result<(), crate::Error> {
-        let style = Style::for_line(styles).unwrap_or_default();
+        let line = self.map_coords(|coord| epsg_4326_point_to_pixel(snapr, zoom, center, coord));
+        let style = Style::for_line(styles, &line).unwrap_or_default();
 
-        let converted_points = self
-            .points()
-            .flat_map(|point| epsg_4326_point_to_pixel_point(snapr, zoom, center, &point))
-            .enumerate();
-
+        let converted_points = line.points().enumerate();
         let mut path_builder = PathBuilder::new();
 
         for (index, point) in converted_points {

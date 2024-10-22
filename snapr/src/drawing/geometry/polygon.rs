@@ -1,10 +1,11 @@
 //! Contains [`Drawable`] implementations and [`Styles`](Style) for [`geo::Polygon`], [`geo::Rect`], and [`geo::Triangle`] primitives.
 
+use geo::MapCoords;
 use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::{
     drawing::{
-        epsg_4326_point_to_pixel_point,
+        epsg_4326_point_to_pixel,
         style::{ColorOptions, Style},
         Drawable,
     },
@@ -41,18 +42,15 @@ where
         center: geo::Point,
         zoom: u8,
     ) -> Result<(), crate::Error> {
-        let line_style = Style::for_line(styles).unwrap_or_default();
-        let polygon_style = Style::for_polygon(styles).unwrap_or_default();
+        let polygon = self.map_coords(|coord| epsg_4326_point_to_pixel(snapr, zoom, center, coord));
+        let exterior = polygon.exterior();
 
-        let converted_points = self
-            .exterior()
-            .points()
-            .flat_map(|point| epsg_4326_point_to_pixel_point(snapr, zoom, center, &point))
-            .enumerate();
+        let line_style = Style::for_line(styles, exterior).unwrap_or_default();
+        let polygon_style = Style::for_polygon(styles, &polygon).unwrap_or_default();
 
         let mut path_builder = PathBuilder::new();
 
-        for (index, point) in converted_points {
+        for (index, point) in exterior.points().enumerate() {
             if index == 0 {
                 path_builder.move_to(point.x() as f32, point.y() as f32);
             } else {

@@ -5,51 +5,54 @@ use tiny_skia::Color;
 use super::geometry::{line::LineStyle, point::PointStyle, polygon::PolygonStyle};
 
 /// Represents _styles_ that can be applied to [`Drawable`](super::Drawable) objects.
-#[derive(Clone, Debug, PartialEq)]
 pub enum Style {
     Point(PointStyle),
     Line(LineStyle),
     Polygon(PolygonStyle),
+    Dynamic(Box<dyn DynamicStyle>),
 }
 
 impl Style {
     /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`PointStyle`].
-    pub fn for_point<'a, I>(styles: I) -> Option<PointStyle>
+    pub fn for_point<'a, I>(styles: I, point: &geo::Point<i32>) -> Option<PointStyle>
     where
         I: IntoIterator<Item = &'a Self>,
     {
         let styles = styles.into_iter().flat_map(|style| match style {
-            Self::Point(style) => Some(style),
+            Self::Dynamic(style) => style.for_point(point),
+            Self::Point(style) => Some(style).cloned(),
             _ => None,
         });
 
-        styles.cloned().reduce(Self::merge_point_styles)
+        styles.reduce(Self::merge_point_styles)
     }
 
     /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`LineStyle`].
-    pub fn for_line<'a, I>(styles: I) -> Option<LineStyle>
+    pub fn for_line<'a, I>(styles: I, line_string: &geo::LineString<i32>) -> Option<LineStyle>
     where
         I: IntoIterator<Item = &'a Self>,
     {
         let styles = styles.into_iter().flat_map(|style| match style {
-            Self::Line(style) => Some(style),
+            Self::Dynamic(style) => style.for_line(line_string),
+            Self::Line(style) => Some(style).cloned(),
             _ => None,
         });
 
-        styles.cloned().reduce(Self::merge_line_styles)
+        styles.reduce(Self::merge_line_styles)
     }
 
     /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`PolygonStyle`].
-    pub fn for_polygon<'a, I>(styles: I) -> Option<PolygonStyle>
+    pub fn for_polygon<'a, I>(styles: I, polygon: &geo::Polygon<i32>) -> Option<PolygonStyle>
     where
         I: IntoIterator<Item = &'a Self>,
     {
         let styles = styles.into_iter().flat_map(|style| match style {
-            Self::Polygon(style) => Some(style),
+            Self::Dynamic(style) => style.for_polygon(polygon),
+            Self::Polygon(style) => Some(style).cloned(),
             _ => None,
         });
 
-        styles.cloned().reduce(Self::merge_polygon_styles)
+        styles.reduce(Self::merge_polygon_styles)
     }
 
     /// Merges two [`PointStyle`]s into one with the fields in `b` taking priority over the fields in `a`.
@@ -110,6 +113,24 @@ impl From<LineStyle> for Style {
 impl From<PolygonStyle> for Style {
     fn from(value: PolygonStyle) -> Self {
         Self::Polygon(value)
+    }
+}
+
+#[allow(unused_variables)]
+pub trait DynamicStyle {
+    /// Creates a [`PointStyle`] from a given `point`.
+    fn for_point(&self, point: &geo::Point<i32>) -> Option<PointStyle> {
+        None
+    }
+
+    /// Creates a [`LineStyle`] from a given `line`.
+    fn for_line(&self, line_string: &geo::LineString<i32>) -> Option<LineStyle> {
+        None
+    }
+
+    /// Creates a [`PolygonStyle`] from a given `polygon`.
+    fn for_polygon(&self, polygon: &geo::Polygon<i32>) -> Option<PolygonStyle> {
+        None
     }
 }
 

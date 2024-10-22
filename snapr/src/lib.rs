@@ -35,9 +35,6 @@ pub enum Error {
     #[error("incorrect tile size")]
     IncorrectTileSize { expected: u32, received: u32 },
 
-    #[error("failed to convert between primitive numbers")]
-    PrimitiveNumberConversion,
-
     #[error("failed to construct path")]
     PathConstruction,
 
