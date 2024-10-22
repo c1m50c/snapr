@@ -10,10 +10,7 @@ pub mod line;
 pub mod point;
 pub mod polygon;
 
-impl<T> Drawable for geo::Geometry<T>
-where
-    T: geo::CoordNum,
-{
+impl Drawable for geo::Geometry<f64> {
     fn draw(
         &self,
         snapr: &Snapr,
@@ -30,13 +27,12 @@ where
             Self::MultiPoint(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
             Self::MultiLineString(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
             Self::MultiPolygon(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
+            Self::Rect(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
+            Self::Triangle(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
 
             Self::GeometryCollection(geometry) => geometry
                 .into_iter()
                 .try_for_each(|geometry| geometry.draw(snapr, styles, pixmap, center, zoom)),
-
-            Self::Rect(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::Triangle(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
         }
     }
 }

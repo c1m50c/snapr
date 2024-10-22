@@ -63,10 +63,7 @@ pub struct PointStyle {
     pub label: Option<crate::drawing::svg::Label>,
 }
 
-impl<T> Drawable for geo::Point<T>
-where
-    T: geo::CoordNum,
-{
+impl Drawable for geo::Point<f64> {
     fn draw(
         &self,
         snapr: &Snapr,
@@ -131,10 +128,7 @@ where
     }
 }
 
-impl<T> Drawable for geo::MultiPoint<T>
-where
-    T: geo::CoordNum,
-{
+impl Drawable for geo::MultiPoint<f64> {
     fn draw(
         &self,
         snapr: &Snapr,

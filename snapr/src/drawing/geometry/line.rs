@@ -31,10 +31,7 @@ impl Default for LineStyle {
     }
 }
 
-impl<T> Drawable for geo::Line<T>
-where
-    T: geo::CoordNum,
-{
+impl Drawable for geo::Line<f64> {
     fn draw(
         &self,
         snapr: &Snapr,
@@ -95,10 +92,7 @@ where
     }
 }
 
-impl<T> Drawable for geo::LineString<T>
-where
-    T: geo::CoordNum,
-{
+impl Drawable for geo::LineString<f64> {
     fn draw(
         &self,
         snapr: &Snapr,
@@ -165,10 +159,7 @@ where
     }
 }
 
-impl<T> Drawable for geo::MultiLineString<T>
-where
-    T: geo::CoordNum,
-{
+impl Drawable for geo::MultiLineString<f64> {
     fn draw(
         &self,
         snapr: &Snapr,

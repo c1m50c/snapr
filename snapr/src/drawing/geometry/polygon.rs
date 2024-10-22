@@ -29,10 +29,7 @@ impl Default for PolygonStyle {
     }
 }
 
-impl<T> Drawable for geo::Polygon<T>
-where
-    T: geo::CoordNum,
-{
+impl Drawable for geo::Polygon<f64> {
     fn draw(
         &self,
         snapr: &Snapr,
@@ -116,10 +113,7 @@ where
     }
 }
 
-impl<T> Drawable for geo::MultiPolygon<T>
-where
-    T: geo::CoordNum,
-{
+impl Drawable for geo::MultiPolygon<f64> {
     fn draw(
         &self,
         snapr: &Snapr,
@@ -133,10 +127,7 @@ where
     }
 }
 
-impl<T> Drawable for geo::Rect<T>
-where
-    T: geo::CoordNum,
-{
+impl Drawable for geo::Rect<f64> {
     fn draw(
         &self,
         snapr: &Snapr,
@@ -149,10 +140,7 @@ where
     }
 }
 
-impl<T> Drawable for geo::Triangle<T>
-where
-    T: geo::CoordNum,
-{
+impl Drawable for geo::Triangle<f64> {
     fn draw(
         &self,
         snapr: &Snapr,
