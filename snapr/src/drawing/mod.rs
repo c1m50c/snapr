@@ -1,6 +1,5 @@
 //! Contains utilities to draw objects on top of map tiles.
 
-use style::Style;
 use tiny_skia::Pixmap;
 
 use crate::Snapr;
@@ -15,7 +14,6 @@ pub mod svg;
 #[derive(Debug)]
 pub struct Context<'a> {
     pub snapr: &'a Snapr<'a>,
-    pub styles: &'a [Style],
     pub center: geo::Point<f64>,
     pub zoom: u8,
 }

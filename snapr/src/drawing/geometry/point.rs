@@ -4,9 +4,11 @@ use geo::MapCoords;
 use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::drawing::{
-    style::{ColorOptions, Style},
+    style::{ColorOptions, Styleable, Styled},
     Context, Drawable,
 };
+
+use super::macros::impl_styled_geo;
 
 /// Represents a _shape_ that can be transformed into a [`Path`] via the [`Shape::to_path`] method.
 #[derive(Clone, Debug, PartialEq)]
@@ -60,12 +62,15 @@ pub struct PointStyle {
     pub label: Option<crate::drawing::svg::Label>,
 }
 
-impl Drawable for geo::Point<f64> {
+impl_styled_geo!(
+    Point,
+    PointStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-        let point = self.map_coords(|coord| context.epsg_4326_to_pixel(&coord));
-        let style = Style::for_point(context.styles).unwrap_or_default();
+        let point = self
+            .inner
+            .map_coords(|coord| context.epsg_4326_to_pixel(&coord));
 
-        let shape = match &style.representation {
+        let shape = match &self.style.representation {
             Representation::Shape(shape) => shape,
 
             #[cfg(feature = "svg")]
@@ -82,8 +87,8 @@ impl Drawable for geo::Point<f64> {
         pixmap.fill_path(
             &shape,
             &Paint {
-                shader: Shader::SolidColor(style.color_options.foreground),
-                anti_alias: style.color_options.anti_alias,
+                shader: Shader::SolidColor(self.style.color_options.foreground),
+                anti_alias: self.style.color_options.anti_alias,
                 ..Paint::default()
             },
             FillRule::default(),
@@ -91,12 +96,12 @@ impl Drawable for geo::Point<f64> {
             None,
         );
 
-        if let Some(border) = style.color_options.border {
+        if let Some(border) = self.style.color_options.border {
             pixmap.stroke_path(
                 &shape,
                 &Paint {
-                    shader: Shader::SolidColor(style.color_options.background),
-                    anti_alias: style.color_options.anti_alias,
+                    shader: Shader::SolidColor(self.style.color_options.background),
+                    anti_alias: self.style.color_options.anti_alias,
                     ..Paint::default()
                 },
                 &Stroke {
@@ -109,18 +114,22 @@ impl Drawable for geo::Point<f64> {
         }
 
         #[cfg(feature = "svg")]
-        if let Some(label) = &style.label {
+        if let Some(label) = &self.style.label {
             let svg = label.try_as_svg((point.x(), point.y()))?;
             svg.draw(pixmap, context)?;
         }
 
         Ok(())
     }
-}
+);
 
-impl Drawable for geo::MultiPoint<f64> {
+impl_styled_geo!(
+    MultiPoint,
+    PointStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-        self.into_iter()
+        self.inner
+            .iter()
+            .map(|point| point.as_styled(self.style.clone()))
             .try_for_each(|point| point.draw(pixmap, context))
     }
-}
+);

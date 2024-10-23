@@ -27,3 +27,26 @@ impl Drawable for geo::Geometry<f64> {
         }
     }
 }
+
+pub(crate) mod macros {
+    macro_rules! impl_styled_geo {
+        ($type: ident, $style: ident, $draw: item) => {
+            impl Styleable for geo::$type<f64> {
+                type Style = $style;
+            }
+
+            impl Drawable for Styled<'_, geo::$type<f64>, $style> {
+                $draw
+            }
+
+            impl Drawable for geo::$type<f64> {
+                fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
+                    self.as_styled($style::default())
+                        .draw(pixmap, context)
+                }
+            }
+        };
+    }
+
+    pub(crate) use impl_styled_geo;
+}

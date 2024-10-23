@@ -4,14 +4,17 @@ use geo::MapCoords;
 use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::drawing::{
-    style::{ColorOptions, Style},
+    style::{ColorOptions, Styleable, Styled},
     Context, Drawable,
 };
+
+use super::{line::LineStyle, macros::impl_styled_geo};
 
 /// A [`Style`] that can be applied to [`geo::Polygon`], [`geo::Rect`], and [`geo::Triangle`] primitives.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolygonStyle {
     pub color_options: ColorOptions,
+    pub line_style: LineStyle,
 }
 
 impl Default for PolygonStyle {
@@ -22,19 +25,22 @@ impl Default for PolygonStyle {
                 border: None,
                 ..ColorOptions::default()
             },
+            line_style: LineStyle::default(),
         }
     }
 }
 
-impl Drawable for geo::Polygon<f64> {
+impl_styled_geo!(
+    Polygon,
+    PolygonStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-        let polygon_style = Style::for_polygon(context.styles).unwrap_or_default();
-        let line_style = Style::for_line(context.styles).unwrap_or_default();
+        let pixel_polygon = self
+            .inner
+            .map_coords(|coord| context.epsg_4326_to_pixel(&coord));
 
-        let polygon = self.map_coords(|coord| context.epsg_4326_to_pixel(&coord));
         let mut path_builder = PathBuilder::new();
 
-        for (index, point) in polygon.exterior().points().enumerate() {
+        for (index, point) in pixel_polygon.exterior().points().enumerate() {
             if index == 0 {
                 path_builder.move_to(point.x() as f32, point.y() as f32);
             } else {
@@ -48,8 +54,8 @@ impl Drawable for geo::Polygon<f64> {
             pixmap.fill_path(
                 &lines,
                 &Paint {
-                    shader: Shader::SolidColor(polygon_style.color_options.foreground),
-                    anti_alias: polygon_style.color_options.anti_alias,
+                    shader: Shader::SolidColor(self.style.color_options.foreground),
+                    anti_alias: self.style.color_options.anti_alias,
                     ..Paint::default()
                 },
                 FillRule::default(),
@@ -57,12 +63,12 @@ impl Drawable for geo::Polygon<f64> {
                 None,
             );
 
-            if let Some(border) = line_style.color_options.border {
+            if let Some(border) = self.style.line_style.color_options.border {
                 pixmap.stroke_path(
                     &lines,
                     &Paint {
-                        shader: Shader::SolidColor(line_style.color_options.background),
-                        anti_alias: line_style.color_options.anti_alias,
+                        shader: Shader::SolidColor(self.style.line_style.color_options.background),
+                        anti_alias: self.style.line_style.color_options.anti_alias,
                         ..Paint::default()
                     },
                     &Stroke {
@@ -77,12 +83,12 @@ impl Drawable for geo::Polygon<f64> {
             pixmap.stroke_path(
                 &lines,
                 &Paint {
-                    shader: Shader::SolidColor(line_style.color_options.foreground),
-                    anti_alias: line_style.color_options.anti_alias,
+                    shader: Shader::SolidColor(self.style.line_style.color_options.foreground),
+                    anti_alias: self.style.line_style.color_options.anti_alias,
                     ..Paint::default()
                 },
                 &Stroke {
-                    width: line_style.width,
+                    width: self.style.line_style.width,
                     ..Stroke::default()
                 },
                 Transform::default(),
@@ -90,29 +96,44 @@ impl Drawable for geo::Polygon<f64> {
             );
         }
 
-        self.exterior()
+        self.inner
+            .exterior()
             .points()
             .try_for_each(|point| point.draw(pixmap, context))?;
 
         Ok(())
     }
-}
+);
 
-impl Drawable for geo::MultiPolygon<f64> {
+impl_styled_geo!(
+    MultiPolygon,
+    PolygonStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-        self.into_iter()
+        self.inner
+            .iter()
+            .map(|polygon| polygon.as_styled(self.style.clone()))
             .try_for_each(|polygon| polygon.draw(pixmap, context))
     }
-}
+);
 
-impl Drawable for geo::Rect<f64> {
+impl_styled_geo!(
+    Rect,
+    PolygonStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-        self.to_polygon().draw(pixmap, context)
+        self.inner
+            .to_polygon()
+            .as_styled(self.style.clone())
+            .draw(pixmap, context)
     }
-}
+);
 
-impl Drawable for geo::Triangle<f64> {
+impl_styled_geo!(
+    Triangle,
+    PolygonStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-        self.to_polygon().draw(pixmap, context)
+        self.inner
+            .to_polygon()
+            .as_styled(self.style.clone())
+            .draw(pixmap, context)
     }
-}
+);

@@ -2,7 +2,7 @@
 
 use std::{f64::consts::PI, fmt};
 
-use drawing::{style::Style, Context, Drawable};
+use drawing::{Context, Drawable};
 use geo::{BoundingRect, Centroid, Coord, MapCoords};
 use image::imageops::overlay;
 use thiserror::Error;
@@ -69,23 +69,18 @@ pub struct Snapr<'a> {
 
 impl<'a> Snapr<'a> {
     /// Returns a snapshot centered around the provided `geometry`.
-    pub fn generate_snapshot_from_geometry<G>(
-        &self,
-        geometry: G,
-        styles: &[Style],
-    ) -> Result<image::RgbaImage, Error>
+    pub fn generate_snapshot_from_geometry<G>(&self, geometry: G) -> Result<image::RgbaImage, Error>
     where
         G: Into<geo::Geometry>,
     {
         let geometries = vec![geometry.into()];
-        self.generate_snapshot_from_geometries(geometries, styles)
+        self.generate_snapshot_from_geometries(geometries)
     }
 
     /// Returns a snapshot centered around the provided `geometries`.
     pub fn generate_snapshot_from_geometries(
         &self,
         geometries: Vec<geo::Geometry>,
-        styles: &[Style],
     ) -> Result<image::RgbaImage, Error> {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
         let geometries = geo::GeometryCollection::from(geometries);
@@ -110,7 +105,6 @@ impl<'a> Snapr<'a> {
 
         let context = Context {
             snapr: self,
-            styles,
             center,
             zoom,
         };
