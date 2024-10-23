@@ -25,7 +25,7 @@ fn main() -> Result<(), anyhow::Error> {
         (x: 41.83485, y: -103.69969),
     ];
 
-    let geometry = line_string.as_styled(LineStyle {
+    let geometry = line_string.as_styled(LineStringStyle {
         point_style: PointStyle {
             effect: Some(|style, _, context| PointStyle {
                 label: Some(Label {
