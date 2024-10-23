@@ -82,7 +82,26 @@ impl<'a> Snapr<'a> {
         &self,
         geometries: Vec<geo::Geometry>,
     ) -> Result<image::RgbaImage, Error> {
+        let geometries = geometries
+            .iter()
+            .map(|geometry| geometry as &dyn Drawable)
+            .collect();
+
+        self.generate_snapshot(geometries)
+    }
+
+    /// Returns a snapshot rendering the provided `drawables`.
+    pub fn generate_snapshot(
+        &self,
+        drawables: Vec<&'_ dyn Drawable>,
+    ) -> Result<image::RgbaImage, Error> {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
+
+        let geometries = drawables
+            .iter()
+            .flat_map(|drawable| drawable.as_geometry())
+            .collect::<Vec<_>>();
+
         let geometries = geo::GeometryCollection::from(geometries);
 
         let Some(mut pixmap) = Pixmap::new(self.width, self.height) else {
@@ -109,8 +128,8 @@ impl<'a> Snapr<'a> {
             zoom,
         };
 
-        geometries
-            .into_iter()
+        drawables
+            .iter()
             .try_for_each(|geometry| geometry.draw(&mut pixmap, &context))?;
 
         let pixmap_image = image::ImageBuffer::from_fn(self.width, self.height, |x, y| {
