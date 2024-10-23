@@ -42,8 +42,7 @@ impl Drawable for geo::Polygon<f64> {
         let polygon_style = Style::for_polygon(styles).unwrap_or_default();
         let line_style = Style::for_line(styles).unwrap_or_default();
 
-        let polygon =
-            self.map_coords(|coord| epsg_4326_to_pixel(snapr, zoom, center, &coord));
+        let polygon = self.map_coords(|coord| epsg_4326_to_pixel(snapr, zoom, center, &coord));
 
         let mut path_builder = PathBuilder::new();
 
