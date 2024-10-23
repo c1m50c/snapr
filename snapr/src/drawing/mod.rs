@@ -11,11 +11,14 @@ pub mod style;
 pub mod svg;
 
 /// Passed to [`Drawable::draw`] calls, represents the _[`Context`]_ of those calls.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Context<'a> {
     pub snapr: &'a Snapr<'a>,
     pub center: geo::Point<f64>,
     pub zoom: u8,
+
+    /// Relative index of the current [`Drawable`] being _drawn_.
+    pub index: usize,
 }
 
 impl<'a> Context<'a> {

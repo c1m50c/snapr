@@ -98,11 +98,20 @@ impl_styled_geo!(
             );
         }
 
-        self.inner.exterior().points().try_for_each(|point| {
-            point
-                .as_styled(self.style.point_style.clone())
-                .draw(pixmap, context)
-        })?;
+        self.inner
+            .exterior()
+            .points()
+            .enumerate()
+            .try_for_each(|(index, point)| {
+                let context = &Context {
+                    index,
+                    ..context.clone()
+                };
+
+                point
+                    .as_styled(self.style.point_style.clone())
+                    .draw(pixmap, context)
+            })?;
 
         Ok(())
     }

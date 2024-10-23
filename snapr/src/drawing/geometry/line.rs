@@ -83,12 +83,24 @@ impl_styled_geo!(
         self.inner
             .start_point()
             .as_styled(self.style.point_style.clone())
-            .draw(pixmap, context)?;
+            .draw(
+                pixmap,
+                &Context {
+                    index: 0,
+                    ..context.clone()
+                },
+            )?;
 
         self.inner
             .end_point()
             .as_styled(self.style.point_style.clone())
-            .draw(pixmap, context)?;
+            .draw(
+                pixmap,
+                &Context {
+                    index: 1,
+                    ..context.clone()
+                },
+            )?;
 
         Ok(())
     }
@@ -146,11 +158,19 @@ impl_styled_geo!(
             );
         }
 
-        self.inner.points().try_for_each(|point| {
-            point
-                .as_styled(self.style.point_style.clone())
-                .draw(pixmap, context)
-        })?;
+        self.inner
+            .points()
+            .enumerate()
+            .try_for_each(|(index, point)| {
+                let context = &Context {
+                    index,
+                    ..context.clone()
+                };
+
+                point
+                    .as_styled(self.style.point_style.clone())
+                    .draw(pixmap, context)
+            })?;
 
         Ok(())
     }

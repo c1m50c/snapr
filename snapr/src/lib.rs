@@ -122,15 +122,19 @@ impl<'a> Snapr<'a> {
 
         self.overlay_backing_tiles(&mut output_image, center, zoom)?;
 
-        let context = Context {
-            snapr: self,
-            center,
-            zoom,
-        };
-
         drawables
             .iter()
-            .try_for_each(|geometry| geometry.draw(&mut pixmap, &context))?;
+            .enumerate()
+            .try_for_each(|(index, drawable)| {
+                let context = Context {
+                    snapr: self,
+                    center,
+                    zoom,
+                    index,
+                };
+
+                drawable.draw(&mut pixmap, &context)
+            })?;
 
         let pixmap_image = image::ImageBuffer::from_fn(self.width, self.height, |x, y| {
             let pixel = pixmap.pixel(x, y)
