@@ -16,6 +16,7 @@ Snapr ([/ˈsnæp ər/](http://ipa-reader.xyz/?text=%CB%88sn%C3%A6p:%C9%99r)) is 
 - [Labels](https://github.com/c1m50c/snapr/blob/main/examples/label/) - Example showing how to label a point geometry.
 - [SVG](https://github.com/c1m50c/snapr/blob/main/examples/svg/) - Example showing how to draw an SVG on top of a point geometry.
 - [Batch](https://github.com/c1m50c/snapr/blob/main/examples/batch/) - Example showing how to use a [`TileFetcher::Batch`](https://docs.rs/snapr/latest/snapr/enum.TileFetcher.html#variant.Batch), as opposed to the usual [`TileFetcher::Individual`](https://docs.rs/snapr/latest/snapr/enum.TileFetcher.html#variant.Individual) variant.
+- [Stateful](./examples/stateful/) - Example showing how to implement the `IndividualTileFetcher` trait to enable a `TileFetcher` that keeps track of state.
 
 ## License
 

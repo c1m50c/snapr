@@ -1,14 +1,11 @@
 //! Contains [`Drawable`] implementations and [`Styles`](Style) for [`geo::Polygon`], [`geo::Rect`], and [`geo::Triangle`] primitives.
 
+use geo::MapCoords;
 use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
-use crate::{
-    drawing::{
-        epsg_4326_point_to_pixel_point,
-        style::{ColorOptions, Style},
-        Drawable,
-    },
-    Snapr,
+use crate::drawing::{
+    style::{ColorOptions, Style},
+    Context, Drawable,
 };
 
 /// A [`Style`] that can be applied to [`geo::Polygon`], [`geo::Rect`], and [`geo::Triangle`] primitives.
@@ -29,30 +26,15 @@ impl Default for PolygonStyle {
     }
 }
 
-impl<T> Drawable for geo::Polygon<T>
-where
-    T: geo::CoordNum,
-{
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
-        let line_style = Style::for_line(styles).unwrap_or_default();
-        let polygon_style = Style::for_polygon(styles).unwrap_or_default();
+impl Drawable for geo::Polygon<f64> {
+    fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
+        let polygon_style = Style::for_polygon(context.styles).unwrap_or_default();
+        let line_style = Style::for_line(context.styles).unwrap_or_default();
 
-        let converted_points = self
-            .exterior()
-            .points()
-            .flat_map(|point| epsg_4326_point_to_pixel_point(snapr, zoom, center, &point))
-            .enumerate();
-
+        let polygon = self.map_coords(|coord| context.epsg_4326_to_pixel(&coord));
         let mut path_builder = PathBuilder::new();
 
-        for (index, point) in converted_points {
+        for (index, point) in polygon.exterior().points().enumerate() {
             if index == 0 {
                 path_builder.move_to(point.x() as f32, point.y() as f32);
             } else {
@@ -110,57 +92,27 @@ where
 
         self.exterior()
             .points()
-            .try_for_each(|point| point.draw(snapr, styles, pixmap, center, zoom))?;
+            .try_for_each(|point| point.draw(pixmap, context))?;
 
         Ok(())
     }
 }
 
-impl<T> Drawable for geo::MultiPolygon<T>
-where
-    T: geo::CoordNum,
-{
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
+impl Drawable for geo::MultiPolygon<f64> {
+    fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
         self.into_iter()
-            .try_for_each(|polygon| polygon.draw(snapr, styles, pixmap, center, zoom))
+            .try_for_each(|polygon| polygon.draw(pixmap, context))
     }
 }
 
-impl<T> Drawable for geo::Rect<T>
-where
-    T: geo::CoordNum,
-{
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
-        self.to_polygon().draw(snapr, styles, pixmap, center, zoom)
+impl Drawable for geo::Rect<f64> {
+    fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
+        self.to_polygon().draw(pixmap, context)
     }
 }
 
-impl<T> Drawable for geo::Triangle<T>
-where
-    T: geo::CoordNum,
-{
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
-        self.to_polygon().draw(snapr, styles, pixmap, center, zoom)
+impl Drawable for geo::Triangle<f64> {
+    fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
+        self.to_polygon().draw(pixmap, context)
     }
 }

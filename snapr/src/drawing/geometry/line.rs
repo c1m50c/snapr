@@ -1,14 +1,11 @@
 //! Contains [`Drawable`] implementations and [`Styles`](Style) for [`geo::Line`], and [`geo::LineString`] primitives.
 
+use geo::MapCoords;
 use tiny_skia::{Color, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
-use crate::{
-    drawing::{
-        epsg_4326_point_to_pixel_point,
-        style::{ColorOptions, Style},
-        Drawable,
-    },
-    Snapr,
+use crate::drawing::{
+    style::{ColorOptions, Style},
+    Context, Drawable,
 };
 
 /// A [`Style`] that can be applied to [`geo::Line`] and [`geo::LineString`] primitives.
@@ -31,25 +28,14 @@ impl Default for LineStyle {
     }
 }
 
-impl<T> Drawable for geo::Line<T>
-where
-    T: geo::CoordNum,
-{
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
-        let start_point = epsg_4326_point_to_pixel_point(snapr, zoom, center, &self.start_point())?;
-        let end_point = epsg_4326_point_to_pixel_point(snapr, zoom, center, &self.end_point())?;
-        let style = Style::for_line(styles).unwrap_or_default();
+impl Drawable for geo::Line<f64> {
+    fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
+        let line = self.map_coords(|coord| context.epsg_4326_to_pixel(&coord));
+        let style = Style::for_line(context.styles).unwrap_or_default();
 
         let mut path_builder = PathBuilder::new();
-        path_builder.move_to(start_point.x() as f32, start_point.y() as f32);
-        path_builder.line_to(end_point.x() as f32, end_point.y() as f32);
+        path_builder.move_to(line.start.x as f32, line.start.y as f32);
+        path_builder.line_to(line.end.x as f32, line.end.y as f32);
 
         let line = path_builder
             .finish()
@@ -87,36 +73,21 @@ where
             None,
         );
 
-        self.start_point()
-            .draw(snapr, styles, pixmap, center, zoom)?;
-        self.end_point().draw(snapr, styles, pixmap, center, zoom)?;
+        self.start_point().draw(pixmap, context)?;
+        self.end_point().draw(pixmap, context)?;
 
         Ok(())
     }
 }
 
-impl<T> Drawable for geo::LineString<T>
-where
-    T: geo::CoordNum,
-{
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
-        let style = Style::for_line(styles).unwrap_or_default();
-
-        let converted_points = self
-            .points()
-            .flat_map(|point| epsg_4326_point_to_pixel_point(snapr, zoom, center, &point))
-            .enumerate();
-
+impl Drawable for geo::LineString<f64> {
+    fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
+        let style = Style::for_line(context.styles).unwrap_or_default();
         let mut path_builder = PathBuilder::new();
 
-        for (index, point) in converted_points {
+        let line_string = self.map_coords(|coord| context.epsg_4326_to_pixel(&coord));
+
+        for (index, point) in line_string.points().enumerate() {
             if index == 0 {
                 path_builder.move_to(point.x() as f32, point.y() as f32);
             } else {
@@ -159,25 +130,15 @@ where
         }
 
         self.points()
-            .try_for_each(|point| point.draw(snapr, styles, pixmap, center, zoom))?;
+            .try_for_each(|point| point.draw(pixmap, context))?;
 
         Ok(())
     }
 }
 
-impl<T> Drawable for geo::MultiLineString<T>
-where
-    T: geo::CoordNum,
-{
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
+impl Drawable for geo::MultiLineString<f64> {
+    fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
         self.into_iter()
-            .try_for_each(|line_string| line_string.draw(snapr, styles, pixmap, center, zoom))
+            .try_for_each(|line_string| line_string.draw(pixmap, context))
     }
 }

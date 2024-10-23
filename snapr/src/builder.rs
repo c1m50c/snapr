@@ -27,6 +27,7 @@ pub struct SnaprBuilder<'a> {
     height: Option<u32>,
     width: Option<u32>,
     zoom: Option<u8>,
+    max_zoom: Option<u8>,
 }
 
 impl<'a> SnaprBuilder<'a> {
@@ -75,6 +76,14 @@ impl<'a> SnaprBuilder<'a> {
         }
     }
 
+    /// Configures the `max_zoom` to be used in the [`Snapr::max_zoom`] field.
+    pub fn with_max_zoom(self, max_zoom: u8) -> Self {
+        Self {
+            max_zoom: Some(max_zoom),
+            ..self
+        }
+    }
+
     /// Attempts to construct a new [`Snapr`] from the [`SnaprBuilder`].
     ///
     /// ## Example
@@ -105,6 +114,7 @@ impl<'a> SnaprBuilder<'a> {
         let height = self.height.unwrap_or(600);
         let width = self.width.unwrap_or(800);
         let zoom = self.zoom;
+        let max_zoom = self.max_zoom.unwrap_or(17);
 
         let snapr = Snapr {
             tile_fetcher,
@@ -112,6 +122,7 @@ impl<'a> SnaprBuilder<'a> {
             height,
             width,
             zoom,
+            max_zoom,
         };
 
         Ok(snapr)

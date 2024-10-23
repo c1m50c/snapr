@@ -2,6 +2,7 @@
 
 use std::{f64::consts::PI, fmt};
 
+use drawing::{style::Style, Context, Drawable};
 use geo::{BoundingRect, Centroid, Coord, MapCoords};
 use image::imageops::overlay;
 use thiserror::Error;
@@ -10,18 +11,13 @@ use tiny_skia::Pixmap;
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
-#[cfg(feature = "drawing")]
-use drawing::style::Style;
-
 pub use builder::SnaprBuilder;
 pub use fetchers::TileFetcher;
 pub use {geo, image, tiny_skia};
 
 mod builder;
-pub mod fetchers;
-
-#[cfg(feature = "drawing")]
 pub mod drawing;
+pub mod fetchers;
 
 /// Error type used throughout the [`snapr`](crate) crate.
 #[derive(Debug, Error)]
@@ -34,9 +30,6 @@ pub enum Error {
     /// Returned by [`Snapr`] when a fetched tile does not match the expected [`tile_size`](Snapr::tile_size).
     #[error("incorrect tile size")]
     IncorrectTileSize { expected: u32, received: u32 },
-
-    #[error("failed to convert between primitive numbers")]
-    PrimitiveNumberConversion,
 
     #[error("failed to construct path")]
     PathConstruction,
@@ -69,11 +62,13 @@ pub struct Snapr<'a> {
 
     /// Zoom level of generated snapshots.
     zoom: Option<u8>,
+
+    /// Maximum zoom level of generated snapshots.
+    max_zoom: u8,
 }
 
 impl<'a> Snapr<'a> {
     /// Returns a snapshot centered around the provided `geometry`.
-    #[cfg(feature = "drawing")]
     pub fn generate_snapshot_from_geometry<G>(
         &self,
         geometry: G,
@@ -87,65 +82,42 @@ impl<'a> Snapr<'a> {
     }
 
     /// Returns a snapshot centered around the provided `geometries`.
-    #[cfg(feature = "drawing")]
     pub fn generate_snapshot_from_geometries(
         &self,
         geometries: Vec<geo::Geometry>,
         styles: &[Style],
     ) -> Result<image::RgbaImage, Error> {
-        use drawing::Drawable;
-
-        self.generate_snapshot_from_geometries_with_drawer(
-            geometries,
-            |geometries, snapr, pixmap, center, zoom| -> Result<(), Error> {
-                geometries
-                    .into_iter()
-                    .try_for_each(|geometry| geometry.draw(snapr, styles, pixmap, center, zoom))?;
-
-                Ok(())
-            },
-        )
-    }
-
-    /// Returns a snapshot centered around the provided `geometries`.
-    /// The drawing of each of the `geometries` is done with the given `drawer` function.
-    pub fn generate_snapshot_from_geometries_with_drawer<G, D>(
-        &self,
-        geometries: Vec<G>,
-        drawer: D,
-    ) -> Result<image::RgbaImage, Error>
-    where
-        G: Clone + Into<geo::Geometry>,
-        D: Fn(Vec<G>, &Self, &mut Pixmap, geo::Point, u8) -> Result<(), Error>,
-    {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
-
-        let geometry_collection = geometries
-            .iter()
-            .cloned()
-            .map(|geometry| geometry.into())
-            .collect();
-
-        let geometry_collection = geo::GeometryCollection::new_from(geometry_collection);
+        let geometries = geo::GeometryCollection::from(geometries);
 
         let Some(mut pixmap) = Pixmap::new(self.width, self.height) else {
             todo!("Return an `Err` or find some way to safely go forward with the function")
         };
 
-        let Some(geometry_center_point) = geometry_collection.centroid() else {
-            todo!("Return an `Err` or find a suitable default for `geometry_center_point`")
+        let Some(center) = geometries.centroid() else {
+            todo!("Return an `Err` or find a suitable default for `center`")
         };
 
         let zoom = match self.zoom {
-            Some(zoom) => zoom,
-            None => match geometry_collection.bounding_rect() {
+            Some(zoom) => zoom.clamp(1, self.max_zoom),
+            None => match geometries.bounding_rect() {
                 Some(bounding_box) => self.zoom_from_geometries(bounding_box),
                 None => todo!("Return an `Err` or find a suitable default for `bounding_box`"),
             },
         };
 
-        self.overlay_backing_tiles(&mut output_image, geometry_center_point, zoom)?;
-        drawer(geometries, self, &mut pixmap, geometry_center_point, zoom)?;
+        self.overlay_backing_tiles(&mut output_image, center, zoom)?;
+
+        let context = Context {
+            snapr: self,
+            styles,
+            center,
+            zoom,
+        };
+
+        geometries
+            .into_iter()
+            .try_for_each(|geometry| geometry.draw(&mut pixmap, &context))?;
 
         let pixmap_image = image::ImageBuffer::from_fn(self.width, self.height, |x, y| {
             let pixel = pixmap.pixel(x, y)
@@ -155,7 +127,6 @@ impl<'a> Snapr<'a> {
         });
 
         overlay(&mut output_image, &pixmap_image, 0, 0);
-
         Ok(output_image)
     }
 
@@ -170,22 +141,6 @@ impl<'a> Snapr<'a> {
             y: (n * (1.0 - (point_as_rad.x().tan() + (1.0 / point_as_rad.x().cos())).ln() / PI) / 2.0)
         )
     }
-
-    /// Converts a [`EPSG:4326`](https://epsg.io/4326) coordinate to the corresponding pixel coordinate in a snapshot.
-    pub fn epsg_4326_to_pixel(
-        &self,
-        zoom: u8,
-        center: geo::Point,
-        point: geo::Point,
-    ) -> geo::Point<i32> {
-        let epsg_3857_point =
-            Self::epsg_4326_to_epsg_3857(zoom, point) - Self::epsg_4326_to_epsg_3857(zoom, center);
-
-        geo::point!(
-            x: (epsg_3857_point.x().fract() * self.tile_size as f64 + self.width as f64 / 2.0).round() as i32,
-            y: (epsg_3857_point.y().fract() * self.tile_size as f64 + self.height as f64 / 2.0).round() as i32,
-        )
-    }
 }
 
 impl<'a> Snapr<'a> {
@@ -193,7 +148,7 @@ impl<'a> Snapr<'a> {
     fn zoom_from_geometries(&self, bounding_box: geo::Rect) -> u8 {
         let mut zoom = 1;
 
-        for level in (0..=17).rev() {
+        for level in (0..=self.max_zoom).rev() {
             let bounding_box = bounding_box.map_coords(|coords| {
                 let converted = Self::epsg_4326_to_epsg_3857(level, geo::Point::from(coords));
 
@@ -216,7 +171,7 @@ impl<'a> Snapr<'a> {
             break;
         }
 
-        dbg!(zoom)
+        zoom
     }
 
     /// Fills the given `image` with tiles centered around the given `epsg_3857_center` point.
