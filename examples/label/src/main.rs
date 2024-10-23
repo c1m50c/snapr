@@ -5,7 +5,7 @@ use image::{DynamicImage, ImageFormat, ImageReader};
 use reqwest::blocking::ClientBuilder;
 use snapr::{
     drawing::{
-        geometry::{line::LineStyle, point::PointStyle},
+        geometry::{line::LineStringStyle, point::PointStyle},
         style::{ColorOptions, Styleable},
         svg::Label,
     },
