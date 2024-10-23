@@ -4,7 +4,7 @@ use geo::MapCoords;
 use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::drawing::{
-    style::{ColorOptions, Styleable, Styled},
+    style::{ColorOptions, Effect, Styleable, Styled},
     Context, Drawable,
 };
 
@@ -14,7 +14,8 @@ use super::{line::LineStyle, macros::impl_styled_geo, point::PointStyle};
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolygonStyle {
     pub color_options: ColorOptions,
-    pub line_style: LineStyle,
+    pub effect: Option<Effect<geo::Polygon<f64>, Self>>,
+    pub line_style: LineStyle<geo::LineString<f64>>,
     pub point_style: PointStyle,
 }
 
@@ -26,6 +27,7 @@ impl Default for PolygonStyle {
                 border: None,
                 ..ColorOptions::default()
             },
+            effect: None,
             line_style: LineStyle::default(),
             point_style: PointStyle::default(),
         }
@@ -36,6 +38,11 @@ impl_styled_geo!(
     Polygon,
     PolygonStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
+        let style = match self.style.effect {
+            Some(effect) => &((effect)(self.style.clone(), &self.inner, context)),
+            None => &self.style,
+        };
+
         let pixel_polygon = self
             .inner
             .map_coords(|coord| context.epsg_4326_to_pixel(&coord));
@@ -56,8 +63,8 @@ impl_styled_geo!(
             pixmap.fill_path(
                 &lines,
                 &Paint {
-                    shader: Shader::SolidColor(self.style.color_options.foreground),
-                    anti_alias: self.style.color_options.anti_alias,
+                    shader: Shader::SolidColor(style.color_options.foreground),
+                    anti_alias: style.color_options.anti_alias,
                     ..Paint::default()
                 },
                 FillRule::default(),
@@ -65,12 +72,12 @@ impl_styled_geo!(
                 None,
             );
 
-            if let Some(border) = self.style.line_style.color_options.border {
+            if let Some(border) = style.line_style.color_options.border {
                 pixmap.stroke_path(
                     &lines,
                     &Paint {
-                        shader: Shader::SolidColor(self.style.line_style.color_options.background),
-                        anti_alias: self.style.line_style.color_options.anti_alias,
+                        shader: Shader::SolidColor(style.line_style.color_options.background),
+                        anti_alias: style.line_style.color_options.anti_alias,
                         ..Paint::default()
                     },
                     &Stroke {
@@ -85,12 +92,12 @@ impl_styled_geo!(
             pixmap.stroke_path(
                 &lines,
                 &Paint {
-                    shader: Shader::SolidColor(self.style.line_style.color_options.foreground),
-                    anti_alias: self.style.line_style.color_options.anti_alias,
+                    shader: Shader::SolidColor(style.line_style.color_options.foreground),
+                    anti_alias: style.line_style.color_options.anti_alias,
                     ..Paint::default()
                 },
                 &Stroke {
-                    width: self.style.line_style.width,
+                    width: style.line_style.width,
                     ..Stroke::default()
                 },
                 Transform::default(),
@@ -109,7 +116,7 @@ impl_styled_geo!(
                 };
 
                 point
-                    .as_styled(self.style.point_style.clone())
+                    .as_styled(style.point_style.clone())
                     .draw(pixmap, context)
             })?;
 

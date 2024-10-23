@@ -2,7 +2,7 @@
 
 use tiny_skia::Color;
 
-use super::Drawable;
+use super::{Context, Drawable};
 
 pub struct Styled<'a, T: Styleable<S>, S> {
     pub inner: &'a T,
@@ -15,6 +15,8 @@ pub trait Styleable<S>: Drawable + Sized {
         Styled { inner: self, style }
     }
 }
+
+pub type Effect<T, S> = fn(S, &T, &Context) -> S;
 
 /// Standard options for coloring [`Drawables`](super::Drawable) found throughout most style options.
 #[derive(Clone, Debug, PartialEq)]

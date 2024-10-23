@@ -34,25 +34,25 @@ impl Drawable for geo::Geometry<f64> {
 
 pub(crate) mod macros {
     macro_rules! impl_styled_geo {
-        ($type: ident, $style: ident, $draw: item) => {
-            impl<F> Styleable<F> for geo::$type<f64>
-            where F: Fn(&geo::$type<f64>, &Context) -> $style {  }
+        ($type: ident, $style: ty, $draw: item) => {
+            // impl<F> Styleable<F> for geo::$type<f64>
+            // where F: Fn(&geo::$type<f64>, &Context) -> $style {  }
 
             impl Styleable<$style> for geo::$type<f64> {}
 
-            impl<F> Drawable for Styled<'_, geo::$type<f64>, F>
-            where
-                F: Fn(&geo::$type<f64>, &Context) -> $style
-            {
-                fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-                    let style = (self.style)(self.inner, context);
-                    self.inner.as_styled(style).draw(pixmap, context)
-                }
+            // impl<F> Drawable for Styled<'_, geo::$type<f64>, F>
+            // where
+            //     F: Fn(&geo::$type<f64>, &Context) -> $style
+            // {
+            //     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
+            //         let style = (self.style)(self.inner, context);
+            //         self.inner.as_styled(style).draw(pixmap, context)
+            //     }
 
-                fn as_geometry(&self) -> Option<geo::Geometry<f64>> {
-                    Some(self.inner.clone().into())
-                }
-            }
+            //     fn as_geometry(&self) -> Option<geo::Geometry<f64>> {
+            //         Some(self.inner.clone().into())
+            //     }
+            // }
 
             impl Drawable for Styled<'_, geo::$type<f64>, $style> {
                 $draw
@@ -64,7 +64,7 @@ pub(crate) mod macros {
 
             impl Drawable for geo::$type<f64> {
                 fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-                    self.as_styled($style::default())
+                    self.as_styled(<$style>::default())
                         .draw(pixmap, context)
                 }
 

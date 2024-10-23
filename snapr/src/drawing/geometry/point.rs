@@ -4,7 +4,7 @@ use geo::MapCoords;
 use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::drawing::{
-    style::{ColorOptions, Styleable, Styled},
+    style::{ColorOptions, Effect, Styleable, Styled},
     Context, Drawable,
 };
 
@@ -57,6 +57,7 @@ impl Default for Representation {
 pub struct PointStyle {
     pub color_options: ColorOptions,
     pub representation: Representation,
+    pub effect: Option<Effect<geo::Point<f64>, Self>>,
 
     #[cfg(feature = "svg")]
     pub label: Option<crate::drawing::svg::Label>,
@@ -66,11 +67,16 @@ impl_styled_geo!(
     Point,
     PointStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
+        let style = match self.style.effect {
+            Some(effect) => &((effect)(self.style.clone(), &self.inner, context)),
+            None => &self.style,
+        };
+
         let point = self
             .inner
             .map_coords(|coord| context.epsg_4326_to_pixel(&coord));
 
-        let shape = match &self.style.representation {
+        let shape = match &style.representation {
             Representation::Shape(shape) => shape,
 
             #[cfg(feature = "svg")]
@@ -87,8 +93,8 @@ impl_styled_geo!(
         pixmap.fill_path(
             &shape,
             &Paint {
-                shader: Shader::SolidColor(self.style.color_options.foreground),
-                anti_alias: self.style.color_options.anti_alias,
+                shader: Shader::SolidColor(style.color_options.foreground),
+                anti_alias: style.color_options.anti_alias,
                 ..Paint::default()
             },
             FillRule::default(),
@@ -96,12 +102,12 @@ impl_styled_geo!(
             None,
         );
 
-        if let Some(border) = self.style.color_options.border {
+        if let Some(border) = style.color_options.border {
             pixmap.stroke_path(
                 &shape,
                 &Paint {
-                    shader: Shader::SolidColor(self.style.color_options.background),
-                    anti_alias: self.style.color_options.anti_alias,
+                    shader: Shader::SolidColor(style.color_options.background),
+                    anti_alias: style.color_options.anti_alias,
                     ..Paint::default()
                 },
                 &Stroke {
@@ -114,7 +120,7 @@ impl_styled_geo!(
         }
 
         #[cfg(feature = "svg")]
-        if let Some(label) = &self.style.label {
+        if let Some(label) = &style.label {
             let svg = label.try_as_svg((point.x(), point.y()))?;
             svg.draw(pixmap, context)?;
         }
