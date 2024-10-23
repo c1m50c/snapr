@@ -109,7 +109,7 @@ impl<'a> Snapr<'a> {
         self.overlay_backing_tiles(&mut output_image, center, zoom)?;
 
         for geometry in geometries {
-            geometry.draw(&self, styles, &mut pixmap, center, zoom)?;
+            geometry.draw(self, styles, &mut pixmap, center, zoom)?;
         }
 
         let pixmap_image = image::ImageBuffer::from_fn(self.width, self.height, |x, y| {
