@@ -14,7 +14,7 @@ fn main() -> Result<(), anyhow::Error> {
     let geometry = geo::point!(x: 41.225683, y: -95.927762);
 
     snapr
-        .generate_snapshot_from_geometry(geometry, &[])?
+        .generate_snapshot_from_geometry(geometry)?
         .save("example.png")?;
 
     Ok(())
