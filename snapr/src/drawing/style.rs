@@ -4,19 +4,14 @@ use tiny_skia::Color;
 
 use super::Drawable;
 
-pub struct Styled<'a, T: Styleable, S> {
+pub struct Styled<'a, T: Styleable<S>, S> {
     pub inner: &'a T,
     pub style: S,
 }
 
-pub trait Styleable: Drawable {
-    type Style;
-
+pub trait Styleable<S>: Drawable + Sized {
     /// Constructs a [`Styled`] variant of the type using the given `style`.
-    fn as_styled<'a>(&'a self, style: Self::Style) -> Styled<Self, Self::Style>
-    where
-        Self: Sized,
-    {
+    fn as_styled<'a>(&'a self, style: S) -> Styled<Self, S> {
         Styled { inner: self, style }
     }
 }
