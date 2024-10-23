@@ -25,12 +25,6 @@ pub trait Drawable {
         center: geo::Point,
         zoom: u8,
     ) -> Result<(), crate::Error>;
-
-    /// Returns the underlying [`Geometry`](geo::Geometry) that the [`Drawable`] represents.
-    /// If the [`Drawable`] type doesn't represent something spatial, i.e. something that shouldn't be accounted for when calculating map bounds, then this method returns [`None`].
-    fn geometry(&self) -> Option<geo::Geometry<f64>> {
-        None
-    }
 }
 
 /// Converts an [`EPSG:4326`](https://epsg.io/4326) coordinate to one that represents a pixel in a snapshot.

@@ -84,29 +84,7 @@ impl<'a> Snapr<'a> {
         geometries: Vec<geo::Geometry>,
         styles: &[Style],
     ) -> Result<image::RgbaImage, Error> {
-        let drawables = geometries
-            .iter()
-            .map(|geometry| geometry as &dyn Drawable)
-            .collect::<Vec<_>>();
-
-        self.generate_snapshot_from_drawables(drawables, styles)
-    }
-
-    /// Returns a snapshot centered around each `drawables`' [`Drawable::geometry`].
-    pub fn generate_snapshot_from_drawables(
-        &self,
-        drawables: Vec<&dyn Drawable>,
-        styles: &[Style],
-    ) -> Result<image::RgbaImage, Error> {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
-        let mut geometries = Vec::new();
-
-        for drawable in &drawables {
-            if let Some(geometry) = drawable.geometry() {
-                geometries.push(geometry);
-            }
-        }
-
         let geometries = geo::GeometryCollection::from(geometries);
 
         let Some(mut pixmap) = Pixmap::new(self.width, self.height) else {
@@ -127,8 +105,8 @@ impl<'a> Snapr<'a> {
 
         self.overlay_backing_tiles(&mut output_image, center, zoom)?;
 
-        for drawable in &drawables {
-            drawable.draw(&self, styles, &mut pixmap, center, zoom)?;
+        for geometry in geometries {
+            geometry.draw(&self, styles, &mut pixmap, center, zoom)?;
         }
 
         let pixmap_image = image::ImageBuffer::from_fn(self.width, self.height, |x, y| {

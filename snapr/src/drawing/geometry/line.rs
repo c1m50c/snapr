@@ -90,13 +90,6 @@ impl Drawable for geo::Line<f64> {
 
         Ok(())
     }
-
-    fn geometry(&self) -> Option<geo::Geometry<f64>>
-    where
-        Self: Sized,
-    {
-        Some(geo::Geometry::Line(self.clone()))
-    }
 }
 
 impl Drawable for geo::LineString<f64> {
@@ -160,13 +153,6 @@ impl Drawable for geo::LineString<f64> {
 
         Ok(())
     }
-
-    fn geometry(&self) -> Option<geo::Geometry<f64>>
-    where
-        Self: Sized,
-    {
-        Some(geo::Geometry::LineString(self.clone()))
-    }
 }
 
 impl Drawable for geo::MultiLineString<f64> {
@@ -180,12 +166,5 @@ impl Drawable for geo::MultiLineString<f64> {
     ) -> Result<(), crate::Error> {
         self.into_iter()
             .try_for_each(|line_string| line_string.draw(snapr, styles, pixmap, center, zoom))
-    }
-
-    fn geometry(&self) -> Option<geo::Geometry<f64>>
-    where
-        Self: Sized,
-    {
-        Some(geo::Geometry::MultiLineString(self.clone()))
     }
 }
