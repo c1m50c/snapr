@@ -1,10 +1,11 @@
 use std::io::Cursor;
 
+use geo::line_string;
 use image::{DynamicImage, ImageFormat, ImageReader};
 use reqwest::blocking::ClientBuilder;
 use snapr::{
     drawing::{
-        geometry::point::PointStyle,
+        geometry::{line::LineStyle, point::PointStyle},
         style::{ColorOptions, Styleable},
         svg::Label,
     },
@@ -15,20 +16,30 @@ fn main() -> Result<(), anyhow::Error> {
     let snapr = SnaprBuilder::new()
         .with_tile_fetcher(TileFetcher::Individual(&tile_fetcher))
         .with_tile_size(256)
-        .with_zoom(13)
+        .with_zoom(16)
         .build()?;
 
-    let point = geo::point!(x: 41.2551, y: -101.8354);
+    let line_string = geo::line_string![
+        (x: 41.83993, y: -103.69907),
+        (x: 41.83799, y: -103.69841),
+        (x: 41.83485, y: -103.69969),
+    ];
 
-    let geometry = point.as_styled(PointStyle {
-        label: Some(Label {
-            color_options: ColorOptions {
-                border: Some(1.5),
-                ..Default::default()
-            },
-            text: "Water".to_string(),
+    let geometry = line_string.as_styled(LineStyle {
+        point_style: PointStyle {
+            effect: Some(|style, _, context| PointStyle {
+                label: Some(Label {
+                    color_options: ColorOptions {
+                        border: Some(1.25),
+                        ..Default::default()
+                    },
+                    text: (context.index + 1).to_string(),
+                    ..Default::default()
+                }),
+                ..style
+            }),
             ..Default::default()
-        }),
+        },
         ..Default::default()
     });
 
