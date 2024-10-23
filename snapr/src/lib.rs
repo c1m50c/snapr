@@ -99,7 +99,7 @@ impl<'a> Snapr<'a> {
         };
 
         let zoom = match self.zoom {
-            Some(zoom) => zoom,
+            Some(zoom) => zoom.clamp(1, self.max_zoom),
             None => match geometries.bounding_rect() {
                 Some(bounding_box) => self.zoom_from_geometries(bounding_box),
                 None => todo!("Return an `Err` or find a suitable default for `bounding_box`"),
