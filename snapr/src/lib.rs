@@ -62,6 +62,9 @@ pub struct Snapr<'a> {
 
     /// Zoom level of generated snapshots.
     zoom: Option<u8>,
+
+    /// Maximum zoom level of generated snapshots.
+    max_zoom: u8,
 }
 
 impl<'a> Snapr<'a> {
@@ -138,7 +141,7 @@ impl<'a> Snapr<'a> {
     fn zoom_from_geometries(&self, bounding_box: geo::Rect) -> u8 {
         let mut zoom = 1;
 
-        for level in (0..=17).rev() {
+        for level in (0..=self.max_zoom).rev() {
             let bounding_box = bounding_box.map_coords(|coords| {
                 let converted = Self::epsg_4326_to_epsg_3857(level, geo::Point::from(coords));
 
