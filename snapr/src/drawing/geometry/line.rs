@@ -10,33 +10,40 @@ use crate::drawing::{
 
 use super::{macros::impl_styled_geo, point::PointStyle};
 
-/// A [`Style`] that can be applied to [`geo::Line`] and [`geo::LineString`] primitives.
-#[derive(Clone, Debug, PartialEq)]
-pub struct LineStyle<T: From<geo::Line<f64>>> {
-    pub color_options: ColorOptions,
-    pub point_style: PointStyle,
-    pub width: f32,
-    pub effect: Option<Effect<T, Self>>,
+macro_rules! impl_line_style {
+    ($style: ident, $line: ident) => {
+        #[derive(Clone, Debug, PartialEq)]
+        #[doc = concat!("A style that can be applied to the [`geo::", stringify!($line), "`] primitive.")]
+        pub struct $style {
+            pub color_options: ColorOptions,
+            pub point_style: PointStyle,
+            pub width: f32,
+            pub effect: Option<Effect<geo::$line<f64>, Self>>,
+        }
+
+        impl Default for $style {
+            fn default() -> Self {
+                Self {
+                    color_options: ColorOptions {
+                        foreground: Color::from_rgba8(196, 196, 196, 255),
+                        border: Some(4.0),
+                        ..ColorOptions::default()
+                    },
+                    point_style: PointStyle::default(),
+                    width: 3.0,
+                    effect: None,
+                }
+            }
+        }
+    };
 }
 
-impl<T: From<geo::Line<f64>>> Default for LineStyle<T> {
-    fn default() -> Self {
-        Self {
-            color_options: ColorOptions {
-                foreground: Color::from_rgba8(196, 196, 196, 255),
-                border: Some(4.0),
-                ..ColorOptions::default()
-            },
-            point_style: PointStyle::default(),
-            width: 3.0,
-            effect: None,
-        }
-    }
-}
+impl_line_style!(LineStyle, Line);
+impl_line_style!(LineStringStyle, LineString);
 
 impl_styled_geo!(
     Line,
-    LineStyle<geo::Line<f64>>,
+    LineStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
         let style = match self.style.effect {
             Some(effect) => &((effect)(self.style.clone(), &self.inner, context)),
@@ -115,7 +122,7 @@ impl_styled_geo!(
 
 impl_styled_geo!(
     LineString,
-    LineStyle<geo::LineString<f64>>,
+    LineStringStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
         let style = match self.style.effect {
             Some(effect) => &((effect)(self.style.clone(), &self.inner, context)),
@@ -190,7 +197,7 @@ impl_styled_geo!(
 
 impl_styled_geo!(
     MultiLineString,
-    LineStyle<geo::LineString<f64>>,
+    LineStringStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
         self.inner
             .iter()

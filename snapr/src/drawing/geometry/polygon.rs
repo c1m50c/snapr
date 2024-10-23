@@ -8,14 +8,14 @@ use crate::drawing::{
     Context, Drawable,
 };
 
-use super::{line::LineStyle, macros::impl_styled_geo, point::PointStyle};
+use super::{line::LineStringStyle, macros::impl_styled_geo, point::PointStyle};
 
 /// A [`Style`] that can be applied to [`geo::Polygon`], [`geo::Rect`], and [`geo::Triangle`] primitives.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolygonStyle {
     pub color_options: ColorOptions,
     pub effect: Option<Effect<geo::Polygon<f64>, Self>>,
-    pub line_style: LineStyle<geo::LineString<f64>>,
+    pub line_style: LineStringStyle,
     pub point_style: PointStyle,
 }
 
@@ -28,7 +28,7 @@ impl Default for PolygonStyle {
                 ..ColorOptions::default()
             },
             effect: None,
-            line_style: LineStyle::default(),
+            line_style: LineStringStyle::default(),
             point_style: PointStyle::default(),
         }
     }
