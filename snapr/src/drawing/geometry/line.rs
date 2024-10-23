@@ -8,12 +8,13 @@ use crate::drawing::{
     Context, Drawable,
 };
 
-use super::macros::impl_styled_geo;
+use super::{macros::impl_styled_geo, point::PointStyle};
 
 /// A [`Style`] that can be applied to [`geo::Line`] and [`geo::LineString`] primitives.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineStyle {
     pub color_options: ColorOptions,
+    pub point_style: PointStyle,
     pub width: f32,
 }
 
@@ -25,6 +26,7 @@ impl Default for LineStyle {
                 border: Some(4.0),
                 ..ColorOptions::default()
             },
+            point_style: PointStyle::default(),
             width: 3.0,
         }
     }
@@ -78,8 +80,15 @@ impl_styled_geo!(
             None,
         );
 
-        self.inner.start_point().draw(pixmap, context)?;
-        self.inner.end_point().draw(pixmap, context)?;
+        self.inner
+            .start_point()
+            .as_styled(self.style.point_style.clone())
+            .draw(pixmap, context)?;
+
+        self.inner
+            .end_point()
+            .as_styled(self.style.point_style.clone())
+            .draw(pixmap, context)?;
 
         Ok(())
     }
@@ -137,9 +146,11 @@ impl_styled_geo!(
             );
         }
 
-        self.inner
-            .points()
-            .try_for_each(|point| point.draw(pixmap, context))?;
+        self.inner.points().try_for_each(|point| {
+            point
+                .as_styled(self.style.point_style.clone())
+                .draw(pixmap, context)
+        })?;
 
         Ok(())
     }
