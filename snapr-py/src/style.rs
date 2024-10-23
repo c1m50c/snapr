@@ -2,11 +2,11 @@ use pyo3::prelude::*;
 use snapr::{
     drawing::{
         geometry::{
-            line::LineStyle,
+            line::{LineStringStyle, LineStyle},
             point::{PointStyle, Representation, Shape},
             polygon::PolygonStyle,
         },
-        style::{ColorOptions, Style},
+        style::{ColorOptions, Effect},
         svg::{Label, Svg},
     },
     tiny_skia::Color,
@@ -70,17 +70,6 @@ pub enum PyStyle {
 
     #[pyo3(constructor = (_0 = PyPolygonStyle(PolygonStyle::default())))]
     Polygon(PyPolygonStyle),
-}
-
-#[allow(clippy::from_over_into)]
-impl Into<Style> for PyStyle {
-    fn into(self) -> Style {
-        match self {
-            Self::Point(style) => Style::Point(style.0),
-            Self::Line(style) => Style::Line(style.0),
-            Self::Polygon(style) => Style::Polygon(style.0),
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -154,54 +143,106 @@ impl PyLabel {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 #[pyclass(name = "PointStyle")]
 pub struct PyPointStyle(PointStyle);
 
 #[pymethods]
 impl PyPointStyle {
     #[new]
-    #[pyo3(signature = (color_options = PyColorOptions(ColorOptions::default()), representation = PyRepresentation::Shape(PyShape::Circle { radius: 4.0 }), label = None))]
+    #[pyo3(signature = (color_options = PyColorOptions(ColorOptions::default()), representation = PyRepresentation::Shape(PyShape::Circle { radius: 4.0 }), label = None, effect = None))]
     fn new(
         color_options: PyColorOptions,
         representation: PyRepresentation,
         label: Option<PyLabel>,
+        effect: Option<Py<PyAny>>,
     ) -> Self {
+        let effect = effect.map(callable_to_effect::<geo::Point<f64>, PointStyle>);
+
         Self(PointStyle {
             color_options: color_options.0,
             representation: representation.into(),
             label: label.map(|x| x.0),
+            effect,
         })
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 #[pyclass(name = "LineStyle")]
 pub struct PyLineStyle(LineStyle);
 
 #[pymethods]
 impl PyLineStyle {
     #[new]
-    #[pyo3(signature = (color_options = PyColorOptions(ColorOptions { foreground: Color::from_rgba8(196, 196, 196, 255), border: Some(4.0), ..Default::default() }), width = 3.0))]
-    fn new(color_options: PyColorOptions, width: f32) -> Self {
+    #[pyo3(signature = (color_options = PyColorOptions(ColorOptions { foreground: Color::from_rgba8(196, 196, 196, 255), border: Some(4.0), ..Default::default() }), point_style = PyPointStyle::default(), width = 3.0, effect = None))]
+    fn new(
+        color_options: PyColorOptions,
+        point_style: PyPointStyle,
+        width: f32,
+        effect: Option<Py<PyAny>>,
+    ) -> Self {
+        let effect = effect.map(callable_to_effect::<geo::Line<f64>, LineStyle>);
+
         Self(LineStyle {
             color_options: color_options.0,
             width,
+            point_style: point_style.0,
+            effect,
         })
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
+#[pyclass(name = "LineStyle")]
+pub struct PyLineStringStyle(LineStringStyle);
+
+#[pymethods]
+impl PyLineStringStyle {
+    #[new]
+    #[pyo3(signature = (color_options = PyColorOptions(ColorOptions { foreground: Color::from_rgba8(196, 196, 196, 255), border: Some(4.0), ..Default::default() }), point_style = PyPointStyle::default(), width = 3.0, effect = None))]
+    fn new(
+        color_options: PyColorOptions,
+        point_style: PyPointStyle,
+        width: f32,
+        effect: Option<Py<PyAny>>,
+    ) -> Self {
+        let effect = effect.map(callable_to_effect::<geo::LineString<f64>, LineStringStyle>);
+
+        Self(LineStringStyle {
+            color_options: color_options.0,
+            width,
+            point_style: point_style.0,
+            effect,
+        })
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
 #[pyclass(name = "PolygonStyle")]
 pub struct PyPolygonStyle(PolygonStyle);
 
 #[pymethods]
 impl PyPolygonStyle {
     #[new]
-    #[pyo3(signature = (color_options = PyColorOptions(ColorOptions { foreground: Color::from_rgba8(248, 248, 248, 64), border: None, ..Default::default() })))]
-    fn new(color_options: PyColorOptions) -> Self {
+    #[pyo3(signature = (color_options = PyColorOptions(ColorOptions { foreground: Color::from_rgba8(248, 248, 248, 64), border: None, ..Default::default() }), line_style = PyLineStringStyle::default(), point_style = PyPointStyle::default(), effect = None))]
+    fn new(
+        color_options: PyColorOptions,
+        line_style: PyLineStringStyle,
+        point_style: PyPointStyle,
+        effect: Option<Py<PyAny>>,
+    ) -> Self {
+        let effect = effect.map(callable_to_effect::<geo::Polygon<f64>, PolygonStyle>);
+
         Self(PolygonStyle {
             color_options: color_options.0,
+            line_style: line_style.0,
+            point_style: point_style.0,
+            effect,
         })
     }
+}
+
+fn callable_to_effect<T, S>(_callable: Py<PyAny>) -> Effect<T, S> {
+    todo!("Call `callable` and return an `Effect`")
 }

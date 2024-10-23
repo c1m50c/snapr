@@ -42,22 +42,20 @@ impl Snapr {
         }
     }
 
-    #[pyo3(signature = (geometry, styles = Vec::new()))]
+    #[pyo3(signature = (geometry))]
     fn generate_snapshot_from_geometry<'py>(
         &self,
         py: Python<'py>,
         geometry: geo::PyGeometry,
-        styles: Vec<style::PyStyle>,
     ) -> PyResult<Bound<'py, PyByteArray>> {
-        self.generate_snapshot_from_geometries(py, vec![geometry], styles)
+        self.generate_snapshot_from_geometries(py, vec![geometry])
     }
 
-    #[pyo3(signature = (geometries, styles = Vec::new()))]
+    #[pyo3(signature = (geometries))]
     fn generate_snapshot_from_geometries<'py>(
         &self,
         py: Python<'py>,
         geometries: Vec<geo::PyGeometry>,
-        styles: Vec<style::PyStyle>,
     ) -> PyResult<Bound<'py, PyByteArray>> {
         let tile_fetcher = |coords: &'_ [(i32, i32)],
                             zoom: u8|
@@ -109,13 +107,8 @@ impl Snapr {
             .map(<geo::PyGeometry as Into<::geo::Geometry>>::into)
             .collect::<Vec<_>>();
 
-        let styles = styles
-            .into_iter()
-            .map(<style::PyStyle as Into<::snapr::drawing::style::Style>>::into)
-            .collect::<Vec<_>>();
-
         let snapshot = snapr
-            .generate_snapshot_from_geometries(geometries, &styles)
+            .generate_snapshot_from_geometries(geometries)
             .map_err(to_py_error)?;
 
         // Estimated size of an 800x600 PNG snapshot is `1.44MB`
@@ -159,6 +152,7 @@ fn snapr(py: Python, module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<style::PyColorOptions>()?;
     module.add_class::<style::PyLabel>()?;
     module.add_class::<style::PyLineStyle>()?;
+    module.add_class::<style::PyLineStringStyle>()?;
     module.add_class::<style::PyPointStyle>()?;
     module.add_class::<style::PyPolygonStyle>()?;
     module.add_class::<style::PyRepresentation>()?;
