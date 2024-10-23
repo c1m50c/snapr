@@ -17,18 +17,20 @@ struct Snapr {
     height: u32,
     width: u32,
     zoom: Option<u8>,
+    max_zoom: u8,
 }
 
 #[pymethods]
 impl Snapr {
     #[new]
-    #[pyo3(signature = (tile_fetcher, tile_size=256, height=600, width=800, zoom=None))]
+    #[pyo3(signature = (tile_fetcher, tile_size=256, height=600, width=800, zoom=None, max_zoom=17))]
     fn new(
         tile_fetcher: Py<PyAny>,
         tile_size: u32,
         height: u32,
         width: u32,
         zoom: Option<u8>,
+        max_zoom: u8,
     ) -> Self {
         Self {
             tile_fetcher,
@@ -36,6 +38,7 @@ impl Snapr {
             height,
             width,
             zoom,
+            max_zoom,
         }
     }
 
@@ -89,7 +92,8 @@ impl Snapr {
             .with_tile_fetcher(TileFetcher::Batch(&tile_fetcher))
             .with_tile_size(self.tile_size)
             .with_height(self.height)
-            .with_width(self.width);
+            .with_width(self.width)
+            .with_max_zoom(self.max_zoom);
 
         let snapr = match self.zoom {
             Some(zoom) => {

@@ -14,6 +14,7 @@ class Snapr:
         height: int = 600,
         width: int = 800,
         zoom: int | None = None,
+        max_zoom: int = 17,
     ) -> None: ...
     def generate_snapshot_from_geometry(
         self, geometry: Geometry, styles: list[Style] = []
