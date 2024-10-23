@@ -3,13 +3,9 @@
 use geo::MapCoords;
 use tiny_skia::{Color, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
-use crate::{
-    drawing::{
-        epsg_4326_to_pixel,
-        style::{ColorOptions, Style},
-        Drawable,
-    },
-    Snapr,
+use crate::drawing::{
+    style::{ColorOptions, Style},
+    Context, Drawable,
 };
 
 /// A [`Style`] that can be applied to [`geo::Line`] and [`geo::LineString`] primitives.
@@ -33,16 +29,9 @@ impl Default for LineStyle {
 }
 
 impl Drawable for geo::Line<f64> {
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
-        let line = self.map_coords(|coord| epsg_4326_to_pixel(snapr, zoom, center, &coord));
-        let style = Style::for_line(styles).unwrap_or_default();
+    fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
+        let line = self.map_coords(|coord| context.epsg_4326_to_pixel(&coord));
+        let style = Style::for_line(context.styles).unwrap_or_default();
 
         let mut path_builder = PathBuilder::new();
         path_builder.move_to(line.start.x as f32, line.start.y as f32);
@@ -84,27 +73,19 @@ impl Drawable for geo::Line<f64> {
             None,
         );
 
-        self.start_point()
-            .draw(snapr, styles, pixmap, center, zoom)?;
-        self.end_point().draw(snapr, styles, pixmap, center, zoom)?;
+        self.start_point().draw(pixmap, context)?;
+        self.end_point().draw(pixmap, context)?;
 
         Ok(())
     }
 }
 
 impl Drawable for geo::LineString<f64> {
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
-        let style = Style::for_line(styles).unwrap_or_default();
+    fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
+        let style = Style::for_line(context.styles).unwrap_or_default();
         let mut path_builder = PathBuilder::new();
 
-        let line_string = self.map_coords(|coord| epsg_4326_to_pixel(snapr, zoom, center, &coord));
+        let line_string = self.map_coords(|coord| context.epsg_4326_to_pixel(&coord));
 
         for (index, point) in line_string.points().enumerate() {
             if index == 0 {
@@ -149,22 +130,15 @@ impl Drawable for geo::LineString<f64> {
         }
 
         self.points()
-            .try_for_each(|point| point.draw(snapr, styles, pixmap, center, zoom))?;
+            .try_for_each(|point| point.draw(pixmap, context))?;
 
         Ok(())
     }
 }
 
 impl Drawable for geo::MultiLineString<f64> {
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
+    fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
         self.into_iter()
-            .try_for_each(|line_string| line_string.draw(snapr, styles, pixmap, center, zoom))
+            .try_for_each(|line_string| line_string.draw(pixmap, context))
     }
 }

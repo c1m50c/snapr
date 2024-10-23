@@ -2,7 +2,7 @@
 
 use std::{f64::consts::PI, fmt};
 
-use drawing::{style::Style, Drawable};
+use drawing::{style::Style, Context, Drawable};
 use geo::{BoundingRect, Centroid, Coord, MapCoords};
 use image::imageops::overlay;
 use thiserror::Error;
@@ -108,9 +108,16 @@ impl<'a> Snapr<'a> {
 
         self.overlay_backing_tiles(&mut output_image, center, zoom)?;
 
-        for geometry in geometries {
-            geometry.draw(self, styles, &mut pixmap, center, zoom)?;
-        }
+        let context = Context {
+            snapr: self,
+            styles,
+            center,
+            zoom,
+        };
+
+        geometries
+            .into_iter()
+            .try_for_each(|geometry| geometry.draw(&mut pixmap, &context))?;
 
         let pixmap_image = image::ImageBuffer::from_fn(self.width, self.height, |x, y| {
             let pixel = pixmap.pixel(x, y)

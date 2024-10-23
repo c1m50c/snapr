@@ -2,37 +2,28 @@
 
 use tiny_skia::Pixmap;
 
-use crate::Snapr;
-
-use super::{style::Style, Drawable};
+use super::{Context, Drawable};
 
 pub mod line;
 pub mod point;
 pub mod polygon;
 
 impl Drawable for geo::Geometry<f64> {
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
+    fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
         match self {
-            Self::Point(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::Line(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::LineString(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::Polygon(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::MultiPoint(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::MultiLineString(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::MultiPolygon(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::Rect(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
-            Self::Triangle(geometry) => geometry.draw(snapr, styles, pixmap, center, zoom),
+            Self::Point(geometry) => geometry.draw(pixmap, context),
+            Self::Line(geometry) => geometry.draw(pixmap, context),
+            Self::LineString(geometry) => geometry.draw(pixmap, context),
+            Self::Polygon(geometry) => geometry.draw(pixmap, context),
+            Self::MultiPoint(geometry) => geometry.draw(pixmap, context),
+            Self::MultiLineString(geometry) => geometry.draw(pixmap, context),
+            Self::MultiPolygon(geometry) => geometry.draw(pixmap, context),
+            Self::Rect(geometry) => geometry.draw(pixmap, context),
+            Self::Triangle(geometry) => geometry.draw(pixmap, context),
 
             Self::GeometryCollection(geometry) => geometry
                 .into_iter()
-                .try_for_each(|geometry| geometry.draw(snapr, styles, pixmap, center, zoom)),
+                .try_for_each(|geometry| geometry.draw(pixmap, context)),
         }
     }
 }

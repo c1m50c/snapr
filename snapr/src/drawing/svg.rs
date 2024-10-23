@@ -6,12 +6,7 @@ use resvg::{
 };
 use tiny_skia::{Pixmap, Transform};
 
-use crate::Snapr;
-
-use super::{
-    style::{ColorOptions, Style},
-    Drawable,
-};
+use super::{style::ColorOptions, Context, Drawable};
 
 /// Configuration structure used to generate a [`Drawable`] SVG.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -94,14 +89,7 @@ pub(crate) struct SpatialSvg {
 }
 
 impl Drawable for SpatialSvg {
-    fn draw(
-        &self,
-        _: &Snapr,
-        _: &[Style],
-        pixmap: &mut Pixmap,
-        _: geo::Point,
-        _: u8,
-    ) -> Result<(), crate::Error> {
+    fn draw(&self, pixmap: &mut Pixmap, _: &Context) -> Result<(), crate::Error> {
         let SpatialSvg { pixel, tree } = self;
 
         let svg_size = tree.size();

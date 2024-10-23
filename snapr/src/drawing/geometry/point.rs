@@ -3,13 +3,9 @@
 use geo::MapCoords;
 use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
-use crate::{
-    drawing::{
-        epsg_4326_to_pixel,
-        style::{ColorOptions, Style},
-        Drawable,
-    },
-    Snapr,
+use crate::drawing::{
+    style::{ColorOptions, Style},
+    Context, Drawable,
 };
 
 /// Represents a _shape_ that can be transformed into a [`Path`] via the [`Shape::to_path`] method.
@@ -65,16 +61,9 @@ pub struct PointStyle {
 }
 
 impl Drawable for geo::Point<f64> {
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
-        let point = self.map_coords(|coord| epsg_4326_to_pixel(snapr, zoom, center, &coord));
-        let style = Style::for_point(styles).unwrap_or_default();
+    fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
+        let point = self.map_coords(|coord| context.epsg_4326_to_pixel(&coord));
+        let style = Style::for_point(context.styles).unwrap_or_default();
 
         let shape = match &style.representation {
             Representation::Shape(shape) => shape,
@@ -82,7 +71,7 @@ impl Drawable for geo::Point<f64> {
             #[cfg(feature = "svg")]
             Representation::Svg(svg) => {
                 let svg = svg.try_as_svg((point.x(), point.y()))?;
-                svg.draw(snapr, styles, pixmap, center, zoom)?;
+                svg.draw(pixmap, context)?;
 
                 return Ok(());
             }
@@ -122,7 +111,7 @@ impl Drawable for geo::Point<f64> {
         #[cfg(feature = "svg")]
         if let Some(label) = &style.label {
             let svg = label.try_as_svg((point.x(), point.y()))?;
-            svg.draw(snapr, styles, pixmap, center, zoom)?;
+            svg.draw(pixmap, context)?;
         }
 
         Ok(())
@@ -130,15 +119,8 @@ impl Drawable for geo::Point<f64> {
 }
 
 impl Drawable for geo::MultiPoint<f64> {
-    fn draw(
-        &self,
-        snapr: &Snapr,
-        styles: &[Style],
-        pixmap: &mut Pixmap,
-        center: geo::Point,
-        zoom: u8,
-    ) -> Result<(), crate::Error> {
+    fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
         self.into_iter()
-            .try_for_each(|point| point.draw(snapr, styles, pixmap, center, zoom))
+            .try_for_each(|point| point.draw(pixmap, context))
     }
 }
