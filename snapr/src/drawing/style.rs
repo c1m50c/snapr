@@ -4,11 +4,13 @@ use tiny_skia::Color;
 
 use super::{Context, Drawable};
 
+/// Represents a [`Drawable`] that has been _styled_.
 pub struct Styled<'a, T: Styleable<S>, S> {
     pub inner: &'a T,
     pub style: S,
 }
 
+/// Types that can be converted into a [`Styled`] variant.
 pub trait Styleable<S>: Drawable + Sized {
     /// Constructs a [`Styled`] variant of the type using the given `style`.
     fn as_styled<'a>(&'a self, style: S) -> Styled<Self, S> {
@@ -16,6 +18,8 @@ pub trait Styleable<S>: Drawable + Sized {
     }
 }
 
+/// Function that consumes the current style and returns a new style based on the given parameters.
+/// Used by styles to enable more dynamic _effects_ on said styles.
 pub type Effect<T, S> = fn(S, &T, &Context) -> S;
 
 /// Standard options for coloring [`Drawables`](super::Drawable) found throughout most style options.
