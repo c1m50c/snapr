@@ -1,9 +1,14 @@
 use std::io::Cursor;
 
+use geo::line_string;
 use image::{DynamicImage, ImageFormat, ImageReader};
 use reqwest::blocking::ClientBuilder;
 use snapr::{
-    drawing::{geometry::point::PointStyle, style::ColorOptions, svg::Label},
+    drawing::{
+        geometry::{line::LineStringStyle, point::PointStyle},
+        style::{ColorOptions, Styleable},
+        svg::Label,
+    },
     SnaprBuilder, TileFetcher,
 };
 
@@ -11,25 +16,35 @@ fn main() -> Result<(), anyhow::Error> {
     let snapr = SnaprBuilder::new()
         .with_tile_fetcher(TileFetcher::Individual(&tile_fetcher))
         .with_tile_size(256)
-        .with_zoom(13)
+        .with_zoom(16)
         .build()?;
 
-    let style = PointStyle {
-        label: Some(Label {
-            color_options: ColorOptions {
-                border: Some(1.5),
-                ..Default::default()
-            },
-            text: "Water".to_string(),
-            ..Default::default()
-        }),
-        ..Default::default()
-    };
+    let line_string = geo::line_string![
+        (x: 41.83993, y: -103.69907),
+        (x: 41.83799, y: -103.69841),
+        (x: 41.83485, y: -103.69969),
+    ];
 
-    let geometry = geo::point!(x: 41.2551, y: -101.8354);
+    let geometry = line_string.as_styled(LineStringStyle {
+        point_style: PointStyle {
+            effect: Some(|style, _, context| PointStyle {
+                label: Some(Label {
+                    color_options: ColorOptions {
+                        border: Some(1.25),
+                        ..Default::default()
+                    },
+                    text: (context.index + 1).to_string(),
+                    ..Default::default()
+                }),
+                ..style
+            }),
+            ..Default::default()
+        },
+        ..Default::default()
+    });
 
     snapr
-        .generate_snapshot_from_geometry(geometry, &[style.into()])?
+        .generate_snapshot(vec![&geometry])?
         .save("example.png")?;
 
     Ok(())
@@ -44,7 +59,7 @@ fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> 
         .map_err(anyhow::Error::from)?;
 
     let cursor = client
-        .get(&address)
+        .get(address)
         .send()
         .and_then(|response| response.error_for_status())
         .and_then(|response| response.bytes())

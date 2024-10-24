@@ -1,6 +1,5 @@
 //! Contains utilities to draw objects on top of map tiles.
 
-use style::Style;
 use tiny_skia::Pixmap;
 
 use crate::Snapr;
@@ -12,12 +11,14 @@ pub mod style;
 pub mod svg;
 
 /// Passed to [`Drawable::draw`] calls, represents the _[`Context`]_ of those calls.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Context<'a> {
     pub snapr: &'a Snapr<'a>,
-    pub styles: &'a [Style],
     pub center: geo::Point<f64>,
     pub zoom: u8,
+
+    /// Relative index of the current [`Drawable`] being _drawn_.
+    pub index: usize,
 }
 
 impl<'a> Context<'a> {
@@ -41,4 +42,16 @@ pub trait Drawable {
     /// Function that's called when its time for an object to be drawn.
     /// See [`Drawable`] for more details.
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error>;
+
+    // FIXME: Currently, the `as_geometry` method takes the `Drawable` by reference
+    // This causes a few issues via some pretty excessive cloning when converting inner geometries to a `Geometry`.
+    // Ideally, this method would return a `Option<&Geometry>`, but there's not a good way to convert an inner geometry to that type; AFAIK.
+
+    /// Converts the [`Drawable`] to a [`Geometry`](geo::Geometry).
+    ///
+    /// The [`as_geometry`](Drawable::as_geometry) method is used when calculating geometrical extents when generating a snapshot.
+    /// If your [`Drawable`] does not represent something spatial, you may return [`None`] to opt out of said calculations.
+    fn as_geometry(&self) -> Option<geo::Geometry<f64>> {
+        None
+    }
 }

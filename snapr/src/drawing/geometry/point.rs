@@ -4,9 +4,11 @@ use geo::MapCoords;
 use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::drawing::{
-    style::{ColorOptions, Style},
+    style::{ColorOptions, Effect, Styleable, Styled},
     Context, Drawable,
 };
+
+use super::macros::impl_styled_geo;
 
 /// Represents a _shape_ that can be transformed into a [`Path`] via the [`Shape::to_path`] method.
 #[derive(Clone, Debug, PartialEq)]
@@ -55,15 +57,24 @@ impl Default for Representation {
 pub struct PointStyle {
     pub color_options: ColorOptions,
     pub representation: Representation,
+    pub effect: Option<Effect<geo::Point<f64>, Self>>,
 
     #[cfg(feature = "svg")]
     pub label: Option<crate::drawing::svg::Label>,
 }
 
-impl Drawable for geo::Point<f64> {
+impl_styled_geo!(
+    Point,
+    PointStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-        let point = self.map_coords(|coord| context.epsg_4326_to_pixel(&coord));
-        let style = Style::for_point(context.styles).unwrap_or_default();
+        let style = match self.style.effect {
+            Some(effect) => &((effect)(self.style.clone(), self.inner, context)),
+            None => &self.style,
+        };
+
+        let point = self
+            .inner
+            .map_coords(|coord| context.epsg_4326_to_pixel(&coord));
 
         let shape = match &style.representation {
             Representation::Shape(shape) => shape,
@@ -116,11 +127,15 @@ impl Drawable for geo::Point<f64> {
 
         Ok(())
     }
-}
+);
 
-impl Drawable for geo::MultiPoint<f64> {
+impl_styled_geo!(
+    MultiPoint,
+    PointStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-        self.into_iter()
+        self.inner
+            .iter()
+            .map(|point| point.as_styled(self.style.clone()))
             .try_for_each(|point| point.draw(pixmap, context))
     }
-}
+);

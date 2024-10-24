@@ -2,98 +2,25 @@
 
 use tiny_skia::Color;
 
-use super::geometry::{line::LineStyle, point::PointStyle, polygon::PolygonStyle};
+use super::{Context, Drawable};
 
-/// Represents _styles_ that can be applied to [`Drawable`](super::Drawable) objects.
-#[derive(Clone, Debug, PartialEq)]
-pub enum Style {
-    Point(PointStyle),
-    Line(LineStyle),
-    Polygon(PolygonStyle),
+/// Represents a [`Drawable`] that has been _styled_.
+pub struct Styled<'a, T: Styleable<S>, S> {
+    pub inner: &'a T,
+    pub style: S,
 }
 
-impl Style {
-    /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`PointStyle`].
-    pub fn for_point<'a, I>(styles: I) -> Option<PointStyle>
-    where
-        I: IntoIterator<Item = &'a Self>,
-    {
-        let styles = styles.into_iter().flat_map(|style| match style {
-            Self::Point(style) => Some(style),
-            _ => None,
-        });
-
-        styles.cloned().reduce(|merged, current| PointStyle {
-            color_options: ColorOptions {
-                foreground: current.color_options.foreground,
-                background: current.color_options.background,
-                anti_alias: current.color_options.anti_alias,
-                border: current.color_options.border.or(merged.color_options.border),
-            },
-            representation: current.representation,
-            label: current.label.or(merged.label),
-        })
-    }
-
-    /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`LineStyle`].
-    pub fn for_line<'a, I>(styles: I) -> Option<LineStyle>
-    where
-        I: IntoIterator<Item = &'a Self>,
-    {
-        let styles = styles.into_iter().flat_map(|style| match style {
-            Self::Line(style) => Some(style),
-            _ => None,
-        });
-
-        styles.cloned().reduce(|merged, current| LineStyle {
-            color_options: ColorOptions {
-                foreground: current.color_options.foreground,
-                background: current.color_options.background,
-                anti_alias: current.color_options.anti_alias,
-                border: current.color_options.border.or(merged.color_options.border),
-            },
-            width: current.width,
-        })
-    }
-
-    /// Attempts to convert the given [`Iterator`] of [`Styles`](Style) to a singular [`PolygonStyle`].
-    pub fn for_polygon<'a, I>(styles: I) -> Option<PolygonStyle>
-    where
-        I: IntoIterator<Item = &'a Self>,
-    {
-        let styles = styles.into_iter().flat_map(|style| match style {
-            Self::Polygon(style) => Some(style),
-            _ => None,
-        });
-
-        styles.cloned().reduce(|merged, current| PolygonStyle {
-            color_options: ColorOptions {
-                foreground: current.color_options.foreground,
-                background: current.color_options.background,
-                anti_alias: current.color_options.anti_alias,
-                border: current.color_options.border.or(merged.color_options.border),
-            },
-        })
+/// Types that can be converted into a [`Styled`] variant.
+pub trait Styleable<S>: Drawable + Sized {
+    /// Constructs a [`Styled`] variant of the type using the given `style`.
+    fn as_styled(&self, style: S) -> Styled<Self, S> {
+        Styled { inner: self, style }
     }
 }
 
-impl From<PointStyle> for Style {
-    fn from(value: PointStyle) -> Self {
-        Self::Point(value)
-    }
-}
-
-impl From<LineStyle> for Style {
-    fn from(value: LineStyle) -> Self {
-        Self::Line(value)
-    }
-}
-
-impl From<PolygonStyle> for Style {
-    fn from(value: PolygonStyle) -> Self {
-        Self::Polygon(value)
-    }
-}
+/// Function that consumes the current style and returns a new style based on the given parameters.
+/// Used by styles to enable more dynamic _effects_ on said styles.
+pub type Effect<T, S> = fn(S, &T, &Context) -> S;
 
 /// Standard options for coloring [`Drawables`](super::Drawable) found throughout most style options.
 #[derive(Clone, Debug, PartialEq)]

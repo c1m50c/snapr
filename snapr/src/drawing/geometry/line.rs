@@ -4,34 +4,55 @@ use geo::MapCoords;
 use tiny_skia::{Color, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
 use crate::drawing::{
-    style::{ColorOptions, Style},
+    style::{ColorOptions, Effect, Styleable, Styled},
     Context, Drawable,
 };
 
-/// A [`Style`] that can be applied to [`geo::Line`] and [`geo::LineString`] primitives.
-#[derive(Clone, Debug, PartialEq)]
-pub struct LineStyle {
-    pub color_options: ColorOptions,
-    pub width: f32,
-}
+use super::{macros::impl_styled_geo, point::PointStyle};
 
-impl Default for LineStyle {
-    fn default() -> Self {
-        Self {
-            color_options: ColorOptions {
-                foreground: Color::from_rgba8(196, 196, 196, 255),
-                border: Some(4.0),
-                ..ColorOptions::default()
-            },
-            width: 3.0,
+macro_rules! impl_line_style {
+    ($style: ident, $line: ident) => {
+        #[derive(Clone, Debug, PartialEq)]
+        #[doc = concat!("A style that can be applied to the [`geo::", stringify!($line), "`] primitive.")]
+        pub struct $style {
+            pub color_options: ColorOptions,
+            pub point_style: PointStyle,
+            pub width: f32,
+            pub effect: Option<Effect<geo::$line<f64>, Self>>,
         }
-    }
+
+        impl Default for $style {
+            fn default() -> Self {
+                Self {
+                    color_options: ColorOptions {
+                        foreground: Color::from_rgba8(196, 196, 196, 255),
+                        border: Some(4.0),
+                        ..ColorOptions::default()
+                    },
+                    point_style: PointStyle::default(),
+                    width: 3.0,
+                    effect: None,
+                }
+            }
+        }
+    };
 }
 
-impl Drawable for geo::Line<f64> {
+impl_line_style!(LineStyle, Line);
+impl_line_style!(LineStringStyle, LineString);
+
+impl_styled_geo!(
+    Line,
+    LineStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-        let line = self.map_coords(|coord| context.epsg_4326_to_pixel(&coord));
-        let style = Style::for_line(context.styles).unwrap_or_default();
+        let style = match self.style.effect {
+            Some(effect) => &((effect)(self.style.clone(), self.inner, context)),
+            None => &self.style,
+        };
+
+        let line = self
+            .inner
+            .map_coords(|coord| context.epsg_4326_to_pixel(&coord));
 
         let mut path_builder = PathBuilder::new();
         path_builder.move_to(line.start.x as f32, line.start.y as f32);
@@ -73,19 +94,46 @@ impl Drawable for geo::Line<f64> {
             None,
         );
 
-        self.start_point().draw(pixmap, context)?;
-        self.end_point().draw(pixmap, context)?;
+        self.inner
+            .start_point()
+            .as_styled(style.point_style.clone())
+            .draw(
+                pixmap,
+                &Context {
+                    index: 0,
+                    ..context.clone()
+                },
+            )?;
+
+        self.inner
+            .end_point()
+            .as_styled(style.point_style.clone())
+            .draw(
+                pixmap,
+                &Context {
+                    index: 1,
+                    ..context.clone()
+                },
+            )?;
 
         Ok(())
     }
-}
+);
 
-impl Drawable for geo::LineString<f64> {
+impl_styled_geo!(
+    LineString,
+    LineStringStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-        let style = Style::for_line(context.styles).unwrap_or_default();
+        let style = match self.style.effect {
+            Some(effect) => &((effect)(self.style.clone(), self.inner, context)),
+            None => &self.style,
+        };
+
         let mut path_builder = PathBuilder::new();
 
-        let line_string = self.map_coords(|coord| context.epsg_4326_to_pixel(&coord));
+        let line_string = self
+            .inner
+            .map_coords(|coord| context.epsg_4326_to_pixel(&coord));
 
         for (index, point) in line_string.points().enumerate() {
             if index == 0 {
@@ -129,16 +177,31 @@ impl Drawable for geo::LineString<f64> {
             );
         }
 
-        self.points()
-            .try_for_each(|point| point.draw(pixmap, context))?;
+        self.inner
+            .points()
+            .enumerate()
+            .try_for_each(|(index, point)| {
+                let context = &Context {
+                    index,
+                    ..context.clone()
+                };
+
+                point
+                    .as_styled(style.point_style.clone())
+                    .draw(pixmap, context)
+            })?;
 
         Ok(())
     }
-}
+);
 
-impl Drawable for geo::MultiLineString<f64> {
+impl_styled_geo!(
+    MultiLineString,
+    LineStringStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-        self.into_iter()
+        self.inner
+            .iter()
+            .map(|line_string| line_string.as_styled(self.style.clone()))
             .try_for_each(|line_string| line_string.draw(pixmap, context))
     }
-}
+);

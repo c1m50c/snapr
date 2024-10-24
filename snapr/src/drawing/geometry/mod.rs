@@ -26,4 +26,37 @@ impl Drawable for geo::Geometry<f64> {
                 .try_for_each(|geometry| geometry.draw(pixmap, context)),
         }
     }
+
+    fn as_geometry(&self) -> Option<geo::Geometry<f64>> {
+        Some(self.clone())
+    }
+}
+
+pub(crate) mod macros {
+    macro_rules! impl_styled_geo {
+        ($type: ident, $style: ty, $draw: item) => {
+            impl Styleable<$style> for geo::$type<f64> {}
+
+            impl Drawable for Styled<'_, geo::$type<f64>, $style> {
+                $draw
+
+                fn as_geometry(&self) -> Option<geo::Geometry<f64>> {
+                    Some(self.inner.clone().into())
+                }
+            }
+
+            impl Drawable for geo::$type<f64> {
+                fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
+                    self.as_styled(<$style>::default())
+                        .draw(pixmap, context)
+                }
+
+                fn as_geometry(&self) -> Option<geo::Geometry<f64>> {
+                    Some(self.clone().into())
+                }
+            }
+        };
+    }
+
+    pub(crate) use impl_styled_geo;
 }

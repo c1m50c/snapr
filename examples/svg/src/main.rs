@@ -5,7 +5,7 @@ use reqwest::blocking::ClientBuilder;
 use snapr::{
     drawing::{
         geometry::point::{PointStyle, Representation},
-        style::Style,
+        style::Styleable,
         svg::Svg,
     },
     SnaprBuilder, TileFetcher,
@@ -41,7 +41,9 @@ fn main() -> Result<(), anyhow::Error> {
         .with_zoom(15)
         .build()?;
 
-    let style = Style::Point(PointStyle {
+    let point = geo::point!(x: 41.14974, y: -100.83754);
+
+    let geometry = point.as_styled(PointStyle {
         representation: Representation::Svg(Svg {
             offset: (0, 0),
             svg: SVG.to_string(),
@@ -49,10 +51,8 @@ fn main() -> Result<(), anyhow::Error> {
         ..Default::default()
     });
 
-    let geometry = geo::point!(x: 41.14974, y: -100.83754);
-
     snapr
-        .generate_snapshot_from_geometry(geometry, &[style])?
+        .generate_snapshot(vec![&geometry])?
         .save("example.png")?;
 
     Ok(())
@@ -67,7 +67,7 @@ fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> 
         .map_err(anyhow::Error::from)?;
 
     let cursor = client
-        .get(&address)
+        .get(address)
         .send()
         .and_then(|response| response.error_for_status())
         .and_then(|response| response.bytes())
