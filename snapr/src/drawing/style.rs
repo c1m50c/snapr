@@ -13,7 +13,7 @@ pub struct Styled<'a, T: Styleable<S>, S> {
 /// Types that can be converted into a [`Styled`] variant.
 pub trait Styleable<S>: Drawable + Sized {
     /// Constructs a [`Styled`] variant of the type using the given `style`.
-    fn as_styled<'a>(&'a self, style: S) -> Styled<Self, S> {
+    fn as_styled(&self, style: S) -> Styled<Self, S> {
         Styled { inner: self, style }
     }
 }

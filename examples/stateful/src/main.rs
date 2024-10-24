@@ -29,7 +29,7 @@ impl OSMTileFetcher {
         let user_agent = format!("snapr/{version}", version = env!("CARGO_PKG_VERSION"));
 
         let client = ClientBuilder::new()
-            .user_agent(&user_agent)
+            .user_agent(user_agent)
             .build()
             .map_err(anyhow::Error::from)?;
 
@@ -43,7 +43,7 @@ impl IndividualTileFetcher for OSMTileFetcher {
 
         let cursor = self
             .0
-            .get(&address)
+            .get(address)
             .send()
             .and_then(|response| response.error_for_status())
             .and_then(|response| response.bytes())

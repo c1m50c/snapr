@@ -39,7 +39,7 @@ impl_styled_geo!(
     PolygonStyle,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
         let style = match self.style.effect {
-            Some(effect) => &((effect)(self.style.clone(), &self.inner, context)),
+            Some(effect) => &((effect)(self.style.clone(), self.inner, context)),
             None => &self.style,
         };
 

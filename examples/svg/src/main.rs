@@ -67,7 +67,7 @@ fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, snapr::Error> 
         .map_err(anyhow::Error::from)?;
 
     let cursor = client
-        .get(&address)
+        .get(address)
         .send()
         .and_then(|response| response.error_for_status())
         .and_then(|response| response.bytes())
