@@ -16,12 +16,15 @@ class Snapr:
         zoom: int | None = None,
         max_zoom: int = 17,
     ) -> None: ...
-    def generate_snapshot_from_geometry(
-        self, geometry: Geometry, styles: list[Style] = []
-    ) -> bytearray: ...
+    def generate_snapshot_from_geometry(self, geometry: Geometry) -> bytearray: ...
     def generate_snapshot_from_geometries(
-        self, geometries: list[Geometry], styles: list[Style] = []
+        self, geometries: list[Geometry]
     ) -> bytearray: ...
+
+class Context:
+    center: Point
+    zoom: int
+    index: int
 
 # region geo.rs
 
@@ -138,6 +141,7 @@ class PointStyle:
         color_options: ColorOptions = ColorOptions(),
         representation: Representation = Representation.Shape(Shape.Circle()),
         label: Label | None = None,
+        effect: Callable[[PointStyle, Point, Context], PointStyle] | None = None,
     ) -> None: ...
 
 class LineStyle:
@@ -146,7 +150,21 @@ class LineStyle:
         color_options: ColorOptions = ColorOptions(
             foreground=Color(196, 196, 196, 255), border=4.0
         ),
+        point_style: PointStyle = PointStyle(),
         width: float = 3.0,
+        effect: Callable[[LineStyle, Line, Context], LineStyle] | None = None,
+    ) -> None: ...
+
+class LineStringStyle:
+    def __init__(
+        self,
+        color_options: ColorOptions = ColorOptions(
+            foreground=Color(196, 196, 196, 255), border=4.0
+        ),
+        point_style: PointStyle = PointStyle(),
+        width: float = 3.0,
+        effect: Callable[[LineStringStyle, LineString, Context], LineStringStyle]
+        | None = None,
     ) -> None: ...
 
 class PolygonStyle:
@@ -155,6 +173,9 @@ class PolygonStyle:
         color_options: ColorOptions = ColorOptions(
             foreground=Color(248, 248, 248, 64), border=None
         ),
+        line_style: LineStringStyle = LineStringStyle(),
+        point_style: PointStyle = PointStyle(),
+        effect: Callable[[PolygonStyle, Polygon, Context], PolygonStyle] | None = None,
     ) -> None: ...
 
 class Style:
