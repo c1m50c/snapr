@@ -198,7 +198,7 @@ impl PyLineStyle {
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-#[pyclass(name = "LineStyle")]
+#[pyclass(name = "LineStringStyle")]
 pub struct PyLineStringStyle(LineStringStyle);
 
 #[pymethods]
