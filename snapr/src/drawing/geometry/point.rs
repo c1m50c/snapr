@@ -1,5 +1,7 @@
 //! Contains [`Drawable`] implementations and [`Styles`](Style) for [`geo::Point`]` primitives.
 
+use std::fmt;
+
 use geo::MapCoords;
 use tiny_skia::{FillRule, Paint, Path, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
@@ -53,22 +55,37 @@ impl Default for Representation {
 }
 
 /// A [`Style`] that can be applied to [`geo::Point`] primitives.
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct PointStyle {
+#[derive(Clone, Default)]
+pub struct PointStyle<'a> {
     pub color_options: ColorOptions,
     pub representation: Representation,
-    pub effect: Option<Effect<geo::Point<f64>, Self>>,
+    pub effect: Option<Effect<'a, geo::Point<f64>, Self>>,
 
     #[cfg(feature = "svg")]
     pub label: Option<crate::drawing::svg::Label>,
 }
 
+impl<'a> fmt::Debug for PointStyle<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PointStyle")
+            .field("color_options", &self.color_options)
+            .field("representation", &self.representation)
+            .field("label", &self.label)
+            .finish()
+    }
+}
+
 impl_styled_geo!(
     Point,
-    PointStyle,
+    PointStyle<'_>,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-        let style = match self.style.effect {
-            Some(effect) => &((effect)(self.style.clone(), self.inner, context)),
+        let style = match &self.style.effect {
+            Some(effect) => {
+                &(effect
+                    .clone()
+                    .apply(self.style.clone(), &self.inner, context))
+            }
+
             None => &self.style,
         };
 
@@ -131,7 +148,7 @@ impl_styled_geo!(
 
 impl_styled_geo!(
     MultiPoint,
-    PointStyle,
+    PointStyle<'_>,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
         self.inner
             .iter()

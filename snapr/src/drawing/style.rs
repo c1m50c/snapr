@@ -1,5 +1,7 @@
 //! Contains utilities for styling [`Drawables`](super::Drawable).
 
+use std::rc::Rc;
+
 use tiny_skia::Color;
 
 use super::{Context, Drawable};
@@ -20,7 +22,24 @@ pub trait Styleable<S>: Drawable + Sized {
 
 /// Function that consumes the current style and returns a new style based on the given parameters.
 /// Used by styles to enable more dynamic _effects_ on said styles.
-pub type Effect<T, S> = fn(S, &T, &Context) -> S;
+#[derive(Clone)]
+pub struct Effect<'a, T: Drawable, S> {
+    func: Rc<dyn (Fn(S, &T, &Context) -> S) + 'a>,
+}
+
+impl<'a, T: Drawable, S> Effect<'a, T, S> {
+    /// Constructs a new [`Effect`] from the given `func`.
+    pub fn new<F: (Fn(S, &T, &Context) -> S) + 'a>(func: F) -> Self {
+        Self {
+            func: Rc::new(func),
+        }
+    }
+
+    /// Consumes the [`Effect`] and returns the new style based on its inner function.
+    pub fn apply(self, style: S, drawable: &T, context: &Context) -> S {
+        (self.func)(style, drawable, context)
+    }
+}
 
 /// Standard options for coloring [`Drawables`](super::Drawable) found throughout most style options.
 #[derive(Clone, Debug, PartialEq)]

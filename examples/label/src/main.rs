@@ -6,7 +6,7 @@ use reqwest::blocking::ClientBuilder;
 use snapr::{
     drawing::{
         geometry::{line::LineStringStyle, point::PointStyle},
-        style::{ColorOptions, Styleable},
+        style::{ColorOptions, Effect, Styleable},
         svg::Label,
     },
     SnaprBuilder, TileFetcher,
@@ -27,7 +27,7 @@ fn main() -> Result<(), anyhow::Error> {
 
     let geometry = line_string.as_styled(LineStringStyle {
         point_style: PointStyle {
-            effect: Some(|style, _, context| PointStyle {
+            effect: Some(Effect::new(|style, _, context| PointStyle {
                 label: Some(Label {
                     color_options: ColorOptions {
                         border: Some(1.25),
@@ -37,7 +37,7 @@ fn main() -> Result<(), anyhow::Error> {
                     ..Default::default()
                 }),
                 ..style
-            }),
+            })),
             ..Default::default()
         },
         ..Default::default()
