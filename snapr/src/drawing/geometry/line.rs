@@ -1,5 +1,7 @@
 //! Contains [`Drawable`] implementations and [`Styles`](Style) for [`geo::Line`], and [`geo::LineString`] primitives.
 
+use std::fmt;
+
 use geo::MapCoords;
 use tiny_skia::{Color, Paint, PathBuilder, Pixmap, Shader, Stroke, Transform};
 
@@ -12,16 +14,26 @@ use super::{macros::impl_styled_geo, point::PointStyle};
 
 macro_rules! impl_line_style {
     ($style: ident, $line: ident) => {
-        #[derive(Clone, Debug, PartialEq)]
+        #[derive(Clone)]
         #[doc = concat!("A style that can be applied to the [`geo::", stringify!($line), "`] primitive.")]
-        pub struct $style {
+        pub struct $style<'a> {
             pub color_options: ColorOptions,
-            pub point_style: PointStyle,
+            pub point_style: PointStyle<'a>,
             pub width: f32,
-            pub effect: Option<Effect<geo::$line<f64>, Self>>,
+            pub effect: Option<Effect<'a, geo::$line<f64>, Self>>,
         }
 
-        impl Default for $style {
+        impl<'a> fmt::Debug for $style<'a> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                f.debug_struct(stringify!($style))
+                    .field("color_options", &self.color_options)
+                    .field("point_style", &self.point_style)
+                    .field("width", &self.width)
+                    .finish()
+            }
+        }
+
+        impl<'a> Default for $style<'a> {
             fn default() -> Self {
                 Self {
                     color_options: ColorOptions {
@@ -43,10 +55,15 @@ impl_line_style!(LineStringStyle, LineString);
 
 impl_styled_geo!(
     Line,
-    LineStyle,
+    LineStyle<'_>,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-        let style = match self.style.effect {
-            Some(effect) => &((effect)(self.style.clone(), self.inner, context)),
+        let style = match &self.style.effect {
+            Some(effect) => {
+                &(effect
+                    .clone()
+                    .apply(self.style.clone(), self.inner, context))
+            }
+
             None => &self.style,
         };
 
@@ -122,10 +139,15 @@ impl_styled_geo!(
 
 impl_styled_geo!(
     LineString,
-    LineStringStyle,
+    LineStringStyle<'_>,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
-        let style = match self.style.effect {
-            Some(effect) => &((effect)(self.style.clone(), self.inner, context)),
+        let style = match &self.style.effect {
+            Some(effect) => {
+                &(effect
+                    .clone()
+                    .apply(self.style.clone(), self.inner, context))
+            }
+
             None => &self.style,
         };
 
@@ -197,7 +219,7 @@ impl_styled_geo!(
 
 impl_styled_geo!(
     MultiLineString,
-    LineStringStyle,
+    LineStringStyle<'_>,
     fn draw(&self, pixmap: &mut Pixmap, context: &Context) -> Result<(), crate::Error> {
         self.inner
             .iter()
