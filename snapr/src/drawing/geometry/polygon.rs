@@ -54,7 +54,7 @@ impl_styled_geo!(
             Some(effect) => {
                 &(effect
                     .clone()
-                    .apply(self.style.clone(), &self.inner, context))
+                    .apply(self.style.clone(), self.inner, context))
             }
 
             None => &self.style,

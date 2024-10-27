@@ -24,6 +24,7 @@ pub trait Styleable<S>: Drawable + Sized {
 /// Used by styles to enable more dynamic _effects_ on said styles.
 #[derive(Clone)]
 pub struct Effect<'a, T: Drawable, S> {
+    #[allow(clippy::type_complexity)]
     func: Rc<dyn (Fn(S, &T, &Context) -> S) + 'a>,
 }
 
