@@ -1,6 +1,10 @@
 #![doc = include_str!("../README.md")]
 
-use std::{f64::consts::PI, fmt};
+use std::{
+    f64::consts::PI,
+    fmt,
+    ops::{Deref, DerefMut},
+};
 
 use drawing::{Context, Drawable};
 use geo::{BoundingRect, Centroid, Coord, MapCoords};
@@ -44,6 +48,49 @@ pub enum Error {
     Unknown(#[from] anyhow::Error),
 }
 
+/// Used by [`Snapr`] to determine how the zoom level is calculated when generating snapshots.
+#[derive(Clone, Copy, Debug, Hash, PartialEq)]
+pub enum Zoom {
+    /// Specifies that the zoom level should be automatically derived from the geometry extents.
+    /// Contains an inner [`u8`] that controls the max zoom level.
+    Automatic(u8),
+
+    /// Specifies that the zoom level should be constant across all snapshots.
+    Constant(u8),
+}
+
+impl Deref for Zoom {
+    type Target = u8;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::Automatic(inner) => inner,
+            Self::Constant(inner) => inner,
+        }
+    }
+}
+
+impl DerefMut for Zoom {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        match self {
+            Self::Automatic(inner) => inner,
+            Self::Constant(inner) => inner,
+        }
+    }
+}
+
+impl Default for Zoom {
+    fn default() -> Self {
+        Zoom::Automatic(17)
+    }
+}
+
+impl From<u8> for Zoom {
+    fn from(value: u8) -> Self {
+        Zoom::Constant(value)
+    }
+}
+
 /// Utility structure to generate snapshots.
 /// Should be normally constructed through building with [`SnaprBuilder`].
 pub struct Snapr<'a> {
@@ -61,10 +108,7 @@ pub struct Snapr<'a> {
     width: u32,
 
     /// Zoom level of generated snapshots.
-    zoom: Option<u8>,
-
-    /// Maximum zoom level of generated snapshots.
-    max_zoom: u8,
+    zoom: Zoom,
 }
 
 impl<'a> Snapr<'a> {
@@ -113,9 +157,9 @@ impl<'a> Snapr<'a> {
         };
 
         let zoom = match self.zoom {
-            Some(zoom) => zoom.clamp(1, self.max_zoom),
-            None => match geometries.bounding_rect() {
-                Some(bounding_box) => self.zoom_from_geometries(bounding_box),
+            Zoom::Constant(level) => level,
+            Zoom::Automatic(max_level) => match geometries.bounding_rect() {
+                Some(bounding_box) => self.zoom_from_geometries(bounding_box, max_level),
                 None => todo!("Return an `Err` or find a suitable default for `bounding_box`"),
             },
         };
@@ -162,10 +206,10 @@ impl<'a> Snapr<'a> {
 
 impl<'a> Snapr<'a> {
     /// Calculates the [`zoom`](Self::zoom) level to use when [`zoom`](Self::zoom) itself is [`None`].
-    fn zoom_from_geometries(&self, bounding_box: geo::Rect) -> u8 {
+    fn zoom_from_geometries(&self, bounding_box: geo::Rect, max_zoom: u8) -> u8 {
         let mut zoom = 1;
 
-        for level in (0..=self.max_zoom).rev() {
+        for level in (0..=max_zoom).rev() {
             let bounding_box = bounding_box.map_coords(|coords| {
                 let converted = Self::epsg_4326_to_epsg_3857(level, geo::Point::from(coords));
 
