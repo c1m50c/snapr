@@ -21,6 +21,7 @@ pub mod fetchers;
 
 /// Error type used throughout the [`snapr`](crate) crate.
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum Error {
     /// Returned by [`SnaprBuilder`] when attempting to call [`build`](`SnaprBuilder::build()`) on an incomplete builder.
     /// Contains an inner [`reason`](Error::Builder::reason) explaining the specifics of the error.
@@ -33,6 +34,15 @@ pub enum Error {
 
     #[error("failed to construct path")]
     PathConstruction,
+
+    #[error("failed to construct pixmap")]
+    PixmapConstruction,
+
+    #[error("failed to calculate a bounding box for the geometry collection")]
+    BoundingBoxCalculation,
+
+    #[error("failed to calculate a centroid for the geometry collection")]
+    CentroidCalculation,
 
     /// Transparent errors returned from [`resvg::usvg`] functions.
     #[error(transparent)]
@@ -92,18 +102,20 @@ impl<'a> Snapr<'a> {
         let geometries = geo::GeometryCollection::from(geometries);
 
         let Some(mut pixmap) = Pixmap::new(self.width, self.height) else {
-            todo!("Return an `Err` or find some way to safely go forward with the function")
+            return Err(Error::PixmapConstruction);
         };
 
         let Some(center) = geometries.centroid() else {
-            todo!("Return an `Err` or find a suitable default for `center`")
+            return Err(Error::CentroidCalculation);
         };
 
         let zoom = match self.zoom {
             Some(zoom) => zoom.clamp(1, self.max_zoom),
             None => match geometries.bounding_rect() {
                 Some(bounding_box) => self.zoom_from_geometries(bounding_box),
-                None => todo!("Return an `Err` or find a suitable default for `bounding_box`"),
+                None => {
+                    return Err(Error::BoundingBoxCalculation);
+                }
             },
         };
 
