@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{Error, Snapr, TileFetcher};
+use crate::{Error, Snapr, TileFetcher, Zoom};
 
 /// Builder structure for [`snapr`].
 ///
@@ -26,8 +26,7 @@ pub struct SnaprBuilder<'a> {
     tile_size: Option<u32>,
     height: Option<u32>,
     width: Option<u32>,
-    zoom: Option<u8>,
-    max_zoom: Option<u8>,
+    zoom: Option<Zoom>,
 }
 
 impl<'a> SnaprBuilder<'a> {
@@ -69,17 +68,9 @@ impl<'a> SnaprBuilder<'a> {
     }
 
     /// Configures the `zoom` to be used in the [`Snapr::zoom`] field.
-    pub fn with_zoom(self, zoom: u8) -> Self {
+    pub fn with_zoom<Z: Into<Zoom>>(self, zoom: Z) -> Self {
         Self {
-            zoom: Some(zoom),
-            ..self
-        }
-    }
-
-    /// Configures the `max_zoom` to be used in the [`Snapr::max_zoom`] field.
-    pub fn with_max_zoom(self, max_zoom: u8) -> Self {
-        Self {
-            max_zoom: Some(max_zoom),
+            zoom: Some(zoom.into()),
             ..self
         }
     }
@@ -113,8 +104,7 @@ impl<'a> SnaprBuilder<'a> {
         let tile_size = self.tile_size.unwrap_or(256);
         let height = self.height.unwrap_or(600);
         let width = self.width.unwrap_or(800);
-        let zoom = self.zoom;
-        let max_zoom = self.max_zoom.unwrap_or(17);
+        let zoom = self.zoom.unwrap_or_default();
 
         let snapr = Snapr {
             tile_fetcher,
@@ -122,7 +112,6 @@ impl<'a> SnaprBuilder<'a> {
             height,
             width,
             zoom,
-            max_zoom,
         };
 
         Ok(snapr)
