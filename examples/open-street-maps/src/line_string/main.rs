@@ -24,7 +24,7 @@ fn main() -> Result<(), anyhow::Error> {
     ];
 
     snapr
-        .generate_snapshot_from_geometry(line_string)?
+        .snapshot_from_geometry(line_string)?
         .save("example.png")?;
 
     Ok(())

@@ -44,7 +44,7 @@ fn main() -> Result<(), anyhow::Error> {
     });
 
     snapr
-        .generate_snapshot(vec![&geometry])?
+        .snapshot_from_drawables(vec![&geometry])?
         .save("example.png")?;
 
     Ok(())

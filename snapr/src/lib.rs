@@ -25,6 +25,7 @@ pub mod fetchers;
 
 /// Error type used throughout the [`snapr`](crate) crate.
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum Error {
     /// Returned by [`SnaprBuilder`] when attempting to call [`build`](`SnaprBuilder::build()`) on an incomplete builder.
     /// Contains an inner [`reason`](Error::Builder::reason) explaining the specifics of the error.
@@ -37,6 +38,15 @@ pub enum Error {
 
     #[error("failed to construct path")]
     PathConstruction,
+
+    #[error("failed to construct pixmap")]
+    PixmapConstruction,
+
+    #[error("failed to calculate a bounding box for the geometry collection")]
+    BoundingBoxCalculation,
+
+    #[error("failed to calculate a centroid for the geometry collection")]
+    CentroidCalculation,
 
     /// Transparent errors returned from [`resvg::usvg`] functions.
     #[error(transparent)]
@@ -112,32 +122,19 @@ pub struct Snapr<'a> {
 }
 
 impl<'a> Snapr<'a> {
-    /// Returns a snapshot centered around the provided `geometry`.
-    pub fn generate_snapshot_from_geometry<G>(&self, geometry: G) -> Result<image::RgbaImage, Error>
-    where
-        G: Into<geo::Geometry>,
-    {
-        let geometries = vec![geometry.into()];
-        self.generate_snapshot_from_geometries(geometries)
-    }
-
-    /// Returns a snapshot centered around the provided `geometries`.
-    pub fn generate_snapshot_from_geometries(
+    /// Attempts to generate a snapshot from the [`Drawable`] object.
+    pub fn snapshot_from_drawable(
         &self,
-        geometries: Vec<geo::Geometry>,
+        drawable: &dyn Drawable,
     ) -> Result<image::RgbaImage, Error> {
-        let geometries = geometries
-            .iter()
-            .map(|geometry| geometry as &dyn Drawable)
-            .collect();
-
-        self.generate_snapshot(geometries)
+        let drawables = vec![drawable];
+        self.snapshot_from_drawables(drawables)
     }
 
-    /// Returns a snapshot rendering the provided `drawables`.
-    pub fn generate_snapshot(
+    /// Attempts to generate a snapshot from the [`Drawable`] objects.
+    pub fn snapshot_from_drawables(
         &self,
-        drawables: Vec<&'_ dyn Drawable>,
+        drawables: Vec<&dyn Drawable>,
     ) -> Result<image::RgbaImage, Error> {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
 
@@ -149,11 +146,11 @@ impl<'a> Snapr<'a> {
         let geometries = geo::GeometryCollection::from(geometries);
 
         let Some(mut pixmap) = Pixmap::new(self.width, self.height) else {
-            todo!("Return an `Err` or find some way to safely go forward with the function")
+            return Err(Error::PixmapConstruction);
         };
 
         let Some(center) = geometries.centroid() else {
-            todo!("Return an `Err` or find a suitable default for `center`")
+            return Err(Error::CentroidCalculation);
         };
 
         let zoom = match self.zoom {
@@ -189,6 +186,28 @@ impl<'a> Snapr<'a> {
 
         overlay(&mut output_image, &pixmap_image, 0, 0);
         Ok(output_image)
+    }
+
+    /// Attempts to generate a snapshot from the given [`Geometry`](geo::Geometry).
+    pub fn snapshot_from_geometry<G>(&self, geometry: G) -> Result<image::RgbaImage, Error>
+    where
+        G: Into<geo::Geometry>,
+    {
+        let geometries = vec![geometry.into()];
+        self.snapshot_from_geometries(geometries)
+    }
+
+    /// Attempts to generate a snapshot from the given [`Geometries`](geo::Geometry).
+    pub fn snapshot_from_geometries(
+        &self,
+        geometries: Vec<geo::Geometry>,
+    ) -> Result<image::RgbaImage, Error> {
+        let geometries = geometries
+            .iter()
+            .map(|geometry| geometry as &dyn Drawable)
+            .collect();
+
+        self.snapshot_from_drawables(geometries)
     }
 
     /// Converts a [`EPSG:4326`](https://epsg.io/4326) coordinate to a [`EPSG:3857`](https://epsg.io/3857) reprojection of said coordinate.
@@ -253,6 +272,10 @@ impl<'a> Snapr<'a> {
         let max_x = (epsg_3857_center.x() + required_columns).ceil() as i32;
         let max_y = (epsg_3857_center.y() + required_rows).ceil() as i32;
 
+        let coordinate_matrix = (min_x..max_x)
+            .map(|x| (x, min_y..max_y))
+            .flat_map(|(x, y)| y.map(move |y| (x, y)));
+
         match self.tile_fetcher {
             TileFetcher::Individual(tile_fetcher) => {
                 // Capture various fields in `self` to enable `x_y_to_tile` to automatically implement `Sync`
@@ -277,40 +300,27 @@ impl<'a> Snapr<'a> {
 
                 #[cfg(feature = "rayon")]
                 {
-                    let matrix_iter = (min_x..max_x)
-                        .map(|x| (x, min_y..max_y))
-                        .flat_map(|(x, y)| y.map(move |y| (x, y)));
-
-                    let tiles = matrix_iter
+                    coordinate_matrix
                         .par_bridge()
                         .flat_map(x_y_to_tile)
-                        .collect::<Vec<_>>();
-
-                    tiles
+                        .collect::<Vec<_>>()
                         .into_iter()
                         .for_each(|(tile, x, y)| overlay(image, &tile, x, y));
                 }
 
                 #[cfg(not(feature = "rayon"))]
                 {
-                    for x in min_x..max_x {
-                        for y in min_y..max_y {
-                            let (tile, x, y) = x_y_to_tile((x, y))?;
-                            overlay(image, &tile, x, y);
-                        }
+                    for (x, y) in coordinate_matrix {
+                        let (tile, x, y) = x_y_to_tile((x, y))?;
+                        overlay(image, &tile, x, y);
                     }
                 }
             }
 
             TileFetcher::Batch(tile_fetcher) => {
-                let matrix = (min_x..max_x)
-                    .map(|x| (x, min_y..max_y))
-                    .flat_map(|(x, y)| y.map(move |y| (x, y)))
-                    .collect::<Vec<_>>();
+                let coordinate_matrix = coordinate_matrix.collect::<Vec<_>>();
 
-                let batches = tile_fetcher.fetch_tiles(&matrix, zoom)?;
-
-                for (x, y, tile) in batches {
+                for (x, y, tile) in tile_fetcher.fetch_tiles(&coordinate_matrix, zoom)? {
                     let tile_coords = (geo::Point::from((x as f64, y as f64)) - epsg_3857_center)
                         .map_coords(|coord| geo::Coord {
                             x: coord.x * self.tile_size as f64 + self.width as f64 / 2.0,
