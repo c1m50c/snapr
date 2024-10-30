@@ -230,6 +230,10 @@ impl<'a> Snapr<'a> {
         let max_x = (epsg_3857_center.x() + required_columns).ceil() as i32;
         let max_y = (epsg_3857_center.y() + required_rows).ceil() as i32;
 
+        let coordinate_matrix = (min_x..max_x)
+            .map(|x| (x, min_y..max_y))
+            .flat_map(|(x, y)| y.map(move |y| (x, y)));
+
         match self.tile_fetcher {
             TileFetcher::Individual(tile_fetcher) => {
                 // Capture various fields in `self` to enable `x_y_to_tile` to automatically implement `Sync`
@@ -254,40 +258,27 @@ impl<'a> Snapr<'a> {
 
                 #[cfg(feature = "rayon")]
                 {
-                    let matrix_iter = (min_x..max_x)
-                        .map(|x| (x, min_y..max_y))
-                        .flat_map(|(x, y)| y.map(move |y| (x, y)));
-
-                    let tiles = matrix_iter
+                    coordinate_matrix
                         .par_bridge()
                         .flat_map(x_y_to_tile)
-                        .collect::<Vec<_>>();
-
-                    tiles
+                        .collect::<Vec<_>>()
                         .into_iter()
                         .for_each(|(tile, x, y)| overlay(image, &tile, x, y));
                 }
 
                 #[cfg(not(feature = "rayon"))]
                 {
-                    for x in min_x..max_x {
-                        for y in min_y..max_y {
-                            let (tile, x, y) = x_y_to_tile((x, y))?;
-                            overlay(image, &tile, x, y);
-                        }
+                    for (x, y) in coordinate_matrix {
+                        let (tile, x, y) = x_y_to_tile((x, y))?;
+                        overlay(image, &tile, x, y);
                     }
                 }
             }
 
             TileFetcher::Batch(tile_fetcher) => {
-                let matrix = (min_x..max_x)
-                    .map(|x| (x, min_y..max_y))
-                    .flat_map(|(x, y)| y.map(move |y| (x, y)))
-                    .collect::<Vec<_>>();
+                let coordinate_matrix = coordinate_matrix.collect::<Vec<_>>();
 
-                let batches = tile_fetcher.fetch_tiles(&matrix, zoom)?;
-
-                for (x, y, tile) in batches {
+                for (x, y, tile) in tile_fetcher.fetch_tiles(&coordinate_matrix, zoom)? {
                     let tile_coords = (geo::Point::from((x as f64, y as f64)) - epsg_3857_center)
                         .map_coords(|coord| geo::Coord {
                             x: coord.x * self.tile_size as f64 + self.width as f64 / 2.0,
