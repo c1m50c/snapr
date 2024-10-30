@@ -68,32 +68,19 @@ pub struct Snapr<'a> {
 }
 
 impl<'a> Snapr<'a> {
-    /// Returns a snapshot centered around the provided `geometry`.
-    pub fn generate_snapshot_from_geometry<G>(&self, geometry: G) -> Result<image::RgbaImage, Error>
-    where
-        G: Into<geo::Geometry>,
-    {
-        let geometries = vec![geometry.into()];
-        self.generate_snapshot_from_geometries(geometries)
-    }
-
-    /// Returns a snapshot centered around the provided `geometries`.
-    pub fn generate_snapshot_from_geometries(
+    /// Attempts to generate a snapshot from the [`Drawable`] object.
+    pub fn snapshot_from_drawable(
         &self,
-        geometries: Vec<geo::Geometry>,
+        drawable: &dyn Drawable,
     ) -> Result<image::RgbaImage, Error> {
-        let geometries = geometries
-            .iter()
-            .map(|geometry| geometry as &dyn Drawable)
-            .collect();
-
-        self.generate_snapshot(geometries)
+        let drawables = vec![drawable];
+        self.snapshot_from_drawables(drawables)
     }
 
-    /// Returns a snapshot rendering the provided `drawables`.
-    pub fn generate_snapshot(
+    /// Attempts to generate a snapshot from the [`Drawable`] objects.
+    pub fn snapshot_from_drawables(
         &self,
-        drawables: Vec<&'_ dyn Drawable>,
+        drawables: Vec<&dyn Drawable>,
     ) -> Result<image::RgbaImage, Error> {
         let mut output_image = image::RgbaImage::new(self.width, self.height);
 
@@ -145,6 +132,28 @@ impl<'a> Snapr<'a> {
 
         overlay(&mut output_image, &pixmap_image, 0, 0);
         Ok(output_image)
+    }
+
+    /// Attempts to generate a snapshot from the given [`Geometry`](geo::Geometry).
+    pub fn snapshot_from_geometry<G>(&self, geometry: G) -> Result<image::RgbaImage, Error>
+    where
+        G: Into<geo::Geometry>,
+    {
+        let geometries = vec![geometry.into()];
+        self.snapshot_from_geometries(geometries)
+    }
+
+    /// Attempts to generate a snapshot from the given [`Geometries`](geo::Geometry).
+    pub fn snapshot_from_geometries(
+        &self,
+        geometries: Vec<geo::Geometry>,
+    ) -> Result<image::RgbaImage, Error> {
+        let geometries = geometries
+            .iter()
+            .map(|geometry| geometry as &dyn Drawable)
+            .collect();
+
+        self.snapshot_from_drawables(geometries)
     }
 
     /// Converts a [`EPSG:4326`](https://epsg.io/4326) coordinate to a [`EPSG:3857`](https://epsg.io/3857) reprojection of said coordinate.

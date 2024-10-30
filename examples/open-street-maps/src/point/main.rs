@@ -27,7 +27,7 @@ fn main() -> Result<(), anyhow::Error> {
     ];
 
     snapr
-        .generate_snapshot_from_geometries(geometries)?
+        .snapshot_from_geometries(geometries)?
         .save("example.png")?;
 
     Ok(())
