@@ -17,9 +17,7 @@ fn main() -> Result<(), anyhow::Error> {
         geo::coord! { x: 41.702909695820175, y: -103.33250120288363 },
     );
 
-    snapr
-        .snapshot_from_geometry(line)?
-        .save("example.png")?;
+    snapr.snapshot_from_geometry(line)?.save("example.png")?;
 
     Ok(())
 }
