@@ -23,6 +23,9 @@ mod builder;
 pub mod drawing;
 pub mod fetchers;
 
+#[cfg(feature = "tokio")]
+pub mod tokio;
+
 /// Error type used throughout the [`snapr`](crate) crate.
 #[derive(Debug, Error)]
 #[non_exhaustive]

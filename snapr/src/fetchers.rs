@@ -125,3 +125,62 @@ pub enum TileFetcher<'a> {
     /// See [`BatchTileFetcher`].
     Batch(&'a dyn BatchTileFetcher),
 }
+/// Types that represent objects that can fetch map tiles one-by-one with the tile's [`EPSG:3857`](https://epsg.io/3857) position.
+///
+/// ## Example
+///
+/// ```rust
+/// use image::DynamicImage;
+/// use snapr::Error;
+///
+/// async fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, Error> {
+///     let image = todo!("fetch tile's image from a tile provider");
+///     Ok(image)
+/// }
+/// ```
+#[cfg(feature = "tokio")]
+#[async_trait::async_trait]
+pub trait AsyncIndividualTileFetcher {
+    /// Takes in a [`EPSG:3857`](https://epsg.io/3857) coordinate and a `zoom` level, and returns an [`Image`](DynamicImage) of the tile at the given position.
+    async fn fetch_tile(&self, x: i32, y: i32, zoom: u8) -> Result<DynamicImage, Error>;
+}
+
+/// Types that represent objects that can fetch map tiles all at once with each tile's [`EPSG:3857`](https://epsg.io/3857) position.
+///
+/// ## Example
+///
+/// ```rust
+/// use image::DynamicImage;
+/// use snapr::Error;
+///
+/// async fn tile_fetcher(coordinate_matrix: &[(i32, i32)], zoom: u8) -> Result<Vec<(i32, i32, DynamicImage)>, Error> {
+///     let mut tiles = Vec::new();
+///
+///     for &(x, y) in coordinate_matrix {
+///         let image = todo!("fetch tile's image from a tile provider");
+///         tiles.push((x, y, image));
+///     }
+///
+///     Ok(tiles)
+/// }
+/// ```
+#[cfg(feature = "tokio")]
+#[async_trait::async_trait]
+pub trait AsyncBatchTileFetcher {
+    /// Takes in a matrix of [`EPSG:3857`](https://epsg.io/3857) coordinates and a `zoom` level, and returns a [`Vec`] of each tile's position and [`Image`](DynamicImage).
+    async fn fetch_tiles(
+        &self,
+        coordinate_matrix: &[(i32, i32)],
+        zoom: u8,
+    ) -> Result<Vec<(i32, i32, DynamicImage)>, Error>;
+}
+
+/// Represents types implementing either [`AsyncIndividualTileFetcher`] or [`AsyncBatchTileFetcher`].
+#[cfg(feature = "tokio")]
+pub enum AsyncTileFetcher<'a> {
+    /// See [`AsyncIndividualTileFetcher`].
+    Individual(&'a dyn AsyncIndividualTileFetcher),
+
+    /// See [`AsyncBatchTileFetcher`].
+    Batch(&'a dyn AsyncBatchTileFetcher),
+}
