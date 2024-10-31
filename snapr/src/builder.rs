@@ -1,6 +1,63 @@
 use std::fmt;
 
+use macros::impl_snapr_builder;
+
 use crate::{Error, Snapr, TileFetcher, Zoom};
+
+pub(crate) mod macros {
+    macro_rules! impl_snapr_builder {
+        ($builder: ty, $snapr: ty, $tile_fetcher: ty) => {
+            impl<'a> $builder {
+                #[doc = concat!("Constructs a new [`", stringify!($builder), "`] to be used in constructing a [`", stringify!($snapr), "`].")]
+                pub fn new() -> Self {
+                    Self::default()
+                }
+
+                #[doc = concat!("Configures a [`", stringify!($tile_fetcher), "`] to be used in the [`", stringify!($snapr), "::tile_fetcher`] field.")]
+                pub fn with_tile_fetcher(self, tile_fetcher: $tile_fetcher) -> Self {
+                    Self {
+                        tile_fetcher: Some(tile_fetcher),
+                        ..self
+                    }
+                }
+
+                #[doc = concat!("Configures the `tile_size` to be used in the [`", stringify!($snapr), "::tile_size`] field.")]
+                pub fn with_tile_size(self, tile_size: u32) -> Self {
+                    Self {
+                        tile_size: Some(tile_size),
+                        ..self
+                    }
+                }
+
+                #[doc = concat!("Configures the `height` to be used in the [`", stringify!($snapr), "::height`] field.")]
+                pub fn with_height(self, height: u32) -> Self {
+                    Self {
+                        height: Some(height),
+                        ..self
+                    }
+                }
+
+                #[doc = concat!("Configures the `width` to be used in the [`", stringify!($snapr), "::width`] field.")]
+                pub fn with_width(self, width: u32) -> Self {
+                    Self {
+                        width: Some(width),
+                        ..self
+                    }
+                }
+
+                #[doc = concat!("Configures the `zoom` to be used in the [`", stringify!($snapr), "::zoom`] field.")]
+                pub fn with_zoom<Z: Into<Zoom>>(self, zoom: Z) -> Self {
+                    Self {
+                        zoom: Some(zoom.into()),
+                        ..self
+                    }
+                }
+            }
+        };
+    }
+
+    pub(crate) use impl_snapr_builder;
+}
 
 /// Builder structure for [`snapr`].
 ///
@@ -30,51 +87,6 @@ pub struct SnaprBuilder<'a> {
 }
 
 impl<'a> SnaprBuilder<'a> {
-    /// Constructs a new [`SnaprBuilder`] to be used in constructing a [`Snapr`].
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Configures a [`TileFetcher`] to be used in the [`Snapr::tile_fetcher`] field.
-    pub fn with_tile_fetcher(self, tile_fetcher: TileFetcher<'a>) -> Self {
-        Self {
-            tile_fetcher: Some(tile_fetcher),
-            ..self
-        }
-    }
-
-    /// Configures the `tile_size` to be used in the [`Snapr::tile_size`] field.
-    pub fn with_tile_size(self, tile_size: u32) -> Self {
-        Self {
-            tile_size: Some(tile_size),
-            ..self
-        }
-    }
-
-    /// Configures the `height` to be used in the [`Snapr::height`] field.
-    pub fn with_height(self, height: u32) -> Self {
-        Self {
-            height: Some(height),
-            ..self
-        }
-    }
-
-    /// Configures the `width` to be used in the [`Snapr::width`] field.
-    pub fn with_width(self, width: u32) -> Self {
-        Self {
-            width: Some(width),
-            ..self
-        }
-    }
-
-    /// Configures the `zoom` to be used in the [`Snapr::zoom`] field.
-    pub fn with_zoom<Z: Into<Zoom>>(self, zoom: Z) -> Self {
-        Self {
-            zoom: Some(zoom.into()),
-            ..self
-        }
-    }
-
     /// Attempts to construct a new [`Snapr`] from the [`SnaprBuilder`].
     ///
     /// ## Example
@@ -117,6 +129,8 @@ impl<'a> SnaprBuilder<'a> {
         Ok(snapr)
     }
 }
+
+impl_snapr_builder!(SnaprBuilder<'a>, Snapr<'a>, TileFetcher<'a>);
 
 impl<'a> fmt::Debug for SnaprBuilder<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
