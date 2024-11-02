@@ -8,7 +8,7 @@ fn main() -> Result<(), anyhow::Error> {
     let tile_fetcher = OSMTileFetcher::new()?;
 
     let snapr = SnaprBuilder::new()
-        .with_tile_fetcher(TileFetcher::Individual(&tile_fetcher))
+        .with_tile_fetcher(TileFetcher::individual(tile_fetcher))
         .with_tile_size(256)
         .with_zoom(15)
         .build()?;
