@@ -6,7 +6,7 @@ use snapr::{SnaprBuilder, TileFetcher};
 
 fn main() -> Result<(), anyhow::Error> {
     let snapr = SnaprBuilder::new()
-        .with_tile_fetcher(TileFetcher::Batch(&tile_fetcher))
+        .with_tile_fetcher(TileFetcher::batch(tile_fetcher))
         .with_tile_size(256)
         .with_zoom(15)
         .build()?;
