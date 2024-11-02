@@ -141,6 +141,7 @@ impl<'a> TileFetcher<'a> {
     ///
     /// let fetcher = TileFetcher::individual(tile_fetcher);
     /// ```
+    #[inline(always)]
     pub fn individual<F>(tile_fetcher: F) -> Self
     where
         F: IndividualTileFetcher + 'a,
@@ -162,6 +163,7 @@ impl<'a> TileFetcher<'a> {
     ///
     /// let fetcher = TileFetcher::batch(tile_fetcher);
     /// ```
+    #[inline(always)]
     pub fn batch<F>(tile_fetcher: F) -> Self
     where
         F: BatchTileFetcher + 'a,
