@@ -277,7 +277,7 @@ impl<'a> Snapr<'a> {
             .flat_map(|(x, y)| y.map(move |y| (x, y)));
 
         match self.tile_fetcher {
-            TileFetcher::Individual(tile_fetcher) => {
+            TileFetcher::Individual(ref tile_fetcher) => {
                 // Capture various fields in `self` to enable `x_y_to_tile` to automatically implement `Sync`
                 let (tile_fetcher, tile_size, height, width, zoom) =
                     (tile_fetcher, self.tile_size, self.height, self.width, zoom);
@@ -317,7 +317,7 @@ impl<'a> Snapr<'a> {
                 }
             }
 
-            TileFetcher::Batch(tile_fetcher) => {
+            TileFetcher::Batch(ref tile_fetcher) => {
                 let coordinate_matrix = coordinate_matrix.collect::<Vec<_>>();
 
                 for (x, y, tile) in tile_fetcher.fetch_tiles(&coordinate_matrix, zoom)? {

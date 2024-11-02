@@ -15,7 +15,7 @@ use crate::{Error, Snapr, TileFetcher, Zoom};
 /// }
 ///
 /// let snapr = SnaprBuilder::new()
-///     .with_tile_fetcher(TileFetcher::Individual(&tile_fetcher))
+///     .with_tile_fetcher(TileFetcher::individual(tile_fetcher))
 ///     .build();
 ///
 /// assert!(snapr.is_ok());
@@ -88,7 +88,7 @@ impl<'a> SnaprBuilder<'a> {
     /// }
     ///
     /// let snapr = SnaprBuilder::new()
-    ///     .with_tile_fetcher(TileFetcher::Individual(&tile_fetcher))
+    ///     .with_tile_fetcher(TileFetcher::individual(tile_fetcher))
     ///     .build();
     ///
     /// assert!(snapr.is_ok());

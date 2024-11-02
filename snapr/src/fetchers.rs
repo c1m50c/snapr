@@ -116,12 +116,58 @@ where
 ///     todo!()
 /// }
 ///
-/// let individual_tile_fetcher = TileFetcher::Individual(&tile_fetcher);
+/// let individual_tile_fetcher = TileFetcher::individual(tile_fetcher);
 /// ```
 pub enum TileFetcher<'a> {
     /// See [`IndividualTileFetcher`].
-    Individual(&'a dyn IndividualTileFetcher),
+    Individual(Box<dyn IndividualTileFetcher + 'a>),
 
     /// See [`BatchTileFetcher`].
-    Batch(&'a dyn BatchTileFetcher),
+    Batch(Box<dyn BatchTileFetcher + 'a>),
+}
+
+impl<'a> TileFetcher<'a> {
+    /// Constructs a new [`TileFetcher::Individual`] from a [`IndividualTileFetcher`].
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// use image::DynamicImage;
+    /// use snapr::{Error, TileFetcher};
+    ///
+    /// fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, Error> {
+    ///     todo!()
+    /// }
+    ///
+    /// let fetcher = TileFetcher::individual(tile_fetcher);
+    /// ```
+    #[inline(always)]
+    pub fn individual<F>(tile_fetcher: F) -> Self
+    where
+        F: IndividualTileFetcher + 'a,
+    {
+        TileFetcher::Individual(Box::new(tile_fetcher))
+    }
+
+    /// Constructs a new [`TileFetcher::Batch`] from a [`BatchTileFetcher`].
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// use image::DynamicImage;
+    /// use snapr::{Error, TileFetcher};
+    ///
+    /// fn tile_fetcher(coordinate_matrix: &[(i32, i32)], zoom: u8) -> Result<Vec<(i32, i32, DynamicImage)>, Error>{
+    ///     todo!()
+    /// }
+    ///
+    /// let fetcher = TileFetcher::batch(tile_fetcher);
+    /// ```
+    #[inline(always)]
+    pub fn batch<F>(tile_fetcher: F) -> Self
+    where
+        F: BatchTileFetcher + 'a,
+    {
+        Self::Batch(Box::new(tile_fetcher))
+    }
 }
