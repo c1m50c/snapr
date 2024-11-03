@@ -1,6 +1,9 @@
 //! Module containing definitions and implementations for tile fetching traits.
 //! See [`TileFetcher`] for more details.
 
+#[cfg(feature = "tokio")]
+use std::future::Future;
+
 use image::DynamicImage;
 
 use crate::Error;
@@ -146,7 +149,7 @@ impl<'a> TileFetcher<'a> {
     where
         F: IndividualTileFetcher + 'a,
     {
-        TileFetcher::Individual(Box::new(tile_fetcher))
+        Self::Individual(Box::new(tile_fetcher))
     }
 
     /// Constructs a new [`TileFetcher::Batch`] from a [`BatchTileFetcher`].
@@ -186,9 +189,21 @@ impl<'a> TileFetcher<'a> {
 /// ```
 #[cfg(feature = "tokio")]
 #[async_trait::async_trait]
-pub trait AsyncIndividualTileFetcher {
+pub trait AsyncIndividualTileFetcher: Sync {
     /// Takes in a [`EPSG:3857`](https://epsg.io/3857) coordinate and a `zoom` level, and returns an [`Image`](DynamicImage) of the tile at the given position.
     async fn fetch_tile(&self, x: i32, y: i32, zoom: u8) -> Result<DynamicImage, Error>;
+}
+
+#[cfg(feature = "tokio")]
+#[async_trait::async_trait]
+impl<A, F> AsyncIndividualTileFetcher for F
+where
+    A: Future<Output = Result<DynamicImage, Error>> + Send,
+    F: (Fn(i32, i32, u8) -> A) + Sync,
+{
+    async fn fetch_tile(&self, x: i32, y: i32, zoom: u8) -> Result<DynamicImage, Error> {
+        (self)(x, y, zoom).await
+    }
 }
 
 /// Types that represent objects that can fetch map tiles all at once with each tile's [`EPSG:3857`](https://epsg.io/3857) position.
@@ -212,7 +227,7 @@ pub trait AsyncIndividualTileFetcher {
 /// ```
 #[cfg(feature = "tokio")]
 #[async_trait::async_trait]
-pub trait AsyncBatchTileFetcher {
+pub trait AsyncBatchTileFetcher: Sync {
     /// Takes in a matrix of [`EPSG:3857`](https://epsg.io/3857) coordinates and a `zoom` level, and returns a [`Vec`] of each tile's position and [`Image`](DynamicImage).
     async fn fetch_tiles(
         &self,
@@ -221,12 +236,75 @@ pub trait AsyncBatchTileFetcher {
     ) -> Result<Vec<(i32, i32, DynamicImage)>, Error>;
 }
 
+#[cfg(feature = "tokio")]
+#[async_trait::async_trait]
+impl<A, F> AsyncBatchTileFetcher for F
+where
+    A: Future<Output = Result<Vec<(i32, i32, DynamicImage)>, Error>> + Send,
+    F: (Fn(&[(i32, i32)], u8) -> A) + Sync,
+{
+    async fn fetch_tiles(
+        &self,
+        coordinate_matrix: &[(i32, i32)],
+        zoom: u8,
+    ) -> Result<Vec<(i32, i32, DynamicImage)>, Error> {
+        (self)(coordinate_matrix, zoom).await
+    }
+}
+
 /// Represents types implementing either [`AsyncIndividualTileFetcher`] or [`AsyncBatchTileFetcher`].
 #[cfg(feature = "tokio")]
 pub enum AsyncTileFetcher<'a> {
     /// See [`AsyncIndividualTileFetcher`].
-    Individual(&'a dyn AsyncIndividualTileFetcher),
+    Individual(Box<dyn AsyncIndividualTileFetcher + 'a>),
 
     /// See [`AsyncBatchTileFetcher`].
-    Batch(&'a dyn AsyncBatchTileFetcher),
+    Batch(Box<dyn AsyncBatchTileFetcher + 'a>),
+}
+
+#[cfg(feature = "tokio")]
+impl<'a> AsyncTileFetcher<'a> {
+    /// Constructs a new [`AsyncTileFetcher::Individual`] from a [`AsyncIndividualTileFetcher`].
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// use image::DynamicImage;
+    /// use snapr::{Error, AsyncTileFetcher};
+    ///
+    /// async fn tile_fetcher(x: i32, y: i32, zoom: u8) -> Result<DynamicImage, Error> {
+    ///     todo!()
+    /// }
+    ///
+    /// let fetcher = AsyncTileFetcher::individual(tile_fetcher);
+    /// ```
+    #[inline(always)]
+    pub fn individual<F>(tile_fetcher: F) -> Self
+    where
+        F: AsyncIndividualTileFetcher + 'a,
+    {
+        Self::Individual(Box::new(tile_fetcher))
+    }
+
+    /// Constructs a new [`AsyncTileFetcher::Batch`] from a [`AsyncBatchTileFetcher`].
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// use image::DynamicImage;
+    /// use snapr::{Error, AsyncTileFetcher};
+    ///
+    /// async fn tile_fetcher(coordinate_matrix: &[(i32, i32)], zoom: u8) -> Result<Vec<(i32, i32, DynamicImage)>, Error>{
+    ///     todo!()
+    /// }
+    ///
+    /// let fetcher = AsyncTileFetcher::batch(tile_fetcher);
+    /// ```
+    #[inline(always)]
+    pub fn batch<F>(tile_fetcher: F) -> Self
+    where
+        F: AsyncBatchTileFetcher + 'a,
+    {
+        Self::Batch(Box::new(tile_fetcher))
+    }
 }

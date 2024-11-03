@@ -49,15 +49,14 @@ impl<'a> SnaprBuilder<'a> {
         let height = self.height.unwrap_or(600);
         let width = self.width.unwrap_or(800);
         let zoom = self.zoom.unwrap_or_default();
-        let handle = Handle::current();
 
         let tile_fetcher = {
             let tokio_tile_fetcher = TokioTileFetcher {
+                handle: Handle::current(),
                 inner: tile_fetcher,
-                handle,
             };
 
-            TileFetcher::Batch(&tokio_tile_fetcher)
+            TileFetcher::batch(tokio_tile_fetcher)
         };
 
         let snapr = crate::Snapr {
@@ -86,8 +85,8 @@ impl<'a> fmt::Debug for SnaprBuilder<'a> {
 }
 
 struct TokioTileFetcher<'a> {
-    inner: AsyncTileFetcher<'a>,
     handle: Handle,
+    inner: AsyncTileFetcher<'a>,
 }
 
 impl<'a> BatchTileFetcher for TokioTileFetcher<'a> {
