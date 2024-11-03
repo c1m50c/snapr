@@ -121,9 +121,7 @@ impl<'a> BatchTileFetcher for TokioTileFetcher<'a> {
                 })
             });
 
-            spawned.join().expect(
-                "the inner `spawned` thread of a `TokioTileFetcher` is not expected to panic",
-            )
+            spawned.join().map_err(|_| Error::AsynchronousTaskPanic)?
         })
     }
 }

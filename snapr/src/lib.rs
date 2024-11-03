@@ -51,9 +51,13 @@ pub enum Error {
     #[error("failed to calculate a centroid for the geometry collection")]
     CentroidCalculation,
 
+    #[cfg(feature = "tokio")]
+    #[error("inner panic of spawned asynchronous task")]
+    AsynchronousTaskPanic,
+
     /// Transparent errors returned from [`resvg::usvg`] functions.
-    #[error(transparent)]
     #[cfg(feature = "svg")]
+    #[error(transparent)]
     Usvg(#[from] resvg::usvg::Error),
 
     /// Returned when the source of the error cannot be determined.
