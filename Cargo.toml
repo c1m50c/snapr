@@ -5,6 +5,7 @@ members = [
     "examples/open-street-maps",
     "examples/stateful",
     "examples/svg",
+    "examples/tokio",
     "snapr",
 ]
 resolver = "2"

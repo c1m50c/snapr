@@ -1,0 +1,17 @@
+[package]
+name = "async-tokio"
+edition = "2021"
+publish = false
+
+# Shared Package Configuration
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+geo = { workspace = true }
+image = { workspace = true }
+reqwest = { version = "0.12.7" }
+snapr = { path = "../../snapr", features = ["tokio"] }
+tiny-skia = { workspace = true }
+tokio = { version = "1.41.0", features = ["full"] }
