@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, thread};
 
 use tokio::runtime::Handle;
 
@@ -32,7 +32,7 @@ impl<'a> SnaprBuilder<'a> {
     /// }
     ///
     /// let snapr = SnaprBuilder::new()
-    ///     .with_tile_fetcher(AsyncTileFetcher::Individual(&tile_fetcher))
+    ///     .with_tile_fetcher(AsyncTileFetcher::individual(tile_fetcher))
     ///     .build();
     ///
     /// assert!(snapr.is_ok());
@@ -95,6 +95,35 @@ impl<'a> BatchTileFetcher for TokioTileFetcher<'a> {
         coordinate_matrix: &[(i32, i32)],
         zoom: u8,
     ) -> Result<Vec<(i32, i32, image::DynamicImage)>, Error> {
-        todo!("execute `inner` and return results")
+        thread::scope(move |scope| {
+            let spawned = scope.spawn(move || {
+                self.handle.block_on(async move {
+                    let coordinate_matrix_size = coordinate_matrix.len();
+                    let fetcher = &self.inner;
+
+                    match fetcher {
+                        AsyncTileFetcher::Individual(tile_fetcher) => {
+                            let mut tiles = Vec::with_capacity(coordinate_matrix_size);
+
+                            // TODO: Process `tile_fetcher` calls concurrently with tasks.
+                            for &(x, y) in coordinate_matrix {
+                                let tile = tile_fetcher.fetch_tile(x, y, zoom).await?;
+                                tiles.push((x, y, tile));
+                            }
+
+                            Ok(tiles)
+                        }
+
+                        AsyncTileFetcher::Batch(tile_fetcher) => {
+                            tile_fetcher.fetch_tiles(coordinate_matrix, zoom).await
+                        }
+                    }
+                })
+            });
+
+            spawned.join().expect(
+                "the inner `spawned` thread of a `TokioTileFetcher` is not expected to panic",
+            )
+        })
     }
 }
