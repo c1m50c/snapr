@@ -105,7 +105,10 @@ impl<'a> BatchTileFetcher for TokioTileFetcher<'a> {
                         AsyncTileFetcher::Individual(tile_fetcher) => {
                             let mut tiles = Vec::with_capacity(coordinate_matrix_size);
 
-                            // TODO: Process `tile_fetcher` calls concurrently with tasks.
+                            // TODO: In the future, we should call `tile_fetcher` concurrently via multiple tasks.
+                            // I am currently avoiding this because ""scoped"" tasks are a little bit funky, at least from what I've played with.
+                            // Anyways, we should do this so we're 1:1 with what handling `TileFetcher::Individual` is like in synchronous land (rayon).
+
                             for &(x, y) in coordinate_matrix {
                                 let tile = tile_fetcher.fetch_tile(x, y, zoom).await?;
                                 tiles.push((x, y, tile));
