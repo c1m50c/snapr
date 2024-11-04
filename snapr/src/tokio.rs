@@ -98,29 +98,9 @@ impl<'a> BatchTileFetcher for TokioTileFetcher<'a> {
         thread::scope(move |scope| {
             let spawned = scope.spawn(move || {
                 self.handle.block_on(async move {
-                    let coordinate_matrix_size = coordinate_matrix.len();
-                    let fetcher = &self.inner;
-
-                    match fetcher {
-                        AsyncTileFetcher::Individual(tile_fetcher) => {
-                            let mut tiles = Vec::with_capacity(coordinate_matrix_size);
-
-                            // TODO: In the future, we should call `tile_fetcher` concurrently via multiple tasks.
-                            // I am currently avoiding this because ""scoped"" tasks are a little bit funky, at least from what I've played with.
-                            // Anyways, we should do this so we're 1:1 with what handling `TileFetcher::Individual` is like in synchronous land (rayon).
-
-                            for &(x, y) in coordinate_matrix {
-                                let tile = tile_fetcher.fetch_tile(x, y, zoom).await?;
-                                tiles.push((x, y, tile));
-                            }
-
-                            Ok(tiles)
-                        }
-
-                        AsyncTileFetcher::Batch(tile_fetcher) => {
-                            tile_fetcher.fetch_tiles(coordinate_matrix, zoom).await
-                        }
-                    }
+                    self.inner
+                        .fetch_tiles_in_batch(coordinate_matrix, zoom)
+                        .await
                 })
             });
 

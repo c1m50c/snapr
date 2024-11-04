@@ -308,3 +308,30 @@ impl<'a> AsyncTileFetcher<'a> {
         Self::Batch(Box::new(tile_fetcher))
     }
 }
+
+#[cfg(feature = "tokio")]
+impl<'a> AsyncTileFetcher<'a> {
+    /// Retrieves tiles from the [`AsyncTileFetcher`] with an [`AsyncBatchTileFetcher`] executor.
+    pub(crate) async fn fetch_tiles_in_batch(
+        &self,
+        coordinate_matrix: &[(i32, i32)],
+        zoom: u8,
+    ) -> Result<Vec<(i32, i32, DynamicImage)>, Error> {
+        let tile_fetcher = match self {
+            AsyncTileFetcher::Individual(tile_fetcher) => tile_fetcher,
+            AsyncTileFetcher::Batch(tile_fetcher) => {
+                return tile_fetcher.fetch_tiles(coordinate_matrix, zoom).await;
+            }
+        };
+
+        let mut tiles = Vec::with_capacity(coordinate_matrix.len());
+
+        // FIXME: The following for-loop should be run concurrently by spawning a task for each iteration.
+        for &(x, y) in coordinate_matrix {
+            let tile = tile_fetcher.fetch_tile(x, y, zoom).await?;
+            tiles.push((x, y, tile));
+        }
+
+        Ok(tiles)
+    }
+}
