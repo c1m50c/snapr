@@ -10,15 +10,15 @@ use crate::{
 
 /// Builder structure for [`Snapr`].
 #[derive(Default)]
-pub struct SnaprBuilder {
-    tile_fetcher: Option<AsyncTileFetcher>,
+pub struct SnaprBuilder<'a> {
+    tile_fetcher: Option<AsyncTileFetcher<'a>>,
     tile_size: Option<u32>,
     height: Option<u32>,
     width: Option<u32>,
     zoom: Option<Zoom>,
 }
 
-impl SnaprBuilder {
+impl<'a> SnaprBuilder<'a> {
     /// Attempts to construct a new [`Snapr`] from the [`SnaprBuilder`].
     ///
     /// ## Example
@@ -31,13 +31,17 @@ impl SnaprBuilder {
     ///     todo!()
     /// }
     ///
-    /// let snapr = SnaprBuilder::new()
-    ///     .with_tile_fetcher(AsyncTileFetcher::individual(tile_fetcher))
-    ///     .build();
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let snapr = SnaprBuilder::new()
+    ///         .with_tile_fetcher(AsyncTileFetcher::individual(tile_fetcher))
+    ///         .build()
+    ///         .await;
     ///
-    /// assert!(snapr.is_ok());
+    ///     assert!(snapr.is_ok());
+    /// }
     /// ```
-    pub async fn build<'a>(self) -> Result<Snapr<'a>, Error> {
+    pub async fn build(self) -> Result<Snapr<'a>, Error> {
         let Some(tile_fetcher) = self.tile_fetcher else {
             return Err(Error::Builder {
                 reason: "field `tile_fetcher` needs to be set prior to a `snapr` being built"
@@ -71,9 +75,9 @@ impl SnaprBuilder {
     }
 }
 
-impl_snapr_builder!(SnaprBuilder, Snapr<'a>, AsyncTileFetcher);
+impl_snapr_builder!(SnaprBuilder<'a>, Snapr<'a>, AsyncTileFetcher<'a>);
 
-impl fmt::Debug for SnaprBuilder {
+impl<'a> fmt::Debug for SnaprBuilder<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SnaprBuilder")
             .field("tile_size", &self.tile_size)
@@ -84,12 +88,12 @@ impl fmt::Debug for SnaprBuilder {
     }
 }
 
-struct TokioTileFetcher {
+struct TokioTileFetcher<'a> {
     handle: Handle,
-    inner: AsyncTileFetcher,
+    inner: AsyncTileFetcher<'a>,
 }
 
-impl BatchTileFetcher for TokioTileFetcher {
+impl<'a> BatchTileFetcher for TokioTileFetcher<'a> {
     fn fetch_tiles(
         &self,
         coordinate_matrix: &[(i32, i32)],

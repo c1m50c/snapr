@@ -215,10 +215,10 @@ where
 /// use image::DynamicImage;
 /// use snapr::Error;
 ///
-/// async fn tile_fetcher(coordinate_matrix: &[(i32, i32)], zoom: u8) -> Result<Vec<(i32, i32, DynamicImage)>, Error> {
+/// async fn tile_fetcher(coordinate_matrix: Vec<(i32, i32)>, zoom: u8) -> Result<Vec<(i32, i32, DynamicImage)>, Error> {
 ///     let mut tiles = Vec::new();
 ///
-///     for &(x, y) in coordinate_matrix {
+///     for (x, y) in coordinate_matrix {
 ///         let image = todo!("fetch tile's image from a tile provider");
 ///         tiles.push((x, y, image));
 ///     }
@@ -232,7 +232,7 @@ pub trait AsyncBatchTileFetcher: Sync {
     /// Takes in a matrix of [`EPSG:3857`](https://epsg.io/3857) coordinates and a `zoom` level, and returns a [`Vec`] of each tile's position and [`Image`](DynamicImage).
     async fn fetch_tiles(
         &self,
-        coordinate_matrix: &[(i32, i32)],
+        coordinate_matrix: Vec<(i32, i32)>,
         zoom: u8,
     ) -> Result<Vec<(i32, i32, DynamicImage)>, Error>;
 }
@@ -242,11 +242,11 @@ pub trait AsyncBatchTileFetcher: Sync {
 impl<A, F> AsyncBatchTileFetcher for F
 where
     A: Future<Output = Result<Vec<(i32, i32, DynamicImage)>, Error>> + Send,
-    F: (Fn(&[(i32, i32)], u8) -> A) + Sync,
+    F: (Fn(Vec<(i32, i32)>, u8) -> A) + Sync,
 {
     async fn fetch_tiles(
         &self,
-        coordinate_matrix: &[(i32, i32)],
+        coordinate_matrix: Vec<(i32, i32)>,
         zoom: u8,
     ) -> Result<Vec<(i32, i32, DynamicImage)>, Error> {
         (self)(coordinate_matrix, zoom).await
@@ -255,16 +255,16 @@ where
 
 /// Represents types implementing either [`AsyncIndividualTileFetcher`] or [`AsyncBatchTileFetcher`].
 #[cfg(feature = "tokio")]
-pub enum AsyncTileFetcher {
+pub enum AsyncTileFetcher<'a> {
     /// See [`AsyncIndividualTileFetcher`].
     Individual(Arc<dyn AsyncIndividualTileFetcher>),
 
     /// See [`AsyncBatchTileFetcher`].
-    Batch(Box<dyn AsyncBatchTileFetcher>),
+    Batch(Box<dyn AsyncBatchTileFetcher + 'a>),
 }
 
 #[cfg(feature = "tokio")]
-impl AsyncTileFetcher {
+impl<'a> AsyncTileFetcher<'a> {
     /// Constructs a new [`AsyncTileFetcher::Individual`] from a [`AsyncIndividualTileFetcher`].
     ///
     /// ## Example
@@ -284,6 +284,9 @@ impl AsyncTileFetcher {
     where
         F: AsyncIndividualTileFetcher + 'static,
     {
+        // FIXME: Ideally, the `tile_fetcher` shouldn't have to live for `'static`, but it's currently required for `tokio::task` reasons.
+        // In a perfect world, there'd be a (safe) equivalent of `std::thread::scope` in `tokio`, but as it currently stands there is not.
+        // Until something like that exists, this lifetime requirement will stick, as far as I known at least.
         Self::Individual(Arc::new(tile_fetcher))
     }
 
@@ -295,7 +298,7 @@ impl AsyncTileFetcher {
     /// use image::DynamicImage;
     /// use snapr::{Error, AsyncTileFetcher};
     ///
-    /// async fn tile_fetcher(coordinate_matrix: &[(i32, i32)], zoom: u8) -> Result<Vec<(i32, i32, DynamicImage)>, Error>{
+    /// async fn tile_fetcher(coordinate_matrix: Vec<(i32, i32)>, zoom: u8) -> Result<Vec<(i32, i32, DynamicImage)>, Error>{
     ///     todo!()
     /// }
     ///
@@ -304,14 +307,14 @@ impl AsyncTileFetcher {
     #[inline(always)]
     pub fn batch<F>(tile_fetcher: F) -> Self
     where
-        F: AsyncBatchTileFetcher + 'static,
+        F: AsyncBatchTileFetcher + 'a,
     {
         Self::Batch(Box::new(tile_fetcher))
     }
 }
 
 #[cfg(feature = "tokio")]
-impl AsyncTileFetcher {
+impl<'a> AsyncTileFetcher<'a> {
     /// Retrieves tiles from the [`AsyncTileFetcher`] with an [`AsyncBatchTileFetcher`] executor.
     pub(crate) async fn fetch_tiles_in_batch(
         &self,
@@ -345,6 +348,7 @@ impl AsyncTileFetcher {
             }
 
             AsyncTileFetcher::Batch(tile_fetcher) => {
+                let coordinate_matrix = Vec::from(coordinate_matrix);
                 tile_fetcher.fetch_tiles(coordinate_matrix, zoom).await
             }
         }
