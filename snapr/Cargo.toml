@@ -15,9 +15,11 @@ version.workspace = true
 default = ["rayon", "svg"]
 rayon = ["dep:rayon"]
 svg = ["dep:resvg"]
+tokio = ["dep:async-trait", "dep:tokio"]
 
 [dependencies]
 anyhow.workspace = true
+async-trait = { version = "0.1.83", optional = true }
 geo.workspace = true
 hex = { workspace = true }
 image.workspace = true
@@ -25,3 +27,4 @@ rayon = { workspace = true, optional = true }
 resvg = { workspace = true, optional = true }
 thiserror.workspace = true
 tiny-skia = { workspace = true }
+tokio = { version = "1.41.0", optional = true, features = ["rt"] }

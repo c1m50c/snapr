@@ -19,9 +19,15 @@ pub use builder::SnaprBuilder;
 pub use fetchers::TileFetcher;
 pub use {geo, image, tiny_skia};
 
+#[cfg(feature = "tokio")]
+pub use fetchers::AsyncTileFetcher;
+
 mod builder;
 pub mod drawing;
 pub mod fetchers;
+
+#[cfg(feature = "tokio")]
+pub mod tokio;
 
 /// Error type used throughout the [`snapr`](crate) crate.
 #[derive(Debug, Error)]
@@ -48,9 +54,13 @@ pub enum Error {
     #[error("failed to calculate a centroid for the geometry collection")]
     CentroidCalculation,
 
+    #[cfg(feature = "tokio")]
+    #[error("inner panic of spawned asynchronous task")]
+    AsynchronousTaskPanic,
+
     /// Transparent errors returned from [`resvg::usvg`] functions.
-    #[error(transparent)]
     #[cfg(feature = "svg")]
+    #[error(transparent)]
     Usvg(#[from] resvg::usvg::Error),
 
     /// Returned when the source of the error cannot be determined.
