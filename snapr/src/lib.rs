@@ -19,6 +19,9 @@ pub use builder::SnaprBuilder;
 pub use fetchers::TileFetcher;
 pub use {geo, image, tiny_skia};
 
+#[cfg(feature = "tokio")]
+pub use fetchers::AsyncTileFetcher;
+
 mod builder;
 pub mod drawing;
 pub mod fetchers;
