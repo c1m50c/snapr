@@ -6,22 +6,22 @@ use crate::{Error, Snapr, TileFetcher, Zoom};
 
 pub(crate) mod macros {
     macro_rules! impl_snapr_builder {
-        ($builder: ty, $snapr: ty, $tile_fetcher: ty) => {
-            impl<'a> $builder {
-                #[doc = concat!("Constructs a new [`", stringify!($builder), "`] to be used in constructing a [`", stringify!($snapr), "`].")]
+        (($builder_ty: ty, $builder_ident: ident), ($snapr_ty: ty, $snapr_ident: ident), ($tile_fetcher_ty: ty, $tile_fetcher_ident: ident)) => {
+            impl<'a> $builder_ty {
+                #[doc = concat!("Constructs a new [`", stringify!($builder_ident), "`] to be used in constructing a [`", stringify!($snapr_ident), "`].")]
                 pub fn new() -> Self {
                     Self::default()
                 }
 
-                #[doc = concat!("Configures a [`", stringify!($tile_fetcher), "`] to be used in the [`", stringify!($snapr), "::tile_fetcher`] field.")]
-                pub fn with_tile_fetcher(self, tile_fetcher: $tile_fetcher) -> Self {
+                #[doc = concat!("Configures a [`", stringify!($tile_fetcher_ident), "`] to be used in the [`", stringify!($snapr_ident), "::tile_fetcher`] field.")]
+                pub fn with_tile_fetcher(self, tile_fetcher: $tile_fetcher_ty) -> Self {
                     Self {
                         tile_fetcher: Some(tile_fetcher),
                         ..self
                     }
                 }
 
-                #[doc = concat!("Configures the `tile_size` to be used in the [`", stringify!($snapr), "::tile_size`] field.")]
+                #[doc = concat!("Configures the `tile_size` to be used in the [`", stringify!($snapr_ident), "::tile_size`] field.")]
                 pub fn with_tile_size(self, tile_size: u32) -> Self {
                     Self {
                         tile_size: Some(tile_size),
@@ -29,7 +29,7 @@ pub(crate) mod macros {
                     }
                 }
 
-                #[doc = concat!("Configures the `height` to be used in the [`", stringify!($snapr), "::height`] field.")]
+                #[doc = concat!("Configures the `height` to be used in the [`", stringify!($snapr_ident), "::height`] field.")]
                 pub fn with_height(self, height: u32) -> Self {
                     Self {
                         height: Some(height),
@@ -37,7 +37,7 @@ pub(crate) mod macros {
                     }
                 }
 
-                #[doc = concat!("Configures the `width` to be used in the [`", stringify!($snapr), "::width`] field.")]
+                #[doc = concat!("Configures the `width` to be used in the [`", stringify!($snapr_ident), "::width`] field.")]
                 pub fn with_width(self, width: u32) -> Self {
                     Self {
                         width: Some(width),
@@ -45,7 +45,7 @@ pub(crate) mod macros {
                     }
                 }
 
-                #[doc = concat!("Configures the `zoom` to be used in the [`", stringify!($snapr), "::zoom`] field.")]
+                #[doc = concat!("Configures the `zoom` to be used in the [`", stringify!($snapr_ident), "::zoom`] field.")]
                 pub fn with_zoom<Z: Into<Zoom>>(self, zoom: Z) -> Self {
                     Self {
                         zoom: Some(zoom.into()),
@@ -59,7 +59,7 @@ pub(crate) mod macros {
     pub(crate) use impl_snapr_builder;
 }
 
-/// Builder structure for [`snapr`].
+/// Builder structure for [`Snapr`].
 ///
 /// ## Example
 ///
@@ -130,7 +130,11 @@ impl<'a> SnaprBuilder<'a> {
     }
 }
 
-impl_snapr_builder!(SnaprBuilder<'a>, Snapr<'a>, TileFetcher<'a>);
+impl_snapr_builder!(
+    (SnaprBuilder<'a>, SnaprBuilder),
+    (Snapr<'a>, Snapr),
+    (TileFetcher<'a>, TileFetcher)
+);
 
 impl<'a> fmt::Debug for SnaprBuilder<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

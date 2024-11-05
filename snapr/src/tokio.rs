@@ -1,3 +1,5 @@
+//! Contains a [`SnaprBuilder`] implementation that constructs an [`AsyncTileFetcher`] with a [`tokio`] executor.
+
 use std::{fmt, thread};
 
 use tokio::runtime::Handle;
@@ -75,7 +77,11 @@ impl<'a> SnaprBuilder<'a> {
     }
 }
 
-impl_snapr_builder!(SnaprBuilder<'a>, Snapr<'a>, AsyncTileFetcher<'a>);
+impl_snapr_builder!(
+    (SnaprBuilder<'a>, SnaprBuilder),
+    (Snapr<'a>, Snapr),
+    (AsyncTileFetcher<'a>, AsyncTileFetcher)
+);
 
 impl<'a> fmt::Debug for SnaprBuilder<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
