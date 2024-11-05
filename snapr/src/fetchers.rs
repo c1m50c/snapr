@@ -3,6 +3,7 @@
 
 #[cfg(feature = "tokio")]
 use std::future::Future;
+use std::sync::Arc;
 
 use image::DynamicImage;
 
@@ -189,7 +190,7 @@ impl<'a> TileFetcher<'a> {
 /// ```
 #[cfg(feature = "tokio")]
 #[async_trait::async_trait]
-pub trait AsyncIndividualTileFetcher: Sync {
+pub trait AsyncIndividualTileFetcher: Send + Sync {
     /// Takes in a [`EPSG:3857`](https://epsg.io/3857) coordinate and a `zoom` level, and returns an [`Image`](DynamicImage) of the tile at the given position.
     async fn fetch_tile(&self, x: i32, y: i32, zoom: u8) -> Result<DynamicImage, Error>;
 }
@@ -199,7 +200,7 @@ pub trait AsyncIndividualTileFetcher: Sync {
 impl<A, F> AsyncIndividualTileFetcher for F
 where
     A: Future<Output = Result<DynamicImage, Error>> + Send,
-    F: (Fn(i32, i32, u8) -> A) + Sync,
+    F: (Fn(i32, i32, u8) -> A) + Send + Sync,
 {
     async fn fetch_tile(&self, x: i32, y: i32, zoom: u8) -> Result<DynamicImage, Error> {
         (self)(x, y, zoom).await
@@ -254,16 +255,16 @@ where
 
 /// Represents types implementing either [`AsyncIndividualTileFetcher`] or [`AsyncBatchTileFetcher`].
 #[cfg(feature = "tokio")]
-pub enum AsyncTileFetcher<'a> {
+pub enum AsyncTileFetcher {
     /// See [`AsyncIndividualTileFetcher`].
-    Individual(Box<dyn AsyncIndividualTileFetcher + 'a>),
+    Individual(Arc<dyn AsyncIndividualTileFetcher>),
 
     /// See [`AsyncBatchTileFetcher`].
-    Batch(Box<dyn AsyncBatchTileFetcher + 'a>),
+    Batch(Box<dyn AsyncBatchTileFetcher>),
 }
 
 #[cfg(feature = "tokio")]
-impl<'a> AsyncTileFetcher<'a> {
+impl AsyncTileFetcher {
     /// Constructs a new [`AsyncTileFetcher::Individual`] from a [`AsyncIndividualTileFetcher`].
     ///
     /// ## Example
@@ -281,9 +282,9 @@ impl<'a> AsyncTileFetcher<'a> {
     #[inline(always)]
     pub fn individual<F>(tile_fetcher: F) -> Self
     where
-        F: AsyncIndividualTileFetcher + 'a,
+        F: AsyncIndividualTileFetcher + 'static,
     {
-        Self::Individual(Box::new(tile_fetcher))
+        Self::Individual(Arc::new(tile_fetcher))
     }
 
     /// Constructs a new [`AsyncTileFetcher::Batch`] from a [`AsyncBatchTileFetcher`].
@@ -303,35 +304,49 @@ impl<'a> AsyncTileFetcher<'a> {
     #[inline(always)]
     pub fn batch<F>(tile_fetcher: F) -> Self
     where
-        F: AsyncBatchTileFetcher + 'a,
+        F: AsyncBatchTileFetcher + 'static,
     {
         Self::Batch(Box::new(tile_fetcher))
     }
 }
 
 #[cfg(feature = "tokio")]
-impl<'a> AsyncTileFetcher<'a> {
+impl AsyncTileFetcher {
     /// Retrieves tiles from the [`AsyncTileFetcher`] with an [`AsyncBatchTileFetcher`] executor.
     pub(crate) async fn fetch_tiles_in_batch(
         &self,
         coordinate_matrix: &[(i32, i32)],
         zoom: u8,
     ) -> Result<Vec<(i32, i32, DynamicImage)>, Error> {
-        let tile_fetcher = match self {
-            AsyncTileFetcher::Individual(tile_fetcher) => tile_fetcher,
-            AsyncTileFetcher::Batch(tile_fetcher) => {
-                return tile_fetcher.fetch_tiles(coordinate_matrix, zoom).await;
+        use tokio::task::JoinSet;
+
+        let expected_tile_count = coordinate_matrix.len();
+
+        match self {
+            AsyncTileFetcher::Individual(tile_fetcher) => {
+                let mut tiles = Vec::with_capacity(expected_tile_count);
+                let mut tasks = JoinSet::new();
+
+                for &(x, y) in coordinate_matrix {
+                    let tile_fetcher = tile_fetcher.clone();
+
+                    tasks.spawn(async move {
+                        let tile = tile_fetcher.fetch_tile(x, y, zoom).await;
+                        tile.map(|tile| (x, y, tile))
+                    });
+                }
+
+                while let Some(task) = tasks.join_next().await {
+                    let tile = task.map_err(|_| Error::AsynchronousTaskPanic)??;
+                    tiles.push(tile);
+                }
+
+                Ok(tiles)
             }
-        };
 
-        let mut tiles = Vec::with_capacity(coordinate_matrix.len());
-
-        // FIXME: The following for-loop should be run concurrently by spawning a task for each iteration.
-        for &(x, y) in coordinate_matrix {
-            let tile = tile_fetcher.fetch_tile(x, y, zoom).await?;
-            tiles.push((x, y, tile));
+            AsyncTileFetcher::Batch(tile_fetcher) => {
+                tile_fetcher.fetch_tiles(coordinate_matrix, zoom).await
+            }
         }
-
-        Ok(tiles)
     }
 }

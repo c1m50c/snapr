@@ -10,15 +10,15 @@ use crate::{
 
 /// Builder structure for [`Snapr`].
 #[derive(Default)]
-pub struct SnaprBuilder<'a> {
-    tile_fetcher: Option<AsyncTileFetcher<'a>>,
+pub struct SnaprBuilder {
+    tile_fetcher: Option<AsyncTileFetcher>,
     tile_size: Option<u32>,
     height: Option<u32>,
     width: Option<u32>,
     zoom: Option<Zoom>,
 }
 
-impl<'a> SnaprBuilder<'a> {
+impl SnaprBuilder {
     /// Attempts to construct a new [`Snapr`] from the [`SnaprBuilder`].
     ///
     /// ## Example
@@ -37,7 +37,7 @@ impl<'a> SnaprBuilder<'a> {
     ///
     /// assert!(snapr.is_ok());
     /// ```
-    pub async fn build(self) -> Result<Snapr<'a>, Error> {
+    pub async fn build<'a>(self) -> Result<Snapr<'a>, Error> {
         let Some(tile_fetcher) = self.tile_fetcher else {
             return Err(Error::Builder {
                 reason: "field `tile_fetcher` needs to be set prior to a `snapr` being built"
@@ -71,9 +71,9 @@ impl<'a> SnaprBuilder<'a> {
     }
 }
 
-impl_snapr_builder!(SnaprBuilder<'a>, Snapr<'a>, AsyncTileFetcher<'a>);
+impl_snapr_builder!(SnaprBuilder, Snapr<'a>, AsyncTileFetcher);
 
-impl<'a> fmt::Debug for SnaprBuilder<'a> {
+impl fmt::Debug for SnaprBuilder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SnaprBuilder")
             .field("tile_size", &self.tile_size)
@@ -84,12 +84,12 @@ impl<'a> fmt::Debug for SnaprBuilder<'a> {
     }
 }
 
-struct TokioTileFetcher<'a> {
+struct TokioTileFetcher {
     handle: Handle,
-    inner: AsyncTileFetcher<'a>,
+    inner: AsyncTileFetcher,
 }
 
-impl<'a> BatchTileFetcher for TokioTileFetcher<'a> {
+impl BatchTileFetcher for TokioTileFetcher {
     fn fetch_tiles(
         &self,
         coordinate_matrix: &[(i32, i32)],
