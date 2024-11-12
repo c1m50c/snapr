@@ -64,6 +64,11 @@ impl_styled_geo!(
             .inner
             .map_coords(|coord| context.epsg_4326_to_pixel(&coord));
 
+        #[cfg(feature = "tracing")]
+        {
+            tracing::trace!("rendering `Polygon` to `pixmap`");
+        }
+
         let mut path_builder = PathBuilder::new();
 
         for (index, point) in pixel_polygon.exterior().points().enumerate() {

@@ -105,6 +105,11 @@ impl_styled_geo!(
             }
         };
 
+        #[cfg(feature = "tracing")]
+        {
+            tracing::trace!(position = ?point, "rendering `Point` to `pixmap`");
+        }
+
         let shape = shape.to_path(point.x() as f32, point.y() as f32)?;
 
         pixmap.fill_path(

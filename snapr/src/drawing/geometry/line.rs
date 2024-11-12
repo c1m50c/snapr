@@ -71,6 +71,11 @@ impl_styled_geo!(
             .inner
             .map_coords(|coord| context.epsg_4326_to_pixel(&coord));
 
+        #[cfg(feature = "tracing")]
+        {
+            tracing::trace!(start = ?line.start, end = ?line.end, "rendering `Line` to `pixmap`");
+        }
+
         let mut path_builder = PathBuilder::new();
         path_builder.move_to(line.start.x as f32, line.start.y as f32);
         path_builder.line_to(line.end.x as f32, line.end.y as f32);
@@ -156,6 +161,11 @@ impl_styled_geo!(
         let line_string = self
             .inner
             .map_coords(|coord| context.epsg_4326_to_pixel(&coord));
+
+        #[cfg(feature = "tracing")]
+        {
+            tracing::trace!("rendering `LineString` to `pixmap`");
+        }
 
         for (index, point) in line_string.points().enumerate() {
             if index == 0 {
