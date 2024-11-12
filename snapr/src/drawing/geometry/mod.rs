@@ -38,6 +38,10 @@ pub(crate) mod macros {
             impl Styleable<$style> for geo::$type<f64> {}
 
             impl Drawable for Styled<'_, geo::$type<f64>, $style> {
+                #[cfg_attr(
+                    feature = "tracing",
+                    tracing::instrument(level = "TRACE", skip(self, pixmap), err)
+                )]
                 $draw
 
                 fn as_geometry(&self) -> Option<geo::Geometry<f64>> {

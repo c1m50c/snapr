@@ -175,6 +175,7 @@ impl<'a> TileFetcher<'a> {
         Self::Batch(Box::new(tile_fetcher))
     }
 }
+
 /// Types that represent objects that can fetch map tiles one-by-one with the tile's [`EPSG:3857`](https://epsg.io/3857) position.
 ///
 /// ## Example
@@ -316,6 +317,10 @@ impl<'a> AsyncTileFetcher<'a> {
 #[cfg(feature = "tokio")]
 impl<'a> AsyncTileFetcher<'a> {
     /// Retrieves tiles from the [`AsyncTileFetcher`] with an [`AsyncBatchTileFetcher`] executor.
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "TRACE", skip(self), err)
+    )]
     pub(crate) async fn fetch_tiles_in_batch(
         &self,
         coordinate_matrix: &[(i32, i32)],
@@ -325,6 +330,14 @@ impl<'a> AsyncTileFetcher<'a> {
 
         let expected_tile_count = coordinate_matrix.len();
 
+        #[cfg(feature = "tracing")]
+        {
+            tracing::trace!(
+                expected_tile_count,
+                "executing inner `AsyncTileFetcher` variant"
+            );
+        }
+
         match self {
             AsyncTileFetcher::Individual(tile_fetcher) => {
                 let mut tiles = Vec::with_capacity(expected_tile_count);
@@ -333,14 +346,40 @@ impl<'a> AsyncTileFetcher<'a> {
                 for &(x, y) in coordinate_matrix {
                     let tile_fetcher = tile_fetcher.clone();
 
+                    #[cfg(feature = "tracing")]
+                    {
+                        tracing::trace!(
+                            x,
+                            y,
+                            "spawning task for `AsyncIndividualTileFetcher.fetch_tile` call"
+                        );
+                    }
+
                     tasks.spawn(async move {
                         let tile = tile_fetcher.fetch_tile(x, y, zoom).await;
                         tile.map(|tile| (x, y, tile))
                     });
                 }
 
+                #[cfg(feature = "tracing")]
+                {
+                    tracing::trace!(
+                        tasks = tasks.len(),
+                        "awaiting `JoinSet` of `AsyncIndividualTileFetcher.fetch_tile` tasks"
+                    );
+                }
+
                 while let Some(task) = tasks.join_next().await {
                     let tile = task.map_err(|_| Error::AsynchronousTaskPanic)??;
+
+                    #[cfg(feature = "tracing")]
+                    {
+                        tracing::trace!(
+                            tile = ?(tile.0, tile.1),
+                            "successfully retrieved tile from `AsyncIndividualTileFetcher.fetch_tile` task"
+                        );
+                    }
+
                     tiles.push(tile);
                 }
 

@@ -89,11 +89,20 @@ pub(crate) struct SpatialSvg {
 }
 
 impl Drawable for SpatialSvg {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "TRACE", skip(self, pixmap), err)
+    )]
     fn draw(&self, pixmap: &mut Pixmap, _: &Context) -> Result<(), crate::Error> {
         let SpatialSvg { pixel, tree } = self;
 
         let svg_size = tree.size();
         let (x, y) = *pixel;
+
+        #[cfg(feature = "tracing")]
+        {
+            tracing::trace!("rendering `SpatialSvg` to `pixmap`");
+        }
 
         render(
             tree,

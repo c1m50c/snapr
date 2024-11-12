@@ -43,6 +43,10 @@ impl<'a> SnaprBuilder<'a> {
     ///     assert!(snapr.is_ok());
     /// }
     /// ```
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "TRACE", skip(self), err)
+    )]
     pub async fn build(self) -> Result<Snapr<'a>, Error> {
         let Some(tile_fetcher) = self.tile_fetcher else {
             return Err(Error::Builder {
@@ -61,6 +65,14 @@ impl<'a> SnaprBuilder<'a> {
                 handle: Handle::current(),
                 inner: tile_fetcher,
             };
+
+            #[cfg(feature = "tracing")]
+            {
+                tracing::trace!(
+                    handle = ?tokio_tile_fetcher.handle,
+                    "built internal `TokioTileFetcher`"
+                );
+            }
 
             TileFetcher::batch(tokio_tile_fetcher)
         };
@@ -100,6 +112,10 @@ struct TokioTileFetcher<'a> {
 }
 
 impl<'a> BatchTileFetcher for TokioTileFetcher<'a> {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "TRACE", skip(self), err)
+    )]
     fn fetch_tiles(
         &self,
         coordinate_matrix: &[(i32, i32)],
@@ -107,7 +123,17 @@ impl<'a> BatchTileFetcher for TokioTileFetcher<'a> {
     ) -> Result<Vec<(i32, i32, image::DynamicImage)>, Error> {
         thread::scope(move |scope| {
             let spawned = scope.spawn(move || {
+                #[cfg(feature = "tracing")]
+                {
+                    tracing::trace!("spawned `std::thread` to execute future on");
+                }
+
                 self.handle.block_on(async move {
+                    #[cfg(feature = "tracing")]
+                    {
+                        tracing::trace!("running `Handle::block_on` on `AsyncTileFetcher.fetch_tiles_in_batch` future");
+                    }
+
                     self.inner
                         .fetch_tiles_in_batch(coordinate_matrix, zoom)
                         .await
