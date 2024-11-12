@@ -133,6 +133,10 @@ pub struct Snapr<'a> {
 
 impl<'a> Snapr<'a> {
     /// Attempts to generate a snapshot from the [`Drawable`] object.
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "DEBUG", skip(self, drawable), err)
+    )]
     pub fn snapshot_from_drawable(
         &self,
         drawable: &dyn Drawable,
@@ -142,6 +146,10 @@ impl<'a> Snapr<'a> {
     }
 
     /// Attempts to generate a snapshot from the [`Drawable`] objects.
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "DEBUG", skip(self, drawables), err)
+    )]
     pub fn snapshot_from_drawables(
         &self,
         drawables: Vec<&dyn Drawable>,
@@ -167,9 +175,20 @@ impl<'a> Snapr<'a> {
             Zoom::Constant(level) => level,
             Zoom::Automatic(max_level) => match geometries.bounding_rect() {
                 Some(bounding_box) => self.zoom_from_geometries(bounding_box, max_level),
-                None => todo!("Return an `Err` or find a suitable default for `bounding_box`"),
+                None => return Err(Error::BoundingBoxCalculation),
             },
         };
+
+        #[cfg(feature = "tracing")]
+        {
+            tracing::trace!(
+                zoom,
+                ?center,
+                geometries = geometries.len(),
+                drawables = drawables.len(),
+                "calculated variables required for overlaying and rendering. overlaying backing tiles..."
+            );
+        }
 
         self.overlay_backing_tiles(&mut output_image, center, zoom)?;
 
@@ -184,8 +203,21 @@ impl<'a> Snapr<'a> {
                     index,
                 };
 
+                #[cfg(feature = "tracing")]
+                {
+                    tracing::trace!(
+                        ?context,
+                        "rendering `Drawable` with the `Drawable.draw` method"
+                    );
+                }
+
                 drawable.draw(&mut pixmap, &context)
             })?;
+
+        #[cfg(feature = "tracing")]
+        {
+            tracing::trace!("merging the tiles and `Drawables` render images together");
+        }
 
         let pixmap_image = image::ImageBuffer::from_fn(self.width, self.height, |x, y| {
             let pixel = pixmap.pixel(x, y)
@@ -199,6 +231,10 @@ impl<'a> Snapr<'a> {
     }
 
     /// Attempts to generate a snapshot from the given [`Geometry`](geo::Geometry).
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "DEBUG", skip(self, geometry), err)
+    )]
     pub fn snapshot_from_geometry<G>(&self, geometry: G) -> Result<image::RgbaImage, Error>
     where
         G: Into<geo::Geometry>,
@@ -208,6 +244,10 @@ impl<'a> Snapr<'a> {
     }
 
     /// Attempts to generate a snapshot from the given [`Geometries`](geo::Geometry).
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "DEBUG", skip(self), err)
+    )]
     pub fn snapshot_from_geometries(
         &self,
         geometries: Vec<geo::Geometry>,
@@ -235,6 +275,10 @@ impl<'a> Snapr<'a> {
 
 impl<'a> Snapr<'a> {
     /// Calculates the [`zoom`](Self::zoom) level to use when [`zoom`](Self::zoom) itself is [`None`].
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "TRACE", skip(self), ret)
+    )]
     fn zoom_from_geometries(&self, bounding_box: geo::Rect, max_zoom: u8) -> u8 {
         let mut zoom = 1;
 
@@ -265,6 +309,10 @@ impl<'a> Snapr<'a> {
     }
 
     /// Fills the given `image` with tiles centered around the given `epsg_3857_center` point.
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "TRACE", skip(self, image), err)
+    )]
     fn overlay_backing_tiles(
         &self,
         image: &mut image::RgbaImage,
@@ -281,6 +329,18 @@ impl<'a> Snapr<'a> {
         let min_y = (epsg_3857_center.y() - required_rows).floor() as i32;
         let max_x = (epsg_3857_center.x() + required_columns).ceil() as i32;
         let max_y = (epsg_3857_center.y() + required_rows).ceil() as i32;
+
+        #[cfg(feature = "tracing")]
+        {
+            tracing::trace!(
+                required_rows,
+                required_columns,
+                ?epsg_3857_center,
+                min = ?(min_x, min_y),
+                max = ?(max_x, max_y),
+                "calculated bounds and required variables"
+            );
+        }
 
         let coordinate_matrix = (min_x..max_x)
             .map(|x| (x, min_y..max_y))
@@ -310,6 +370,13 @@ impl<'a> Snapr<'a> {
 
                 #[cfg(feature = "rayon")]
                 {
+                    #[cfg(feature = "tracing")]
+                    {
+                        tracing::trace!(
+                            "executing `TileFetcher::Individual` in parallel with `rayon` crate"
+                        );
+                    }
+
                     coordinate_matrix
                         .par_bridge()
                         .flat_map(x_y_to_tile)
@@ -320,6 +387,11 @@ impl<'a> Snapr<'a> {
 
                 #[cfg(not(feature = "rayon"))]
                 {
+                    #[cfg(feature = "tracing")]
+                    {
+                        tracing::trace!("executing `TileFetcher::Individual` sequentially");
+                    }
+
                     for (x, y) in coordinate_matrix {
                         let (tile, x, y) = x_y_to_tile((x, y))?;
                         overlay(image, &tile, x, y);
@@ -329,6 +401,11 @@ impl<'a> Snapr<'a> {
 
             TileFetcher::Batch(ref tile_fetcher) => {
                 let coordinate_matrix = coordinate_matrix.collect::<Vec<_>>();
+
+                #[cfg(feature = "tracing")]
+                {
+                    tracing::trace!("executing `TileFetcher::Batch`");
+                }
 
                 for (x, y, tile) in tile_fetcher.fetch_tiles(&coordinate_matrix, zoom)? {
                     let tile_coords = (geo::Point::from((x as f64, y as f64)) - epsg_3857_center)
